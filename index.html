@@ -726,31 +726,21 @@ tbody tr:hover{background:var(--surface-2)}
         <div class="form-group"><label class="form-label">Valor (R$) *</label><input class="form-control" id="trans-valor" type="number" step="0.01" placeholder="0,00"></div>
         <div class="form-group"><label class="form-label">Data</label><input class="form-control" id="trans-data" type="date"></div>
       </div>
-      <div class="form-group" id="trans-status-group"><label class="form-label" id="trans-status-label">Status</label>
-        <select class="form-control" id="trans-status">
-          <option value="pago">Pago</option>
-          <option value="recebido">Recebido</option>
-          <option value="pendente">Pendente</option>
-        </select>
-      </div>
-
-      <!-- Toggle parcelamento -->
-      <div style="display:flex;align-items:center;gap:10px;padding:12px 0;border-top:1px solid var(--border);margin-bottom:4px">
-        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;font-weight:600;color:var(--text-mid);user-select:none">
-          <input type="checkbox" id="trans-parcelar" onchange="toggleTransParc()" style="width:16px;height:16px;accent-color:var(--blue);cursor:pointer">
-          Parcelar este lançamento
-        </label>
-      </div>
-      <div id="trans-parc-fields" style="display:none">
-        <div class="form-row">
-          <div class="form-group"><label class="form-label">Nº de Parcelas *</label><input class="form-control" id="trans-nparc" type="number" min="2" max="60" value="2" placeholder="Ex: 12"></div>
-          <div class="form-group"><label class="form-label">1ª Parcela em *</label><input class="form-control" id="trans-parc-inicio" type="date"></div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Em quantas vezes?</label>
+          <input class="form-control" id="trans-nparc" type="number" min="1" max="60" value="1" placeholder="1 = à vista" oninput="toggleTransParc()">
         </div>
-        <div style="background:var(--blue-bg);border:1px solid #bfdbfe;border-radius:8px;padding:10px 13px;font-size:12px;color:var(--blue-text);margin-bottom:4px">
-          O parcelamento será criado em <strong>Operações → Parcelamentos</strong>. Cada parcela pode ser quitada individualmente.
+        <div class="form-group" id="trans-status-group"><label class="form-label">Status</label>
+          <select class="form-control" id="trans-status">
+            <option value="pago">Pago</option>
+            <option value="recebido">Recebido</option>
+            <option value="pendente">Pendente</option>
+          </select>
         </div>
       </div>
-
+      <div id="trans-parc-info" style="display:none;background:var(--blue-bg);border:1px solid #bfdbfe;border-radius:8px;padding:10px 13px;font-size:12.5px;color:var(--blue-text);margin-bottom:12px">
+        Serão criados <strong id="trans-parc-qtd">2</strong> lançamentos mensais com status <strong>Pendente</strong>. Marque cada um como pago conforme for recebendo/pagando.
+      </div>
       <div class="form-group"><label class="form-label">Observações</label><textarea class="form-control" id="trans-obs" rows="2"></textarea></div>
     </div>
     <div class="modal-footer">
@@ -1175,27 +1165,25 @@ function renderFinanceiro(){
     .join(''):`<tr><td colspan="7"><div class="empty"><div class="empty-icon">💰</div><h3>Nenhuma transação neste mês</h3></div></td></tr>`;
 }
 function toggleTransParc(){
-  const on=document.getElementById('trans-parcelar').checked;
-  document.getElementById('trans-parc-fields').style.display=on?'block':'none';
-  document.getElementById('trans-status-group').style.display=on?'none':'block';
-  if(on)document.getElementById('trans-parc-inicio').value=document.getElementById('trans-data').value||today();
+  const n=Number(document.getElementById('trans-nparc').value)||1;
+  const parc=n>1;
+  document.getElementById('trans-parc-info').style.display=parc?'block':'none';
+  document.getElementById('trans-status-group').style.display=parc?'none':'block';
+  if(parc)document.getElementById('trans-parc-qtd').textContent=n;
 }
 function openModalTransacao(tipo,id){
   const t=id?DB.one('transacoes',id):{};const tp=t.tipo||tipo;
   document.getElementById('mtrans-title').textContent=id?(tp==='entrada'?'Editar Entrada':'Editar Saída'):(tipo==='entrada'?'Nova Entrada':'Nova Saída');
   document.getElementById('trans-id').value=t.id||'';document.getElementById('trans-tipo').value=tp;
   populateCatSelect('trans-cat',tp,t.categoria||'');
-  document.getElementById('trans-desc').value=t.descricao||'';document.getElementById('trans-valor').value=t.valor||'';
+  document.getElementById('trans-desc').value=t.descricao||'';
+  document.getElementById('trans-valor').value=t.valor||'';
   document.getElementById('trans-data').value=t.data||today();
-  const defStatus=t.status||(tp==='entrada'?'recebido':'pago');
-  document.getElementById('trans-status').value=defStatus;
+  document.getElementById('trans-status').value=t.status||(tp==='entrada'?'recebido':'pago');
   document.getElementById('trans-obs').value=t.observacoes||'';
-  // reset parcelamento
-  document.getElementById('trans-parcelar').checked=false;
-  document.getElementById('trans-parc-fields').style.display='none';
+  document.getElementById('trans-nparc').value=1;
+  document.getElementById('trans-parc-info').style.display='none';
   document.getElementById('trans-status-group').style.display='block';
-  document.getElementById('trans-nparc').value=2;
-  document.getElementById('trans-parc-inicio').value=today();
   openModal('modal-transacao');
 }
 function saveTransacao(){
@@ -1203,40 +1191,37 @@ function saveTransacao(){
   const valor=document.getElementById('trans-valor').value;
   if(!desc||!valor){toast('Preencha descrição e valor','error');return;}
   const tipo=document.getElementById('trans-tipo').value;
-  const parcelar=document.getElementById('trans-parcelar').checked;
+  const n=Number(document.getElementById('trans-nparc').value)||1;
+  const cat=document.getElementById('trans-cat').value;
+  const obs=document.getElementById('trans-obs').value;
+  const dataBase=document.getElementById('trans-data').value||today();
+  const grupoId=uid();
 
-  if(parcelar){
-    const n=Number(document.getElementById('trans-nparc').value)||2;
-    const inicio=document.getElementById('trans-parc-inicio').value;
-    if(!inicio){toast('Informe a data da 1ª parcela','error');return;}
-    if(n<2){toast('Mínimo 2 parcelas','error');return;}
-    const parcelas=Array.from({length:n},(_,i)=>{
-      const d=new Date(inicio+'T12:00:00');d.setMonth(d.getMonth()+i);
-      return{vencimento:d.toISOString().slice(0,10),valor:Number(valor)/n,status:'pendente'};
-    });
-    DB.save('parcelamentos',{
-      id:uid(),
-      tipo:tipo==='entrada'?'receber':'pagar',
-      descricao:desc,
-      nomeCliente:'',
-      valorTotal:Number(valor),
-      parcelas,
-      categoria:document.getElementById('trans-cat').value,
-      observacoes:document.getElementById('trans-obs').value,
+  if(n>1){
+    const vlParcela=Number(valor)/n;
+    Array.from({length:n},(_,i)=>{
+      const d=new Date(dataBase+'T12:00:00');d.setMonth(d.getMonth()+i);
+      DB.save('transacoes',{
+        id:uid(),tipo,categoria:cat,
+        descricao:`${desc} (${i+1}/${n})`,
+        valor:vlParcela,
+        data:d.toISOString().slice(0,10),
+        status:'pendente',
+        observacoes:obs,
+        grupoId,
+      });
     });
     closeModal('modal-transacao');renderFinanceiro();
-    toast(`Parcelamento em ${n}x criado em Parcelamentos!`,'success');
+    toast(`${n} lançamentos criados! Marque cada um conforme for ${tipo==='entrada'?'recebendo':'pagando'}.`,'success');
     return;
   }
 
   DB.save('transacoes',{
     id:document.getElementById('trans-id').value||uid(),
-    tipo,
-    categoria:document.getElementById('trans-cat').value,
-    descricao:desc,valor:Number(valor),
-    data:document.getElementById('trans-data').value,
+    tipo,categoria:cat,descricao:desc,
+    valor:Number(valor),data:dataBase,
     status:document.getElementById('trans-status').value,
-    observacoes:document.getElementById('trans-obs').value,
+    observacoes:obs,
   });
   closeModal('modal-transacao');renderFinanceiro();toast('Salvo!','success');
 }
