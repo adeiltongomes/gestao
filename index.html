@@ -642,10 +642,10 @@ tbody tr:hover{background:var(--surface-2)}
       <div class="form-row">
         <div class="form-group"><label class="form-label">Nome do Item *</label><input class="form-control" id="est-nome" placeholder="Ex: Cabo USB-C"></div>
         <div class="form-group"><label class="form-label">Categoria</label>
-          <select class="form-control" id="est-cat">
-            <option>Acessório</option><option>Cabo</option><option>Carregador</option>
-            <option>Peça</option><option>Embalagem</option><option>Consumível</option><option>Outro</option>
-          </select>
+          <div style="display:flex;gap:6px">
+            <select class="form-control" id="est-cat" style="flex:1"></select>
+            <button type="button" class="btn btn-ghost btn-sm" title="Nova categoria" onclick="addCat('estoque','est-cat')" style="flex-shrink:0;font-size:20px;padding:0 13px;line-height:1">+</button>
+          </div>
         </div>
       </div>
       <div class="form-row-3">
@@ -715,15 +715,22 @@ tbody tr:hover{background:var(--surface-2)}
       <input type="hidden" id="trans-tipo">
       <div class="form-row">
         <div class="form-group"><label class="form-label">Descrição *</label><input class="form-control" id="trans-desc" placeholder="Descrição"></div>
-        <div class="form-group"><label class="form-label">Categoria</label><select class="form-control" id="trans-cat"></select></div>
+        <div class="form-group"><label class="form-label">Categoria</label>
+          <div style="display:flex;gap:6px">
+            <select class="form-control" id="trans-cat" style="flex:1"></select>
+            <button type="button" class="btn btn-ghost btn-sm" title="Nova categoria" onclick="addCat(document.getElementById('trans-tipo').value,'trans-cat')" style="flex-shrink:0;font-size:20px;padding:0 13px;line-height:1">+</button>
+          </div>
+        </div>
       </div>
       <div class="form-row">
         <div class="form-group"><label class="form-label">Valor (R$) *</label><input class="form-control" id="trans-valor" type="number" step="0.01" placeholder="0,00"></div>
         <div class="form-group"><label class="form-label">Data</label><input class="form-control" id="trans-data" type="date"></div>
       </div>
-      <div class="form-group"><label class="form-label">Status</label>
+      <div class="form-group"><label class="form-label" id="trans-status-label">Status</label>
         <select class="form-control" id="trans-status">
-          <option value="pago">Pago / Recebido</option><option value="pendente">Pendente</option>
+          <option value="pago">Pago</option>
+          <option value="recebido">Recebido</option>
+          <option value="pendente">Pendente</option>
         </select>
       </div>
       <div class="form-group"><label class="form-label">Observações</label><textarea class="form-control" id="trans-obs" rows="2"></textarea></div>
@@ -774,15 +781,10 @@ tbody tr:hover{background:var(--surface-2)}
       <div class="form-row">
         <div class="form-group"><label class="form-label">Mês/Ano</label><input class="form-control" id="orc-mes-inp" type="month"></div>
         <div class="form-group"><label class="form-label">Categoria</label>
-          <select class="form-control" id="orc-cat">
-            <option value="receita_total">Receita Total</option>
-            <option value="Locação de Equipamento">Locação de Equipamento</option>
-            <option value="Serviço de Manutenção">Serviço de Manutenção</option>
-            <option value="Compra de Equipamento">Compra de Equipamento</option>
-            <option value="Salários">Salários</option>
-            <option value="Manutenção/Reparo">Manutenção/Reparo</option>
-            <option value="Outros">Outros</option>
-          </select>
+          <div style="display:flex;gap:6px">
+            <select class="form-control" id="orc-cat" style="flex:1"></select>
+            <button type="button" class="btn btn-ghost btn-sm" title="Nova categoria" onclick="addCat('orcamento','orc-cat')" style="flex-shrink:0;font-size:20px;padding:0 13px;line-height:1">+</button>
+          </div>
         </div>
       </div>
       <div class="form-group"><label class="form-label">Valor Orçado (R$)</label><input class="form-control" id="orc-valor" type="number" step="0.01" placeholder="0,00"></div>
@@ -796,6 +798,8 @@ tbody tr:hover{background:var(--surface-2)}
 
 <script>
 // ── UTILS ─────────────────────────────────────────────────────────────────────
+const isPago=s=>s==='pago'||s==='recebido';
+const fmtStatus=s=>s==='recebido'?'Recebido':s==='pago'?'Pago':'Pendente';
 const uid=()=>Math.random().toString(36).slice(2)+Date.now().toString(36);
 const esc=s=>String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 const fmtR=v=>Number(v||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
@@ -853,8 +857,8 @@ document.querySelectorAll('[data-view]').forEach(el=>el.addEventListener('click'
 function renderDashboard(){
   const mes=thisMonth();
   const trans=DB.get('transacoes');
-  const ents=trans.filter(t=>t.tipo==='entrada'&&t.data?.startsWith(mes)&&t.status==='pago');
-  const sais=trans.filter(t=>t.tipo==='saida'&&t.data?.startsWith(mes)&&t.status==='pago');
+  const ents=trans.filter(t=>t.tipo==='entrada'&&t.data?.startsWith(mes)&&isPago(t.status));
+  const sais=trans.filter(t=>t.tipo==='saida'&&t.data?.startsWith(mes)&&isPago(t.status));
   const totE=ents.reduce((s,t)=>s+Number(t.valor||0),0);
   const totS=sais.reduce((s,t)=>s+Number(t.valor||0),0);
   const locAtivas=DB.get('locacoes').filter(l=>l.status==='ativa');
@@ -994,7 +998,7 @@ function openModalEstoque(id){
   const e=id?DB.one('estoque',id):{};
   document.getElementById('mest-title').textContent=id?'Editar Item':'Novo Item de Estoque';
   document.getElementById('est-id').value=e.id||'';document.getElementById('est-nome').value=e.nome||'';
-  document.getElementById('est-cat').value=e.categoria||'Acessório';document.getElementById('est-qtd').value=e.quantidade||'';
+  populateCatSelect('est-cat','estoque',e.categoria||'Acessório');document.getElementById('est-qtd').value=e.quantidade||'';
   document.getElementById('est-min').value=e.qtdMinima||'';document.getElementById('est-valor').value=e.valorUnit||'';
   document.getElementById('est-obs').value=e.observacoes||'';openModal('modal-estoque');
 }
@@ -1089,17 +1093,54 @@ function saveLocacao(){
 function delLocacao(id){if(!confirm('Excluir esta locação?'))return;DB.del('locacoes',id);renderLocacoes();toast('Excluído.','info');}
 
 // ── FINANCEIRO ────────────────────────────────────────────────────────────────
-const CATS_E=['Locação de Equipamento','Venda de Equipamento','Serviço de Manutenção','Multa/Juros','Outros'];
-const CATS_S=['Compra de Equipamento','Manutenção/Reparo','Salários','Aluguel','Energia/Internet','Impostos','Frete','Marketing','Outros'];
+// ── CATEGORIAS DINÂMICAS ──────────────────────────────────────────────────────
+const CATS_DEF_E=['Locação de Equipamento','Venda de Equipamento','Serviço de Manutenção','Multa/Juros','Outros'];
+const CATS_DEF_S=['Compra de Equipamento','Manutenção/Reparo','Salários','Aluguel','Energia/Internet','Impostos','Frete','Marketing','Outros'];
+const CATS_DEF_EST=['Acessório','Cabo','Carregador','Peça','Embalagem','Consumível','Outro'];
+const CATS_DEF_ORC=[{v:'receita_total',l:'Receita Total'},{v:'Locação de Equipamento',l:'Locação de Equipamento'},{v:'Serviço de Manutenção',l:'Serviço de Manutenção'},{v:'Compra de Equipamento',l:'Compra de Equipamento'},{v:'Salários',l:'Salários'},{v:'Manutenção/Reparo',l:'Manutenção/Reparo'},{v:'Outros',l:'Outros'}];
+
+function getCats(type){
+  const custom=DB.get('cats_'+type)||[];
+  const def=type==='entrada'?CATS_DEF_E:type==='saida'?CATS_DEF_S:type==='estoque'?CATS_DEF_EST:[];
+  return [...def,...custom.filter(c=>!def.includes(c))];
+}
+function getCatsOrc(){
+  const custom=DB.get('cats_orcamento')||[];
+  const defaults=CATS_DEF_ORC.map(x=>x.v);
+  const customItems=custom.filter(c=>!defaults.includes(c)).map(c=>({v:c,l:c}));
+  return [...CATS_DEF_ORC,...customItems];
+}
+function populateCatSelect(selId,type,selectedVal){
+  const sel=document.getElementById(selId);
+  if(!sel)return;
+  if(type==='orcamento'){
+    sel.innerHTML=getCatsOrc().map(c=>`<option value="${c.v}"${selectedVal===c.v?' selected':''}>${c.l}</option>`).join('');
+  }else{
+    sel.innerHTML=getCats(type).map(c=>`<option${selectedVal===c?' selected':''}>${c}</option>`).join('');
+  }
+}
+function addCat(type,selId){
+  const nome=prompt('Nome da nova categoria:')?.trim();
+  if(!nome)return;
+  const custom=DB.get('cats_'+type)||[];
+  const allExisting=[...getCats(type),...getCatsOrc().map(x=>x.v)];
+  if(allExisting.includes(nome)){toast('Categoria já existe!','info');return;}
+  custom.push(nome);DB.set('cats_'+type,custom);
+  populateCatSelect(selId,type,nome);
+  toast(`Categoria "${nome}" criada!`,'success');
+}
+// aliases de compatibilidade
+const CATS_E=CATS_DEF_E;
+const CATS_S=CATS_DEF_S;
 let finTab='todas';
 function setFinTab(t){finTab=t;document.querySelectorAll('#view-financeiro .tab').forEach((el,i)=>el.classList.toggle('active',['todas','entrada','saida'][i]===t));renderFinanceiro();}
 function renderFinanceiro(){
   const mes=document.getElementById('fin-mes')?.value||thisMonth();
   const trans=DB.get('transacoes').filter(t=>t.data?.startsWith(mes));
   const ents=trans.filter(t=>t.tipo==='entrada');const sais=trans.filter(t=>t.tipo==='saida');
-  const totE=ents.filter(t=>t.status==='pago').reduce((s,t)=>s+Number(t.valor||0),0);
-  const totS=sais.filter(t=>t.status==='pago').reduce((s,t)=>s+Number(t.valor||0),0);
-  const totPend=trans.filter(t=>t.status==='pendente').reduce((s,t)=>s+Number(t.valor||0),0);
+  const totE=ents.filter(t=>isPago(t.status)).reduce((s,t)=>s+Number(t.valor||0),0);
+  const totS=sais.filter(t=>isPago(t.status)).reduce((s,t)=>s+Number(t.valor||0),0);
+  const totPend=trans.filter(t=>!isPago(t.status)).reduce((s,t)=>s+Number(t.valor||0),0);
   document.getElementById('fin-cards').innerHTML=`
     <div class="card green"><div class="card-label">Entradas (pagas)</div><div class="card-value">${fmtR(totE)}</div></div>
     <div class="card red"><div class="card-label">Saídas (pagas)</div><div class="card-value">${fmtR(totS)}</div></div>
@@ -1111,7 +1152,7 @@ function renderFinanceiro(){
     <tr><td>${fmtD(t.data)}</td><td>${esc(t.descricao)}</td><td><span class="badge badge-gray">${esc(t.categoria||'—')}</span></td>
     <td><span class="badge ${t.tipo==='entrada'?'badge-green':'badge-red'}">${t.tipo==='entrada'?'Entrada':'Saída'}</span></td>
     <td><strong style="color:${t.tipo==='entrada'?'var(--green)':'var(--red)'}">${fmtR(t.valor)}</strong></td>
-    <td><span class="badge ${t.status==='pago'?'badge-green':'badge-orange'}">${t.status==='pago'?'Pago':'Pendente'}</span></td>
+    <td><span class="badge ${isPago(t.status)?'badge-green':'badge-orange'}">${fmtStatus(t.status)}</span></td>
     <td><div class="td-actions"><button class="btn btn-ghost btn-xs" onclick="openModalTransacao('${t.tipo}','${t.id}')">✏</button><button class="btn btn-danger btn-xs" onclick="delTransacao('${t.id}')">✕</button></div></td></tr>`)
     .join(''):`<tr><td colspan="7"><div class="empty"><div class="empty-icon">💰</div><h3>Nenhuma transação neste mês</h3></div></td></tr>`;
 }
@@ -1119,9 +1160,11 @@ function openModalTransacao(tipo,id){
   const t=id?DB.one('transacoes',id):{};const tp=t.tipo||tipo;
   document.getElementById('mtrans-title').textContent=id?(tp==='entrada'?'Editar Entrada':'Editar Saída'):(tipo==='entrada'?'Nova Entrada':'Nova Saída');
   document.getElementById('trans-id').value=t.id||'';document.getElementById('trans-tipo').value=tp;
-  document.getElementById('trans-cat').innerHTML=(tp==='entrada'?CATS_E:CATS_S).map(c=>`<option${t.categoria===c?' selected':''}>${c}</option>`).join('');
+  populateCatSelect('trans-cat',tp,t.categoria||'');
   document.getElementById('trans-desc').value=t.descricao||'';document.getElementById('trans-valor').value=t.valor||'';
-  document.getElementById('trans-data').value=t.data||today();document.getElementById('trans-status').value=t.status||'pago';
+  document.getElementById('trans-data').value=t.data||today();
+  const defStatus=t.status||(tp==='entrada'?'recebido':'pago');
+  document.getElementById('trans-status').value=defStatus;
   document.getElementById('trans-obs').value=t.observacoes||'';openModal('modal-transacao');
 }
 function saveTransacao(){
@@ -1188,7 +1231,7 @@ function delParcelamento(id){if(!confirm('Excluir?'))return;DB.del('parcelamento
 function renderOrcamento(){
   const mes=document.getElementById('orc-mes')?.value||thisMonth();
   const orcs=DB.get('orcamentos').filter(o=>o.mes===mes);
-  const trans=DB.get('transacoes').filter(t=>t.data?.startsWith(mes)&&t.status==='pago');
+  const trans=DB.get('transacoes').filter(t=>t.data?.startsWith(mes)&&isPago(t.status));
   if(!orcs.length){document.getElementById('orc-content').innerHTML=`<div class="empty"><div class="empty-icon">🎯</div><h3>Nenhuma meta para este mês</h3><p style="font-size:13px;margin-top:4px">Clique em "+ Definir Meta" para começar.</p></div>`;return;}
   document.getElementById('orc-content').innerHTML=`<div style="display:flex;flex-direction:column;gap:12px">`+orcs.map(o=>{
     let realizado=0;
@@ -1205,7 +1248,7 @@ function renderOrcamento(){
 }
 function openModalOrcamento(){
   document.getElementById('orc-id').value='';document.getElementById('orc-mes-inp').value=document.getElementById('orc-mes')?.value||thisMonth();
-  document.getElementById('orc-valor').value='';openModal('modal-orcamento');
+  document.getElementById('orc-valor').value='';populateCatSelect('orc-cat','orcamento','');openModal('modal-orcamento');
 }
 function saveOrcamento(){
   const valor=Number(document.getElementById('orc-valor').value);const mes=document.getElementById('orc-mes-inp').value;
@@ -1219,8 +1262,8 @@ function delOrcamento(id){DB.del('orcamentos',id);renderOrcamento();}
 function renderRelatorios(){
   const mes=document.getElementById('rel-mes')?.value||thisMonth();
   const trans=DB.get('transacoes').filter(t=>t.data?.startsWith(mes));
-  const ents=trans.filter(t=>t.tipo==='entrada'&&t.status==='pago');
-  const sais=trans.filter(t=>t.tipo==='saida'&&t.status==='pago');
+  const ents=trans.filter(t=>t.tipo==='entrada'&&isPago(t.status));
+  const sais=trans.filter(t=>t.tipo==='saida'&&isPago(t.status));
   const totE=ents.reduce((s,t)=>s+Number(t.valor||0),0);
   const totS=sais.reduce((s,t)=>s+Number(t.valor||0),0);
   const catE={};ents.forEach(t=>{catE[t.categoria||'Outros']=(catE[t.categoria||'Outros']||0)+Number(t.valor||0);});
