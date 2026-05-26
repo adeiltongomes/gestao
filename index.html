@@ -1,0 +1,1131 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>AccertTech — Gestão de Locações</title>
+<style>
+:root{
+  --bg:#0f1117;--bg2:#161922;--bg3:#1e2230;--card:#1a1d2e;
+  --border:rgba(255,255,255,0.08);
+  --blue:#4f8ef7;--blue-d:#3a6fd8;
+  --green:#4caf50;--red:#f44336;--orange:#ff9800;
+  --text:#e8eaf6;--text-mid:#9095b0;--text-dim:#5a5f7a;
+  --sidebar-w:240px;--header-h:56px;--radius:10px;
+  --shadow:0 2px 16px rgba(0,0,0,.4);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);font-size:14px;min-height:100vh}
+.hidden{display:none!important}
+
+/* LAYOUT */
+#app{display:flex;min-height:100vh}
+#sidebar{
+  width:var(--sidebar-w);flex-shrink:0;
+  background:var(--bg2);border-right:1px solid var(--border);
+  display:flex;flex-direction:column;
+  position:fixed;top:0;left:0;bottom:0;z-index:100;
+  transition:transform .25s ease;overflow-y:auto;
+}
+#main{margin-left:var(--sidebar-w);flex:1;display:flex;flex-direction:column;min-height:100vh}
+
+/* SIDEBAR */
+.sidebar-logo{padding:20px 20px 16px;border-bottom:1px solid var(--border);flex-shrink:0}
+.sidebar-logo h1{font-size:16px;font-weight:700;color:var(--blue);letter-spacing:.03em}
+.sidebar-logo p{font-size:11px;color:var(--text-dim);margin-top:2px}
+.nav-section{padding:6px 0;border-bottom:1px solid var(--border)}
+.nav-label{font-size:10px;letter-spacing:.1em;color:var(--text-dim);padding:6px 20px 4px;text-transform:uppercase;font-weight:600}
+.nav-item{
+  display:flex;align-items:center;gap:10px;padding:9px 20px;cursor:pointer;
+  color:var(--text-mid);font-size:13.5px;transition:all .15s;border-left:3px solid transparent;
+}
+.nav-item:hover{background:rgba(79,142,247,.08);color:var(--text)}
+.nav-item.active{background:rgba(79,142,247,.12);color:var(--blue);border-left-color:var(--blue);font-weight:600}
+.nav-icon{font-size:16px;width:20px;text-align:center}
+
+/* TOPBAR */
+#topbar{
+  height:var(--header-h);background:var(--bg2);border-bottom:1px solid var(--border);
+  display:flex;align-items:center;padding:0 24px;gap:12px;
+  position:sticky;top:0;z-index:50;flex-shrink:0;
+}
+#menu-toggle{display:none;background:none;border:none;color:var(--text);font-size:22px;cursor:pointer;padding:4px}
+#page-title{font-size:16px;font-weight:600}
+#topbar-right{margin-left:auto;display:flex;align-items:center;gap:8px}
+
+/* CONTENT */
+#content{flex:1;padding:24px}
+
+/* CARDS */
+.cards-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px;margin-bottom:24px}
+.card{background:var(--card);border-radius:var(--radius);padding:20px;border:1px solid var(--border)}
+.card-label{font-size:11px;color:var(--text-mid);letter-spacing:.08em;text-transform:uppercase;margin-bottom:8px}
+.card-value{font-size:26px;font-weight:700}
+.card-sub{font-size:12px;color:var(--text-dim);margin-top:4px}
+.card.green .card-value{color:var(--green)}
+.card.red .card-value{color:var(--red)}
+.card.blue .card-value{color:var(--blue)}
+.card.orange .card-value{color:var(--orange)}
+
+/* SECTION HEADER */
+.sec-hdr{display:flex;align-items:center;gap:10px;margin-bottom:16px;flex-wrap:wrap}
+.sec-title{font-size:16px;font-weight:600;flex:1;min-width:120px}
+.sec-hdr .s-search{flex:1;min-width:160px;max-width:260px}
+
+/* BUTTONS */
+.btn{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:7px;border:none;cursor:pointer;font-size:13px;font-weight:500;transition:all .15s;font-family:inherit}
+.btn-primary{background:var(--blue);color:#fff}.btn-primary:hover{background:var(--blue-d)}
+.btn-success{background:var(--green);color:#fff}.btn-success:hover{background:#388e3c}
+.btn-danger{background:var(--red);color:#fff}.btn-danger:hover{background:#c62828}
+.btn-ghost{background:rgba(255,255,255,.06);color:var(--text)}.btn-ghost:hover{background:rgba(255,255,255,.12)}
+.btn-sm{padding:5px 10px;font-size:12px}
+.btn-xs{padding:3px 8px;font-size:11px}
+
+/* INPUTS */
+.form-group{margin-bottom:14px}
+.form-label{display:block;font-size:12px;color:var(--text-mid);margin-bottom:5px;font-weight:500}
+.form-control{width:100%;padding:9px 12px;background:var(--bg3);border:1px solid var(--border);border-radius:7px;color:var(--text);font-size:13px;font-family:inherit;transition:border-color .15s}
+.form-control:focus{outline:none;border-color:var(--blue)}
+select.form-control{cursor:pointer}
+textarea.form-control{resize:vertical}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.form-row-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+
+/* TABLE */
+.table-wrap{background:var(--card);border-radius:var(--radius);border:1px solid var(--border);overflow-x:auto}
+table{width:100%;border-collapse:collapse}
+thead th{background:var(--bg3);padding:10px 14px;text-align:left;font-size:11px;color:var(--text-mid);letter-spacing:.08em;text-transform:uppercase;white-space:nowrap}
+tbody td{padding:11px 14px;border-top:1px solid var(--border);vertical-align:middle;font-size:13px}
+tbody tr:hover{background:rgba(255,255,255,.03)}
+.td-actions{display:flex;gap:4px;justify-content:flex-end}
+
+/* BADGES */
+.badge{display:inline-block;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:600;white-space:nowrap}
+.badge-green{background:rgba(76,175,80,.15);color:#81c784}
+.badge-red{background:rgba(244,67,54,.15);color:#e57373}
+.badge-orange{background:rgba(255,152,0,.15);color:#ffb74d}
+.badge-blue{background:rgba(79,142,247,.15);color:#82b1ff}
+.badge-gray{background:rgba(255,255,255,.08);color:var(--text-mid)}
+
+/* MODAL */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:1000;display:flex;align-items:center;justify-content:center;padding:16px;backdrop-filter:blur(4px)}
+.modal{background:var(--bg2);border-radius:14px;border:1px solid var(--border);width:100%;max-width:540px;max-height:92vh;overflow-y:auto;box-shadow:var(--shadow)}
+.modal-lg{max-width:700px}
+.modal-hdr{display:flex;align-items:center;padding:18px 22px 14px;border-bottom:1px solid var(--border);position:sticky;top:0;background:var(--bg2);z-index:1}
+.modal-title{font-size:15px;font-weight:600;flex:1}
+.modal-close{background:none;border:none;color:var(--text-mid);font-size:24px;cursor:pointer;line-height:1;padding:0 0 0 8px}
+.modal-body{padding:18px 22px}
+.modal-footer{display:flex;gap:8px;justify-content:flex-end;padding:14px 22px;border-top:1px solid var(--border)}
+
+/* TOAST */
+#toast-container{position:fixed;bottom:24px;right:24px;z-index:9999;display:flex;flex-direction:column;gap:8px;pointer-events:none}
+.toast{padding:11px 18px;border-radius:8px;font-size:13px;font-weight:500;box-shadow:var(--shadow);max-width:320px;animation:slideIn .25s ease}
+.toast-success{background:#1b5e20;color:#a5d6a7;border:1px solid #2e7d32}
+.toast-info{background:#1a237e;color:#90caf9;border:1px solid #283593}
+.toast-error{background:#b71c1c;color:#ffcdd2;border:1px solid #c62828}
+@keyframes slideIn{from{transform:translateX(60px);opacity:0}to{transform:none;opacity:1}}
+
+/* TABS */
+.tabs{display:flex;gap:4px;background:var(--bg3);padding:4px;border-radius:8px;margin-bottom:16px;width:fit-content}
+.tab{padding:7px 16px;border-radius:6px;cursor:pointer;font-size:13px;color:var(--text-mid);border:none;background:none;font-family:inherit;transition:all .15s}
+.tab.active{background:var(--blue);color:#fff;font-weight:600}
+
+/* EMPTY */
+.empty{text-align:center;padding:50px 20px;color:var(--text-dim)}
+.empty-icon{font-size:36px;margin-bottom:10px}
+.empty h3{font-size:14px;color:var(--text-mid);margin-bottom:4px}
+
+/* DASHBOARD */
+.dash-grid{display:grid;grid-template-columns:2fr 1fr;gap:16px}
+.dash-panel{background:var(--card);border-radius:var(--radius);border:1px solid var(--border);padding:20px}
+.dash-panel-title{font-size:13px;font-weight:600;margin-bottom:12px;color:var(--text-mid)}
+
+/* PROGRESS */
+.progress-bar{height:6px;background:var(--bg3);border-radius:3px;overflow:hidden;margin-top:4px}
+.progress-fill{height:100%;border-radius:3px;transition:width .4s}
+
+/* MOBILE NAV */
+#mob-nav{display:none}
+
+@media(max-width:768px){
+  #sidebar{transform:translateX(-100%)}
+  #sidebar.open{transform:none}
+  #sidebar-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:99;display:none}
+  #sidebar-overlay.show{display:block}
+  #main{margin-left:0}
+  #menu-toggle{display:block}
+  #content{padding:14px;padding-bottom:72px}
+  .form-row,.form-row-3{grid-template-columns:1fr}
+  .dash-grid{grid-template-columns:1fr}
+  .cards-row{grid-template-columns:repeat(2,1fr)}
+  .modal{max-width:100%;border-radius:12px}
+  .sec-hdr .s-search{max-width:100%}
+  thead th,tbody td{padding:8px 10px;font-size:12px}
+  #mob-nav{display:flex;position:fixed;bottom:0;left:0;right:0;background:var(--bg2);border-top:1px solid var(--border);z-index:90;height:56px}
+  .mob-nav-btn{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;border:none;background:none;color:var(--text-mid);font-size:10px;cursor:pointer;padding:6px 0;font-family:inherit;transition:color .15s}
+  .mob-nav-btn.active{color:var(--blue)}
+  .mob-nav-btn span:first-child{font-size:18px}
+  .rel-grid{grid-template-columns:1fr!important}
+}
+@media(max-width:480px){
+  .cards-row{grid-template-columns:1fr}
+  .card-value{font-size:20px}
+  .sec-hdr{flex-direction:column;align-items:stretch}
+  .tabs{width:100%}
+  .tab{flex:1;text-align:center}
+}
+</style>
+</head>
+<body>
+<div id="app">
+
+<div id="sidebar-overlay" onclick="closeSidebar()"></div>
+
+<!-- SIDEBAR -->
+<aside id="sidebar">
+  <div class="sidebar-logo">
+    <h1>💼 AccertTech</h1>
+    <p>Gestão de Locações TI</p>
+  </div>
+  <nav>
+    <div class="nav-section">
+      <div class="nav-label">Geral</div>
+      <div class="nav-item active" data-view="dashboard"><span class="nav-icon">📊</span>Dashboard</div>
+    </div>
+    <div class="nav-section">
+      <div class="nav-label">Cadastros</div>
+      <div class="nav-item" data-view="clientes"><span class="nav-icon">👥</span>Clientes</div>
+      <div class="nav-item" data-view="funcionarios"><span class="nav-icon">👤</span>Funcionários</div>
+      <div class="nav-item" data-view="equipamentos"><span class="nav-icon">💻</span>Equipamentos</div>
+      <div class="nav-item" data-view="estoque"><span class="nav-icon">📦</span>Estoque</div>
+    </div>
+    <div class="nav-section">
+      <div class="nav-label">Operações</div>
+      <div class="nav-item" data-view="locacoes"><span class="nav-icon">📋</span>Locações</div>
+      <div class="nav-item" data-view="financeiro"><span class="nav-icon">💰</span>Financeiro</div>
+      <div class="nav-item" data-view="parcelamentos"><span class="nav-icon">📅</span>Parcelamentos</div>
+    </div>
+    <div class="nav-section">
+      <div class="nav-label">Análise</div>
+      <div class="nav-item" data-view="orcamento"><span class="nav-icon">🎯</span>Orçamento</div>
+      <div class="nav-item" data-view="relatorios"><span class="nav-icon">📈</span>Relatórios</div>
+    </div>
+  </nav>
+</aside>
+
+<!-- MAIN -->
+<div id="main">
+  <div id="topbar">
+    <button id="menu-toggle" onclick="toggleSidebar()">☰</button>
+    <div id="page-title">Dashboard</div>
+    <div id="topbar-right">
+      <span id="topbar-date" style="font-size:12px;color:var(--text-mid)"></span>
+    </div>
+  </div>
+
+  <div id="content">
+
+    <!-- DASHBOARD -->
+    <div id="view-dashboard" class="view-section">
+      <div class="cards-row" id="dash-cards"></div>
+      <div class="dash-grid">
+        <div class="dash-panel">
+          <div class="dash-panel-title">📋 Locações Ativas</div>
+          <div id="dash-locacoes"></div>
+        </div>
+        <div class="dash-panel">
+          <div class="dash-panel-title">⚠️ Vencimentos em 7 dias</div>
+          <div id="dash-vencimentos"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CLIENTES -->
+    <div id="view-clientes" class="view-section hidden">
+      <div class="sec-hdr">
+        <div class="sec-title">Clientes</div>
+        <input class="form-control s-search" id="search-clientes" placeholder="Buscar cliente…" oninput="renderClientes()">
+        <button class="btn btn-primary" onclick="openModalCliente()">+ Novo Cliente</button>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Nome</th><th>CPF/CNPJ</th><th>Telefone</th><th>E-mail</th><th>Cidade</th><th>Locações</th><th></th></tr></thead>
+          <tbody id="tb-clientes"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- FUNCIONÁRIOS -->
+    <div id="view-funcionarios" class="view-section hidden">
+      <div class="sec-hdr">
+        <div class="sec-title">Funcionários</div>
+        <input class="form-control s-search" id="search-funcionarios" placeholder="Buscar…" oninput="renderFuncionarios()">
+        <button class="btn btn-primary" onclick="openModalFuncionario()">+ Novo Funcionário</button>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Nome</th><th>Cargo</th><th>Salário</th><th>Telefone</th><th>Admissão</th><th></th></tr></thead>
+          <tbody id="tb-funcionarios"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- EQUIPAMENTOS -->
+    <div id="view-equipamentos" class="view-section hidden">
+      <div class="sec-hdr">
+        <div class="sec-title">Equipamentos</div>
+        <input class="form-control s-search" id="search-equipamentos" placeholder="Buscar…" oninput="renderEquipamentos()">
+        <select class="form-control" id="filter-equip-status" onchange="renderEquipamentos()" style="width:140px">
+          <option value="">Todos</option>
+          <option value="disponivel">Disponível</option>
+          <option value="locado">Locado</option>
+          <option value="manutencao">Manutenção</option>
+          <option value="inativo">Inativo</option>
+        </select>
+        <button class="btn btn-primary" onclick="openModalEquipamento()">+ Novo Equipamento</button>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Tipo</th><th>Marca / Modelo</th><th>Nº Série</th><th>Val./Dia</th><th>Status</th><th></th></tr></thead>
+          <tbody id="tb-equipamentos"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ESTOQUE -->
+    <div id="view-estoque" class="view-section hidden">
+      <div class="sec-hdr">
+        <div class="sec-title">Estoque</div>
+        <input class="form-control s-search" id="search-estoque" placeholder="Buscar item…" oninput="renderEstoque()">
+        <button class="btn btn-primary" onclick="openModalEstoque()">+ Novo Item</button>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Item</th><th>Categoria</th><th>Qtd</th><th>Qtd Mín.</th><th>Val. Unit.</th><th>Total</th><th>Status</th><th></th></tr></thead>
+          <tbody id="tb-estoque"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- LOCAÇÕES -->
+    <div id="view-locacoes" class="view-section hidden">
+      <div class="sec-hdr">
+        <div class="sec-title">Locações</div>
+        <input class="form-control s-search" id="search-locacoes" placeholder="Buscar cliente…" oninput="renderLocacoes()">
+        <select class="form-control" id="filter-loc-status" onchange="renderLocacoes()" style="width:130px">
+          <option value="">Todos</option>
+          <option value="ativa">Ativas</option>
+          <option value="encerrada">Encerradas</option>
+          <option value="cancelada">Canceladas</option>
+        </select>
+        <button class="btn btn-primary" onclick="openModalLocacao()">+ Nova Locação</button>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Cliente</th><th>Equipamentos</th><th>Início</th><th>Fim</th><th>Valor</th><th>Pagamento</th><th>Status</th><th></th></tr></thead>
+          <tbody id="tb-locacoes"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- FINANCEIRO -->
+    <div id="view-financeiro" class="view-section hidden">
+      <div class="sec-hdr">
+        <div class="sec-title">Financeiro</div>
+        <input type="month" class="form-control" id="fin-mes" style="width:160px" onchange="renderFinanceiro()">
+        <button class="btn btn-success" onclick="openModalTransacao('entrada')">+ Entrada</button>
+        <button class="btn btn-danger" onclick="openModalTransacao('saida')">+ Saída</button>
+      </div>
+      <div class="cards-row" id="fin-cards"></div>
+      <div class="tabs">
+        <button class="tab active" onclick="setFinTab('todas')">Todas</button>
+        <button class="tab" onclick="setFinTab('entrada')">Entradas</button>
+        <button class="tab" onclick="setFinTab('saida')">Saídas</button>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Data</th><th>Descrição</th><th>Categoria</th><th>Tipo</th><th>Valor</th><th>Status</th><th></th></tr></thead>
+          <tbody id="tb-financeiro"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- PARCELAMENTOS -->
+    <div id="view-parcelamentos" class="view-section hidden">
+      <div class="sec-hdr">
+        <div class="sec-title">Parcelamentos</div>
+        <button class="btn btn-primary" onclick="openModalParcelamento()">+ Novo Parcelamento</button>
+      </div>
+      <div class="tabs">
+        <button class="tab active" onclick="setParcTab('receber')">A Receber</button>
+        <button class="tab" onclick="setParcTab('pagar')">A Pagar</button>
+      </div>
+      <div id="parc-content"></div>
+    </div>
+
+    <!-- ORÇAMENTO -->
+    <div id="view-orcamento" class="view-section hidden">
+      <div class="sec-hdr">
+        <div class="sec-title">Orçamento</div>
+        <input type="month" class="form-control" id="orc-mes" style="width:160px" onchange="renderOrcamento()">
+        <button class="btn btn-primary" onclick="openModalOrcamento()">+ Definir Meta</button>
+      </div>
+      <div id="orc-content"></div>
+    </div>
+
+    <!-- RELATÓRIOS -->
+    <div id="view-relatorios" class="view-section hidden">
+      <div class="sec-hdr">
+        <div class="sec-title">Relatórios</div>
+        <input type="month" class="form-control" id="rel-mes" style="width:160px" onchange="renderRelatorios()">
+      </div>
+      <div id="rel-content"></div>
+    </div>
+
+  </div><!-- /content -->
+</div><!-- /main -->
+
+<!-- MOBILE NAV -->
+<nav id="mob-nav">
+  <button class="mob-nav-btn active" data-view="dashboard"><span>📊</span><span>Dashboard</span></button>
+  <button class="mob-nav-btn" data-view="clientes"><span>👥</span><span>Clientes</span></button>
+  <button class="mob-nav-btn" data-view="locacoes"><span>📋</span><span>Locações</span></button>
+  <button class="mob-nav-btn" data-view="financeiro"><span>💰</span><span>Financeiro</span></button>
+  <button class="mob-nav-btn" onclick="toggleSidebar()"><span>☰</span><span>Mais</span></button>
+</nav>
+
+<div id="toast-container"></div>
+
+<!-- ═══════════ MODALS ═══════════ -->
+
+<!-- Modal Cliente -->
+<div class="modal-overlay hidden" id="modal-cliente">
+  <div class="modal">
+    <div class="modal-hdr"><div class="modal-title" id="mcli-title">Novo Cliente</div><button class="modal-close" onclick="closeModal('modal-cliente')">×</button></div>
+    <div class="modal-body">
+      <input type="hidden" id="cli-id">
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Nome *</label><input class="form-control" id="cli-nome" placeholder="Nome completo"></div>
+        <div class="form-group"><label class="form-label">CPF / CNPJ</label><input class="form-control" id="cli-doc" placeholder="000.000.000-00"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Telefone</label><input class="form-control" id="cli-tel" placeholder="(00) 00000-0000"></div>
+        <div class="form-group"><label class="form-label">E-mail</label><input class="form-control" id="cli-email" type="email" placeholder="email@exemplo.com"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Endereço</label><input class="form-control" id="cli-end" placeholder="Rua, número"></div>
+        <div class="form-group"><label class="form-label">Cidade</label><input class="form-control" id="cli-cidade" placeholder="Cidade — UF"></div>
+      </div>
+      <div class="form-group"><label class="form-label">Observações</label><textarea class="form-control" id="cli-obs" rows="2"></textarea></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modal-cliente')">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveCliente()">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Funcionário -->
+<div class="modal-overlay hidden" id="modal-funcionario">
+  <div class="modal">
+    <div class="modal-hdr"><div class="modal-title" id="mfunc-title">Novo Funcionário</div><button class="modal-close" onclick="closeModal('modal-funcionario')">×</button></div>
+    <div class="modal-body">
+      <input type="hidden" id="func-id">
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Nome *</label><input class="form-control" id="func-nome" placeholder="Nome completo"></div>
+        <div class="form-group"><label class="form-label">Cargo</label><input class="form-control" id="func-cargo" placeholder="Ex: Técnico, Vendedor…"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Salário (R$)</label><input class="form-control" id="func-salario" type="number" step="0.01" placeholder="0,00"></div>
+        <div class="form-group"><label class="form-label">Data de Admissão</label><input class="form-control" id="func-admissao" type="date"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Telefone</label><input class="form-control" id="func-tel" placeholder="(00) 00000-0000"></div>
+        <div class="form-group"><label class="form-label">E-mail</label><input class="form-control" id="func-email" type="email"></div>
+      </div>
+      <div class="form-group"><label class="form-label">Observações</label><textarea class="form-control" id="func-obs" rows="2"></textarea></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modal-funcionario')">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveFuncionario()">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Equipamento -->
+<div class="modal-overlay hidden" id="modal-equipamento">
+  <div class="modal">
+    <div class="modal-hdr"><div class="modal-title" id="mequip-title">Novo Equipamento</div><button class="modal-close" onclick="closeModal('modal-equipamento')">×</button></div>
+    <div class="modal-body">
+      <input type="hidden" id="equip-id">
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Tipo *</label>
+          <select class="form-control" id="equip-tipo">
+            <option value="">Selecione…</option>
+            <option>Tablet</option><option>Celular</option><option>Notebook</option>
+            <option>Monitor</option><option>Computador</option><option>Impressora</option>
+            <option>Roteador</option><option>Projetor</option><option>Scanner</option><option>Outro</option>
+          </select>
+        </div>
+        <div class="form-group"><label class="form-label">Marca</label><input class="form-control" id="equip-marca" placeholder="Ex: Samsung, Dell…"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Modelo</label><input class="form-control" id="equip-modelo" placeholder="Ex: Galaxy Tab A8"></div>
+        <div class="form-group"><label class="form-label">Nº de Série</label><input class="form-control" id="equip-serie" placeholder="Número de série"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Valor de Compra (R$)</label><input class="form-control" id="equip-compra" type="number" step="0.01" placeholder="0,00"></div>
+        <div class="form-group"><label class="form-label">Valor por Dia (R$)</label><input class="form-control" id="equip-dia" type="number" step="0.01" placeholder="0,00"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Status</label>
+          <select class="form-control" id="equip-status">
+            <option value="disponivel">Disponível</option>
+            <option value="locado">Locado</option>
+            <option value="manutencao">Manutenção</option>
+            <option value="inativo">Inativo</option>
+          </select>
+        </div>
+        <div class="form-group"><label class="form-label">Descrição / Cor</label><input class="form-control" id="equip-desc" placeholder="Ex: Preto, 64GB"></div>
+      </div>
+      <div class="form-group"><label class="form-label">Observações</label><textarea class="form-control" id="equip-obs" rows="2"></textarea></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modal-equipamento')">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveEquipamento()">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Estoque -->
+<div class="modal-overlay hidden" id="modal-estoque">
+  <div class="modal">
+    <div class="modal-hdr"><div class="modal-title" id="mest-title">Novo Item de Estoque</div><button class="modal-close" onclick="closeModal('modal-estoque')">×</button></div>
+    <div class="modal-body">
+      <input type="hidden" id="est-id">
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Nome do Item *</label><input class="form-control" id="est-nome" placeholder="Ex: Cabo USB-C"></div>
+        <div class="form-group"><label class="form-label">Categoria</label>
+          <select class="form-control" id="est-cat">
+            <option>Acessório</option><option>Cabo</option><option>Carregador</option>
+            <option>Peça</option><option>Embalagem</option><option>Consumível</option><option>Outro</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row-3">
+        <div class="form-group"><label class="form-label">Quantidade</label><input class="form-control" id="est-qtd" type="number" min="0" placeholder="0"></div>
+        <div class="form-group"><label class="form-label">Qtd Mínima</label><input class="form-control" id="est-min" type="number" min="0" placeholder="0"></div>
+        <div class="form-group"><label class="form-label">Val. Unit. (R$)</label><input class="form-control" id="est-valor" type="number" step="0.01" placeholder="0,00"></div>
+      </div>
+      <div class="form-group"><label class="form-label">Observações</label><textarea class="form-control" id="est-obs" rows="2"></textarea></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modal-estoque')">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveEstoque()">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Locação -->
+<div class="modal-overlay hidden" id="modal-locacao">
+  <div class="modal modal-lg">
+    <div class="modal-hdr"><div class="modal-title" id="mloc-title">Nova Locação</div><button class="modal-close" onclick="closeModal('modal-locacao')">×</button></div>
+    <div class="modal-body">
+      <input type="hidden" id="loc-id">
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Cliente *</label><select class="form-control" id="loc-cliente"></select></div>
+        <div class="form-group"><label class="form-label">Status</label>
+          <select class="form-control" id="loc-status">
+            <option value="ativa">Ativa</option><option value="encerrada">Encerrada</option><option value="cancelada">Cancelada</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Data de Início *</label><input class="form-control" id="loc-inicio" type="date"></div>
+        <div class="form-group"><label class="form-label">Data de Fim *</label><input class="form-control" id="loc-fim" type="date"></div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Equipamentos *</label>
+        <div id="loc-equip-list" style="display:flex;flex-direction:column;gap:6px;max-height:180px;overflow-y:auto;padding:8px;background:var(--bg3);border-radius:7px;border:1px solid var(--border)"></div>
+        <button class="btn btn-ghost btn-sm" style="margin-top:6px" onclick="addLocEquip()">+ Adicionar Equipamento</button>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Valor Total (R$) *</label><input class="form-control" id="loc-valor" type="number" step="0.01" placeholder="0,00"></div>
+        <div class="form-group"><label class="form-label">Forma de Pagamento</label>
+          <select class="form-control" id="loc-pagamento" onchange="toggleParcelas()">
+            <option value="avista">À Vista</option><option value="parcelado">Parcelado</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group hidden" id="loc-parc-group">
+        <label class="form-label">Número de Parcelas</label>
+        <input class="form-control" id="loc-parcelas" type="number" min="2" max="60" value="2">
+      </div>
+      <div class="form-group"><label class="form-label">Observações</label><textarea class="form-control" id="loc-obs" rows="2"></textarea></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modal-locacao')">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveLocacao()">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Transação -->
+<div class="modal-overlay hidden" id="modal-transacao">
+  <div class="modal">
+    <div class="modal-hdr"><div class="modal-title" id="mtrans-title">Nova Entrada</div><button class="modal-close" onclick="closeModal('modal-transacao')">×</button></div>
+    <div class="modal-body">
+      <input type="hidden" id="trans-id">
+      <input type="hidden" id="trans-tipo">
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Descrição *</label><input class="form-control" id="trans-desc" placeholder="Descrição"></div>
+        <div class="form-group"><label class="form-label">Categoria</label><select class="form-control" id="trans-cat"></select></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Valor (R$) *</label><input class="form-control" id="trans-valor" type="number" step="0.01" placeholder="0,00"></div>
+        <div class="form-group"><label class="form-label">Data</label><input class="form-control" id="trans-data" type="date"></div>
+      </div>
+      <div class="form-group"><label class="form-label">Status</label>
+        <select class="form-control" id="trans-status">
+          <option value="pago">Pago / Recebido</option><option value="pendente">Pendente</option>
+        </select>
+      </div>
+      <div class="form-group"><label class="form-label">Observações</label><textarea class="form-control" id="trans-obs" rows="2"></textarea></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modal-transacao')">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveTransacao()">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Parcelamento -->
+<div class="modal-overlay hidden" id="modal-parcelamento">
+  <div class="modal">
+    <div class="modal-hdr"><div class="modal-title" id="mparc-title">Novo Parcelamento</div><button class="modal-close" onclick="closeModal('modal-parcelamento')">×</button></div>
+    <div class="modal-body">
+      <input type="hidden" id="parc-id">
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Tipo</label>
+          <select class="form-control" id="parc-tipo">
+            <option value="receber">A Receber</option><option value="pagar">A Pagar</option>
+          </select>
+        </div>
+        <div class="form-group"><label class="form-label">Descrição *</label><input class="form-control" id="parc-desc" placeholder="Ex: Locação João Silva"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Valor Total (R$) *</label><input class="form-control" id="parc-valor" type="number" step="0.01" placeholder="0,00"></div>
+        <div class="form-group"><label class="form-label">Nº de Parcelas *</label><input class="form-control" id="parc-n" type="number" min="2" max="60" value="2"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">1ª Parcela em</label><input class="form-control" id="parc-inicio" type="date"></div>
+        <div class="form-group"><label class="form-label">Cliente / Fornecedor</label><input class="form-control" id="parc-nome" placeholder="Nome"></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modal-parcelamento')">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveParcelamento()">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Orçamento -->
+<div class="modal-overlay hidden" id="modal-orcamento">
+  <div class="modal">
+    <div class="modal-hdr"><div class="modal-title">Definir Meta</div><button class="modal-close" onclick="closeModal('modal-orcamento')">×</button></div>
+    <div class="modal-body">
+      <input type="hidden" id="orc-id">
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Mês/Ano</label><input class="form-control" id="orc-mes-inp" type="month"></div>
+        <div class="form-group"><label class="form-label">Categoria</label>
+          <select class="form-control" id="orc-cat">
+            <option value="receita_total">Receita Total</option>
+            <option value="Locação de Equipamento">Locação de Equipamento</option>
+            <option value="Serviço de Manutenção">Serviço de Manutenção</option>
+            <option value="Compra de Equipamento">Compra de Equipamento</option>
+            <option value="Salários">Salários</option>
+            <option value="Manutenção/Reparo">Manutenção/Reparo</option>
+            <option value="Outros">Outros</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group"><label class="form-label">Valor Orçado (R$)</label><input class="form-control" id="orc-valor" type="number" step="0.01" placeholder="0,00"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modal-orcamento')">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveOrcamento()">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── UTILS ─────────────────────────────────────────────────────────────────────
+const uid=()=>Math.random().toString(36).slice(2)+Date.now().toString(36);
+const esc=s=>String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+const fmtR=v=>Number(v||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
+const fmtD=s=>s?new Date(s+'T12:00:00').toLocaleDateString('pt-BR'):'—';
+const today=()=>new Date().toISOString().slice(0,10);
+const thisMonth=()=>new Date().toISOString().slice(0,7);
+
+function toast(msg,type='info'){
+  const el=document.createElement('div');
+  el.className='toast toast-'+(type==='success'?'success':type==='error'?'error':'info');
+  el.textContent=msg;
+  document.getElementById('toast-container').appendChild(el);
+  setTimeout(()=>el.remove(),3500);
+}
+function openModal(id){document.getElementById(id).classList.remove('hidden')}
+function closeModal(id){document.getElementById(id).classList.add('hidden')}
+
+// ── DATA LAYER ─────────────────────────────────────────────────────────────────
+const DB={
+  get:k=>{try{return JSON.parse(localStorage.getItem('gest_'+k)||'[]')}catch{return[]}},
+  set:(k,v)=>localStorage.setItem('gest_'+k,JSON.stringify(v)),
+  one:(k,id)=>DB.get(k).find(x=>x.id===id),
+  save(k,item){const l=DB.get(k);const i=l.findIndex(x=>x.id===item.id);if(i>=0)l[i]=item;else l.unshift(item);DB.set(k,l)},
+  del:(k,id)=>DB.set(k,DB.get(k).filter(x=>x.id!==id)),
+};
+
+// ── NAVIGATION ────────────────────────────────────────────────────────────────
+const VIEW_TITLES={dashboard:'Dashboard',clientes:'Clientes',funcionarios:'Funcionários',
+  equipamentos:'Equipamentos',estoque:'Estoque',locacoes:'Locações',
+  financeiro:'Financeiro',parcelamentos:'Parcelamentos',orcamento:'Orçamento',relatorios:'Relatórios'};
+
+function goView(v){
+  document.querySelectorAll('.view-section').forEach(el=>el.classList.add('hidden'));
+  document.getElementById('view-'+v).classList.remove('hidden');
+  document.querySelectorAll('[data-view]').forEach(el=>el.classList.toggle('active',el.dataset.view===v));
+  document.getElementById('page-title').textContent=VIEW_TITLES[v]||v;
+  closeSidebar();
+  ({dashboard:renderDashboard,clientes:renderClientes,funcionarios:renderFuncionarios,
+    equipamentos:renderEquipamentos,estoque:renderEstoque,locacoes:renderLocacoes,
+    financeiro:renderFinanceiro,parcelamentos:renderParcelamentos,
+    orcamento:renderOrcamento,relatorios:renderRelatorios}[v]||function(){})();
+}
+
+function toggleSidebar(){
+  document.getElementById('sidebar').classList.toggle('open');
+  document.getElementById('sidebar-overlay').classList.toggle('show');
+}
+function closeSidebar(){
+  document.getElementById('sidebar').classList.remove('open');
+  document.getElementById('sidebar-overlay').classList.remove('show');
+}
+document.querySelectorAll('[data-view]').forEach(el=>el.addEventListener('click',()=>goView(el.dataset.view)));
+
+// ── DASHBOARD ─────────────────────────────────────────────────────────────────
+function renderDashboard(){
+  const mes=thisMonth();
+  const trans=DB.get('transacoes');
+  const ents=trans.filter(t=>t.tipo==='entrada'&&t.data?.startsWith(mes)&&t.status==='pago');
+  const sais=trans.filter(t=>t.tipo==='saida'&&t.data?.startsWith(mes)&&t.status==='pago');
+  const totE=ents.reduce((s,t)=>s+Number(t.valor||0),0);
+  const totS=sais.reduce((s,t)=>s+Number(t.valor||0),0);
+  const locAtivas=DB.get('locacoes').filter(l=>l.status==='ativa');
+  const equipDisp=DB.get('equipamentos').filter(e=>e.status==='disponivel').length;
+  document.getElementById('dash-cards').innerHTML=`
+    <div class="card green"><div class="card-label">Receitas do Mês</div><div class="card-value">${fmtR(totE)}</div><div class="card-sub">Recebido este mês</div></div>
+    <div class="card red"><div class="card-label">Despesas do Mês</div><div class="card-value">${fmtR(totS)}</div><div class="card-sub">Pago este mês</div></div>
+    <div class="card blue"><div class="card-label">Saldo do Mês</div><div class="card-value">${fmtR(totE-totS)}</div><div class="card-sub">Receitas − Despesas</div></div>
+    <div class="card orange"><div class="card-label">Locações Ativas</div><div class="card-value">${locAtivas.length}</div><div class="card-sub">${equipDisp} equip. disponíveis</div></div>`;
+  const clis=DB.get('clientes');
+  document.getElementById('dash-locacoes').innerHTML=locAtivas.length
+    ?locAtivas.slice(0,6).map(l=>{const c=clis.find(x=>x.id===l.clienteId);return`
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border)">
+        <div><div style="font-size:13px;font-weight:500">${esc(c?.nome||'—')}</div><div style="font-size:11px;color:var(--text-mid)">${fmtD(l.inicio)} → ${fmtD(l.fim)}</div></div>
+        <strong style="color:var(--green)">${fmtR(l.valor)}</strong>
+      </div>`}).join('')
+    :`<div class="empty" style="padding:20px 0"><div class="empty-icon">📋</div><div style="color:var(--text-dim);font-size:13px">Nenhuma locação ativa</div></div>`;
+  // Vencimentos
+  const hoje=new Date(),em7=new Date();em7.setDate(em7.getDate()+7);
+  let venc=[];
+  DB.get('parcelamentos').forEach(p=>p.parcelas?.forEach((par,i)=>{
+    if(par.status==='pendente'){const d=new Date(par.vencimento+'T12:00:00');if(d>=hoje&&d<=em7)venc.push({desc:`${p.descricao} — Parc.${i+1}/${p.parcelas.length}`,valor:par.valor,dt:par.vencimento,tipo:p.tipo});}
+  }));
+  trans.filter(t=>t.status==='pendente').forEach(t=>{const d=new Date((t.data||t.vencimento)+'T12:00:00');if(d>=hoje&&d<=em7)venc.push({desc:t.descricao,valor:t.valor,dt:t.data,tipo:t.tipo});});
+  venc.sort((a,b)=>a.dt>b.dt?1:-1);
+  document.getElementById('dash-vencimentos').innerHTML=venc.length
+    ?venc.map(v=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid var(--border)">
+        <div><div style="font-size:12px;font-weight:500">${esc(v.desc)}</div><div style="font-size:11px;color:var(--text-mid)">${fmtD(v.dt)}</div></div>
+        <strong style="color:${v.tipo==='receber'||v.tipo==='entrada'?'var(--green)':'var(--red)'}">${fmtR(v.valor)}</strong>
+      </div>`).join('')
+    :`<div class="empty" style="padding:20px 0"><div class="empty-icon">✅</div><div style="color:var(--text-dim);font-size:13px">Nenhum vencimento próximo</div></div>`;
+}
+
+// ── CLIENTES ──────────────────────────────────────────────────────────────────
+function renderClientes(){
+  const q=(document.getElementById('search-clientes')?.value||'').toLowerCase();
+  const locs=DB.get('locacoes');
+  const rows=DB.get('clientes').filter(c=>!q||c.nome?.toLowerCase().includes(q)||c.cpfCnpj?.includes(q)||c.telefone?.includes(q));
+  document.getElementById('tb-clientes').innerHTML=rows.length?rows.map(c=>{
+    const n=locs.filter(l=>l.clienteId===c.id).length;
+    return`<tr><td><strong>${esc(c.nome)}</strong></td><td>${esc(c.cpfCnpj||'—')}</td><td>${esc(c.telefone||'—')}</td><td>${esc(c.email||'—')}</td><td>${esc(c.cidade||'—')}</td>
+      <td><span class="badge badge-blue">${n} locação${n!==1?'s':''}</span></td>
+      <td><div class="td-actions"><button class="btn btn-ghost btn-xs" onclick="openModalCliente('${c.id}')">✏</button><button class="btn btn-danger btn-xs" onclick="delCliente('${c.id}')">✕</button></div></td></tr>`;
+  }).join(''):`<tr><td colspan="7"><div class="empty"><div class="empty-icon">👥</div><h3>Nenhum cliente cadastrado</h3></div></td></tr>`;
+}
+function openModalCliente(id){
+  const c=id?DB.one('clientes',id):{};
+  document.getElementById('mcli-title').textContent=id?'Editar Cliente':'Novo Cliente';
+  ['id','nome','doc','tel','email','end','cidade','obs'].forEach(k=>document.getElementById('cli-'+k).value=c[{id:'id',nome:'nome',doc:'cpfCnpj',tel:'telefone',email:'email',end:'endereco',cidade:'cidade',obs:'observacoes'}[k]]||'');
+  openModal('modal-cliente');
+}
+function saveCliente(){
+  const nome=document.getElementById('cli-nome').value.trim();
+  if(!nome){toast('Informe o nome','error');return;}
+  DB.save('clientes',{id:document.getElementById('cli-id').value||uid(),nome,cpfCnpj:document.getElementById('cli-doc').value,telefone:document.getElementById('cli-tel').value,email:document.getElementById('cli-email').value,endereco:document.getElementById('cli-end').value,cidade:document.getElementById('cli-cidade').value,observacoes:document.getElementById('cli-obs').value});
+  closeModal('modal-cliente');renderClientes();toast('Cliente salvo!','success');
+}
+function delCliente(id){if(!confirm('Excluir este cliente?'))return;DB.del('clientes',id);renderClientes();toast('Cliente excluído.','info');}
+
+// ── FUNCIONÁRIOS ──────────────────────────────────────────────────────────────
+function renderFuncionarios(){
+  const q=(document.getElementById('search-funcionarios')?.value||'').toLowerCase();
+  const rows=DB.get('funcionarios').filter(f=>!q||f.nome?.toLowerCase().includes(q)||f.cargo?.toLowerCase().includes(q));
+  document.getElementById('tb-funcionarios').innerHTML=rows.length?rows.map(f=>`
+    <tr><td><strong>${esc(f.nome)}</strong></td><td>${esc(f.cargo||'—')}</td><td>${fmtR(f.salario)}</td><td>${esc(f.telefone||'—')}</td><td>${fmtD(f.admissao)}</td>
+    <td><div class="td-actions"><button class="btn btn-ghost btn-xs" onclick="openModalFuncionario('${f.id}')">✏</button><button class="btn btn-danger btn-xs" onclick="delFuncionario('${f.id}')">✕</button></div></td></tr>`)
+    .join(''):`<tr><td colspan="6"><div class="empty"><div class="empty-icon">👤</div><h3>Nenhum funcionário cadastrado</h3></div></td></tr>`;
+}
+function openModalFuncionario(id){
+  const f=id?DB.one('funcionarios',id):{};
+  document.getElementById('mfunc-title').textContent=id?'Editar Funcionário':'Novo Funcionário';
+  document.getElementById('func-id').value=f.id||'';document.getElementById('func-nome').value=f.nome||'';
+  document.getElementById('func-cargo').value=f.cargo||'';document.getElementById('func-salario').value=f.salario||'';
+  document.getElementById('func-admissao').value=f.admissao||'';document.getElementById('func-tel').value=f.telefone||'';
+  document.getElementById('func-email').value=f.email||'';document.getElementById('func-obs').value=f.observacoes||'';
+  openModal('modal-funcionario');
+}
+function saveFuncionario(){
+  const nome=document.getElementById('func-nome').value.trim();
+  if(!nome){toast('Informe o nome','error');return;}
+  DB.save('funcionarios',{id:document.getElementById('func-id').value||uid(),nome,cargo:document.getElementById('func-cargo').value,salario:document.getElementById('func-salario').value,admissao:document.getElementById('func-admissao').value,telefone:document.getElementById('func-tel').value,email:document.getElementById('func-email').value,observacoes:document.getElementById('func-obs').value});
+  closeModal('modal-funcionario');renderFuncionarios();toast('Funcionário salvo!','success');
+}
+function delFuncionario(id){if(!confirm('Excluir?'))return;DB.del('funcionarios',id);renderFuncionarios();toast('Excluído.','info');}
+
+// ── EQUIPAMENTOS ──────────────────────────────────────────────────────────────
+const EQUIP_BADGE={disponivel:'badge-green',locado:'badge-orange',manutencao:'badge-red',inativo:'badge-gray'};
+const EQUIP_LBL={disponivel:'Disponível',locado:'Locado',manutencao:'Manutenção',inativo:'Inativo'};
+function renderEquipamentos(){
+  const q=(document.getElementById('search-equipamentos')?.value||'').toLowerCase();
+  const sf=document.getElementById('filter-equip-status')?.value||'';
+  const rows=DB.get('equipamentos').filter(e=>{
+    if(sf&&e.status!==sf)return false;
+    return !q||[e.tipo,e.marca,e.modelo,e.numSerie].some(v=>v?.toLowerCase().includes(q));
+  });
+  document.getElementById('tb-equipamentos').innerHTML=rows.length?rows.map(e=>`
+    <tr><td>${esc(e.tipo||'—')}</td>
+    <td><strong>${esc(e.marca||'')} ${esc(e.modelo||'')}</strong>${e.desc?`<br><span style="font-size:11px;color:var(--text-dim)">${esc(e.desc)}</span>`:''}</td>
+    <td style="font-size:12px;color:var(--text-mid)">${esc(e.numSerie||'—')}</td>
+    <td>${fmtR(e.valorDia)}/dia</td>
+    <td><span class="badge ${EQUIP_BADGE[e.status]||'badge-gray'}">${EQUIP_LBL[e.status]||e.status}</span></td>
+    <td><div class="td-actions"><button class="btn btn-ghost btn-xs" onclick="openModalEquipamento('${e.id}')">✏</button><button class="btn btn-danger btn-xs" onclick="delEquipamento('${e.id}')">✕</button></div></td></tr>`)
+    .join(''):`<tr><td colspan="6"><div class="empty"><div class="empty-icon">💻</div><h3>Nenhum equipamento cadastrado</h3></div></td></tr>`;
+}
+function openModalEquipamento(id){
+  const e=id?DB.one('equipamentos',id):{};
+  document.getElementById('mequip-title').textContent=id?'Editar Equipamento':'Novo Equipamento';
+  document.getElementById('equip-id').value=e.id||'';document.getElementById('equip-tipo').value=e.tipo||'';
+  document.getElementById('equip-marca').value=e.marca||'';document.getElementById('equip-modelo').value=e.modelo||'';
+  document.getElementById('equip-serie').value=e.numSerie||'';document.getElementById('equip-compra').value=e.valorCompra||'';
+  document.getElementById('equip-dia').value=e.valorDia||'';document.getElementById('equip-status').value=e.status||'disponivel';
+  document.getElementById('equip-desc').value=e.desc||'';document.getElementById('equip-obs').value=e.observacoes||'';
+  openModal('modal-equipamento');
+}
+function saveEquipamento(){
+  if(!document.getElementById('equip-tipo').value){toast('Selecione o tipo','error');return;}
+  DB.save('equipamentos',{id:document.getElementById('equip-id').value||uid(),tipo:document.getElementById('equip-tipo').value,marca:document.getElementById('equip-marca').value,modelo:document.getElementById('equip-modelo').value,numSerie:document.getElementById('equip-serie').value,valorCompra:document.getElementById('equip-compra').value,valorDia:document.getElementById('equip-dia').value,status:document.getElementById('equip-status').value,desc:document.getElementById('equip-desc').value,observacoes:document.getElementById('equip-obs').value});
+  closeModal('modal-equipamento');renderEquipamentos();toast('Equipamento salvo!','success');
+}
+function delEquipamento(id){if(!confirm('Excluir?'))return;DB.del('equipamentos',id);renderEquipamentos();toast('Excluído.','info');}
+
+// ── ESTOQUE ───────────────────────────────────────────────────────────────────
+function renderEstoque(){
+  const q=(document.getElementById('search-estoque')?.value||'').toLowerCase();
+  const rows=DB.get('estoque').filter(e=>!q||e.nome?.toLowerCase().includes(q)||e.categoria?.toLowerCase().includes(q));
+  document.getElementById('tb-estoque').innerHTML=rows.length?rows.map(e=>{
+    const baixo=Number(e.quantidade||0)<=Number(e.qtdMinima||0);
+    return`<tr><td><strong>${esc(e.nome)}</strong></td><td>${esc(e.categoria||'—')}</td>
+      <td style="font-weight:600;color:${baixo?'var(--red)':'inherit'}">${e.quantidade||0}</td>
+      <td>${e.qtdMinima||0}</td><td>${fmtR(e.valorUnit)}</td>
+      <td>${fmtR(Number(e.valorUnit||0)*Number(e.quantidade||0))}</td>
+      <td><span class="badge ${baixo?'badge-red':'badge-green'}">${baixo?'Baixo':'OK'}</span></td>
+      <td><div class="td-actions"><button class="btn btn-ghost btn-xs" onclick="openModalEstoque('${e.id}')">✏</button><button class="btn btn-danger btn-xs" onclick="delEstoque('${e.id}')">✕</button></div></td></tr>`;
+  }).join(''):`<tr><td colspan="8"><div class="empty"><div class="empty-icon">📦</div><h3>Nenhum item no estoque</h3></div></td></tr>`;
+}
+function openModalEstoque(id){
+  const e=id?DB.one('estoque',id):{};
+  document.getElementById('mest-title').textContent=id?'Editar Item':'Novo Item de Estoque';
+  document.getElementById('est-id').value=e.id||'';document.getElementById('est-nome').value=e.nome||'';
+  document.getElementById('est-cat').value=e.categoria||'Acessório';document.getElementById('est-qtd').value=e.quantidade||'';
+  document.getElementById('est-min').value=e.qtdMinima||'';document.getElementById('est-valor').value=e.valorUnit||'';
+  document.getElementById('est-obs').value=e.observacoes||'';openModal('modal-estoque');
+}
+function saveEstoque(){
+  const nome=document.getElementById('est-nome').value.trim();
+  if(!nome){toast('Informe o nome do item','error');return;}
+  DB.save('estoque',{id:document.getElementById('est-id').value||uid(),nome,categoria:document.getElementById('est-cat').value,quantidade:document.getElementById('est-qtd').value,qtdMinima:document.getElementById('est-min').value,valorUnit:document.getElementById('est-valor').value,observacoes:document.getElementById('est-obs').value});
+  closeModal('modal-estoque');renderEstoque();toast('Item salvo!','success');
+}
+function delEstoque(id){if(!confirm('Excluir?'))return;DB.del('estoque',id);renderEstoque();toast('Excluído.','info');}
+
+// ── LOCAÇÕES ──────────────────────────────────────────────────────────────────
+let locLines=[];
+function toggleParcelas(){
+  const p=document.getElementById('loc-pagamento').value==='parcelado';
+  document.getElementById('loc-parc-group').classList.toggle('hidden',!p);
+}
+function addLocEquip(){
+  const equips=DB.get('equipamentos');
+  const lid=uid();locLines.push(lid);
+  const div=document.createElement('div');div.id='ll-'+lid;div.style.cssText='display:flex;gap:6px;align-items:center';
+  div.innerHTML=`<select class="form-control" id="ls-${lid}" style="flex:1"><option value="">Selecione equipamento…</option>${equips.map(e=>`<option value="${e.id}">[${EQUIP_LBL[e.status]||e.status}] ${esc(e.tipo)} ${esc(e.marca)} ${esc(e.modelo)} — ${fmtR(e.valorDia)}/dia</option>`).join('')}</select><button class="btn btn-danger btn-xs" onclick="removeLocEquip('${lid}')">✕</button>`;
+  document.getElementById('loc-equip-list').appendChild(div);
+}
+function removeLocEquip(lid){document.getElementById('ll-'+lid)?.remove();locLines=locLines.filter(x=>x!==lid);}
+function renderLocacoes(){
+  const q=(document.getElementById('search-locacoes')?.value||'').toLowerCase();
+  const sf=document.getElementById('filter-loc-status')?.value||'';
+  const clis=DB.get('clientes'),equips=DB.get('equipamentos');
+  const LOC_BADGE={ativa:'badge-green',encerrada:'badge-gray',cancelada:'badge-red'};
+  const rows=DB.get('locacoes').filter(l=>{
+    if(sf&&l.status!==sf)return false;
+    const c=clis.find(x=>x.id===l.clienteId);return !q||c?.nome?.toLowerCase().includes(q);
+  });
+  document.getElementById('tb-locacoes').innerHTML=rows.length?rows.map(l=>{
+    const c=clis.find(x=>x.id===l.clienteId);
+    const eqs=l.equipamentos?.map(le=>{const e=equips.find(x=>x.id===le.equipId);return e?`${e.tipo} ${e.marca} ${e.modelo}`.trim():'?'}).join(', ')||'—';
+    return`<tr><td><strong>${esc(c?.nome||'—')}</strong></td>
+      <td style="max-width:180px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:12px">${esc(eqs)}</td>
+      <td>${fmtD(l.inicio)}</td><td>${fmtD(l.fim)}</td>
+      <td><strong style="color:var(--green)">${fmtR(l.valor)}</strong></td>
+      <td><span class="badge badge-gray">${l.pagamento==='parcelado'?`${l.numParcelas}x`:'À Vista'}</span></td>
+      <td><span class="badge ${LOC_BADGE[l.status]||'badge-gray'}">${l.status}</span></td>
+      <td><div class="td-actions"><button class="btn btn-ghost btn-xs" onclick="openModalLocacao('${l.id}')">✏</button><button class="btn btn-danger btn-xs" onclick="delLocacao('${l.id}')">✕</button></div></td></tr>`;
+  }).join(''):`<tr><td colspan="8"><div class="empty"><div class="empty-icon">📋</div><h3>Nenhuma locação encontrada</h3></div></td></tr>`;
+}
+function openModalLocacao(id){
+  locLines=[];document.getElementById('loc-equip-list').innerHTML='';
+  document.getElementById('mloc-title').textContent=id?'Editar Locação':'Nova Locação';
+  const l=id?DB.one('locacoes',id):{};
+  document.getElementById('loc-id').value=l.id||'';
+  const clis=DB.get('clientes');
+  document.getElementById('loc-cliente').innerHTML=`<option value="">Selecione cliente…</option>`+clis.map(c=>`<option value="${c.id}"${l.clienteId===c.id?' selected':''}>${esc(c.nome)}</option>`).join('');
+  document.getElementById('loc-inicio').value=l.inicio||today();
+  document.getElementById('loc-fim').value=l.fim||'';
+  document.getElementById('loc-valor').value=l.valor||'';
+  document.getElementById('loc-pagamento').value=l.pagamento||'avista';
+  document.getElementById('loc-parcelas').value=l.numParcelas||2;
+  document.getElementById('loc-status').value=l.status||'ativa';
+  document.getElementById('loc-obs').value=l.observacoes||'';
+  toggleParcelas();
+  if(l.equipamentos?.length){l.equipamentos.forEach(le=>{addLocEquip();document.getElementById('ls-'+locLines[locLines.length-1]).value=le.equipId;})}
+  else addLocEquip();
+  openModal('modal-locacao');
+}
+function saveLocacao(){
+  const clienteId=document.getElementById('loc-cliente').value;
+  if(!clienteId){toast('Selecione um cliente','error');return;}
+  const inicio=document.getElementById('loc-inicio').value,fim=document.getElementById('loc-fim').value;
+  if(!inicio||!fim){toast('Informe as datas','error');return;}
+  const valor=document.getElementById('loc-valor').value;
+  if(!valor){toast('Informe o valor','error');return;}
+  const equipamentos=locLines.map(lid=>({equipId:document.getElementById('ls-'+lid)?.value})).filter(le=>le.equipId);
+  if(!equipamentos.length){toast('Adicione ao menos um equipamento','error');return;}
+  const pagamento=document.getElementById('loc-pagamento').value;
+  const numParcelas=Number(document.getElementById('loc-parcelas').value)||2;
+  const isNew=!document.getElementById('loc-id').value;
+  const item={id:document.getElementById('loc-id').value||uid(),clienteId,inicio,fim,valor:Number(valor),pagamento,numParcelas:pagamento==='parcelado'?numParcelas:1,equipamentos,status:document.getElementById('loc-status').value,observacoes:document.getElementById('loc-obs').value,criado:new Date().toISOString()};
+  DB.save('locacoes',item);
+  if(item.status==='ativa')equipamentos.forEach(le=>{const e=DB.one('equipamentos',le.equipId);if(e){e.status='locado';DB.save('equipamentos',e);}});
+  if(isNew){
+    const cli=DB.one('clientes',clienteId);
+    if(pagamento==='avista'){
+      DB.save('transacoes',{id:uid(),tipo:'entrada',categoria:'Locação de Equipamento',descricao:`Locação — ${cli?.nome||''}`,valor:Number(valor),data:inicio,status:'pendente',observacoes:item.observacoes});
+    }else{
+      const parcelas=Array.from({length:numParcelas},(_,i)=>{const d=new Date(inicio+'T12:00:00');d.setMonth(d.getMonth()+i);return{vencimento:d.toISOString().slice(0,10),valor:Number(valor)/numParcelas,status:'pendente'};});
+      DB.save('parcelamentos',{id:uid(),tipo:'receber',descricao:`Locação — ${cli?.nome||''}`,nomeCliente:cli?.nome||'',valorTotal:Number(valor),parcelas});
+    }
+  }
+  closeModal('modal-locacao');renderLocacoes();toast('Locação salva!','success');
+}
+function delLocacao(id){if(!confirm('Excluir esta locação?'))return;DB.del('locacoes',id);renderLocacoes();toast('Excluído.','info');}
+
+// ── FINANCEIRO ────────────────────────────────────────────────────────────────
+const CATS_E=['Locação de Equipamento','Venda de Equipamento','Serviço de Manutenção','Multa/Juros','Outros'];
+const CATS_S=['Compra de Equipamento','Manutenção/Reparo','Salários','Aluguel','Energia/Internet','Impostos','Frete','Marketing','Outros'];
+let finTab='todas';
+function setFinTab(t){finTab=t;document.querySelectorAll('#view-financeiro .tab').forEach((el,i)=>el.classList.toggle('active',['todas','entrada','saida'][i]===t));renderFinanceiro();}
+function renderFinanceiro(){
+  const mes=document.getElementById('fin-mes')?.value||thisMonth();
+  const trans=DB.get('transacoes').filter(t=>t.data?.startsWith(mes));
+  const ents=trans.filter(t=>t.tipo==='entrada');const sais=trans.filter(t=>t.tipo==='saida');
+  const totE=ents.filter(t=>t.status==='pago').reduce((s,t)=>s+Number(t.valor||0),0);
+  const totS=sais.filter(t=>t.status==='pago').reduce((s,t)=>s+Number(t.valor||0),0);
+  const totPend=trans.filter(t=>t.status==='pendente').reduce((s,t)=>s+Number(t.valor||0),0);
+  document.getElementById('fin-cards').innerHTML=`
+    <div class="card green"><div class="card-label">Entradas (pagas)</div><div class="card-value">${fmtR(totE)}</div></div>
+    <div class="card red"><div class="card-label">Saídas (pagas)</div><div class="card-value">${fmtR(totS)}</div></div>
+    <div class="card blue"><div class="card-label">Saldo</div><div class="card-value">${fmtR(totE-totS)}</div></div>
+    <div class="card orange"><div class="card-label">Pendentes</div><div class="card-value">${fmtR(totPend)}</div></div>`;
+  let lista=finTab==='entrada'?ents:finTab==='saida'?sais:trans;
+  lista=[...lista].sort((a,b)=>b.data>a.data?1:-1);
+  document.getElementById('tb-financeiro').innerHTML=lista.length?lista.map(t=>`
+    <tr><td>${fmtD(t.data)}</td><td>${esc(t.descricao)}</td><td><span class="badge badge-gray">${esc(t.categoria||'—')}</span></td>
+    <td><span class="badge ${t.tipo==='entrada'?'badge-green':'badge-red'}">${t.tipo==='entrada'?'Entrada':'Saída'}</span></td>
+    <td><strong style="color:${t.tipo==='entrada'?'var(--green)':'var(--red)'}">${fmtR(t.valor)}</strong></td>
+    <td><span class="badge ${t.status==='pago'?'badge-green':'badge-orange'}">${t.status==='pago'?'Pago':'Pendente'}</span></td>
+    <td><div class="td-actions"><button class="btn btn-ghost btn-xs" onclick="openModalTransacao('${t.tipo}','${t.id}')">✏</button><button class="btn btn-danger btn-xs" onclick="delTransacao('${t.id}')">✕</button></div></td></tr>`)
+    .join(''):`<tr><td colspan="7"><div class="empty"><div class="empty-icon">💰</div><h3>Nenhuma transação neste mês</h3></div></td></tr>`;
+}
+function openModalTransacao(tipo,id){
+  const t=id?DB.one('transacoes',id):{};const tp=t.tipo||tipo;
+  document.getElementById('mtrans-title').textContent=id?(tp==='entrada'?'Editar Entrada':'Editar Saída'):(tipo==='entrada'?'Nova Entrada':'Nova Saída');
+  document.getElementById('trans-id').value=t.id||'';document.getElementById('trans-tipo').value=tp;
+  document.getElementById('trans-cat').innerHTML=(tp==='entrada'?CATS_E:CATS_S).map(c=>`<option${t.categoria===c?' selected':''}>${c}</option>`).join('');
+  document.getElementById('trans-desc').value=t.descricao||'';document.getElementById('trans-valor').value=t.valor||'';
+  document.getElementById('trans-data').value=t.data||today();document.getElementById('trans-status').value=t.status||'pago';
+  document.getElementById('trans-obs').value=t.observacoes||'';openModal('modal-transacao');
+}
+function saveTransacao(){
+  const desc=document.getElementById('trans-desc').value.trim();const valor=document.getElementById('trans-valor').value;
+  if(!desc||!valor){toast('Preencha descrição e valor','error');return;}
+  DB.save('transacoes',{id:document.getElementById('trans-id').value||uid(),tipo:document.getElementById('trans-tipo').value,categoria:document.getElementById('trans-cat').value,descricao:desc,valor:Number(valor),data:document.getElementById('trans-data').value,status:document.getElementById('trans-status').value,observacoes:document.getElementById('trans-obs').value});
+  closeModal('modal-transacao');renderFinanceiro();toast('Salvo!','success');
+}
+function delTransacao(id){if(!confirm('Excluir?'))return;DB.del('transacoes',id);renderFinanceiro();toast('Excluído.','info');}
+
+// ── PARCELAMENTOS ─────────────────────────────────────────────────────────────
+let parcTab='receber';
+function setParcTab(t){parcTab=t;document.querySelectorAll('#view-parcelamentos .tab').forEach((el,i)=>el.classList.toggle('active',['receber','pagar'][i]===t));renderParcelamentos();}
+function renderParcelamentos(){
+  const lista=DB.get('parcelamentos').filter(p=>p.tipo===parcTab);
+  if(!lista.length){document.getElementById('parc-content').innerHTML=`<div class="empty"><div class="empty-icon">📅</div><h3>Nenhum parcelamento cadastrado</h3></div>`;return;}
+  document.getElementById('parc-content').innerHTML=lista.map(p=>{
+    const pago=p.parcelas?.filter(x=>x.status==='pago').length||0;const tot=p.parcelas?.length||0;
+    const vlPago=p.parcelas?.filter(x=>x.status==='pago').reduce((s,x)=>s+Number(x.valor||0),0)||0;
+    const perc=tot?Math.round(pago/tot*100):0;
+    return`<div class="card" style="margin-bottom:12px">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px">
+        <div><div style="font-weight:600;font-size:14px">${esc(p.descricao)}</div><div style="font-size:12px;color:var(--text-mid)">${esc(p.nomeCliente||'')}</div></div>
+        <div style="text-align:right"><div style="font-weight:700;color:${p.tipo==='receber'?'var(--green)':'var(--red)'}">${fmtR(p.valorTotal)}</div><div style="font-size:11px;color:var(--text-mid)">${pago}/${tot} pagas · ${fmtR(vlPago)} recebido</div></div>
+      </div>
+      <div class="progress-bar"><div class="progress-fill" style="width:${perc}%;background:${p.tipo==='receber'?'var(--green)':'var(--blue)'}"></div></div>
+      <div style="margin-top:10px;display:flex;flex-direction:column;gap:3px">
+        ${p.parcelas?.map((par,i)=>`<div style="display:flex;align-items:center;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border)">
+          <div style="display:flex;align-items:center;gap:8px">
+            <span style="font-size:11px;color:var(--text-dim);min-width:28px">${i+1}/${tot}</span>
+            <span class="badge ${par.status==='pago'?'badge-green':'badge-orange'}">${par.status==='pago'?'Pago':'Pendente'}</span>
+            <span style="font-size:12px;color:var(--text-mid)">${fmtD(par.vencimento)}</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px"><strong>${fmtR(par.valor)}</strong>${par.status==='pendente'?`<button class="btn btn-success btn-xs" onclick="pagarParcela('${p.id}',${i})">✓ Pagar</button>`:''}</div>
+        </div>`).join('')}
+      </div>
+      <div style="margin-top:8px;display:flex;justify-content:flex-end"><button class="btn btn-danger btn-xs" onclick="delParcelamento('${p.id}')">✕ Excluir</button></div>
+    </div>`;
+  }).join('');
+}
+function pagarParcela(pId,idx){
+  const p=DB.one('parcelamentos',pId);if(!p)return;
+  p.parcelas[idx].status='pago';DB.save('parcelamentos',p);
+  DB.save('transacoes',{id:uid(),tipo:p.tipo==='receber'?'entrada':'saida',categoria:p.tipo==='receber'?'Locação de Equipamento':'Outros',descricao:`${p.descricao} — Parc. ${idx+1}/${p.parcelas.length}`,valor:p.parcelas[idx].valor,data:today(),status:'pago'});
+  renderParcelamentos();toast('Parcela paga!','success');
+}
+function openModalParcelamento(){
+  document.getElementById('parc-id').value='';document.getElementById('parc-tipo').value=parcTab;
+  document.getElementById('parc-desc').value='';document.getElementById('parc-valor').value='';
+  document.getElementById('parc-n').value=2;document.getElementById('parc-inicio').value=today();
+  document.getElementById('parc-nome').value='';openModal('modal-parcelamento');
+}
+function saveParcelamento(){
+  const desc=document.getElementById('parc-desc').value.trim();const valor=Number(document.getElementById('parc-valor').value);
+  const n=Number(document.getElementById('parc-n').value)||2;const inicio=document.getElementById('parc-inicio').value;
+  if(!desc||!valor||!inicio){toast('Preencha todos os campos','error');return;}
+  const parcelas=Array.from({length:n},(_,i)=>{const d=new Date(inicio+'T12:00:00');d.setMonth(d.getMonth()+i);return{vencimento:d.toISOString().slice(0,10),valor:valor/n,status:'pendente'};});
+  DB.save('parcelamentos',{id:document.getElementById('parc-id').value||uid(),tipo:document.getElementById('parc-tipo').value,descricao:desc,nomeCliente:document.getElementById('parc-nome').value,valorTotal:valor,parcelas});
+  closeModal('modal-parcelamento');renderParcelamentos();toast('Parcelamento salvo!','success');
+}
+function delParcelamento(id){if(!confirm('Excluir?'))return;DB.del('parcelamentos',id);renderParcelamentos();toast('Excluído.','info');}
+
+// ── ORÇAMENTO ─────────────────────────────────────────────────────────────────
+function renderOrcamento(){
+  const mes=document.getElementById('orc-mes')?.value||thisMonth();
+  const orcs=DB.get('orcamentos').filter(o=>o.mes===mes);
+  const trans=DB.get('transacoes').filter(t=>t.data?.startsWith(mes)&&t.status==='pago');
+  if(!orcs.length){document.getElementById('orc-content').innerHTML=`<div class="empty"><div class="empty-icon">🎯</div><h3>Nenhuma meta para este mês</h3><p style="font-size:13px;margin-top:4px">Clique em "+ Definir Meta" para começar.</p></div>`;return;}
+  document.getElementById('orc-content').innerHTML=`<div style="display:flex;flex-direction:column;gap:12px">`+orcs.map(o=>{
+    let realizado=0;
+    if(o.categoria==='receita_total')realizado=trans.filter(t=>t.tipo==='entrada').reduce((s,t)=>s+Number(t.valor||0),0);
+    else realizado=trans.filter(t=>t.categoria===o.categoria).reduce((s,t)=>s+Number(t.valor||0),0);
+    const perc=o.valorOrcado?Math.min(100,Math.round(realizado/o.valorOrcado*100)):0;
+    const ok=realizado<=Number(o.valorOrcado);
+    return`<div class="card"><div style="display:flex;justify-content:space-between;margin-bottom:8px"><strong>${esc(o.categoria==='receita_total'?'Receita Total':o.categoria)}</strong><span style="font-size:12px;color:var(--text-mid)">${fmtR(realizado)} / ${fmtR(o.valorOrcado)}</span></div>
+      <div class="progress-bar"><div class="progress-fill" style="width:${perc}%;background:${ok?'var(--green)':'var(--red)'}"></div></div>
+      <div style="display:flex;justify-content:space-between;margin-top:6px"><span style="font-size:12px;color:var(--text-mid)">${perc}% realizado</span><span style="font-size:12px;color:${ok?'var(--green)':'var(--red)'}">${ok?`Sobra ${fmtR(Number(o.valorOrcado)-realizado)}`:`Excedeu ${fmtR(realizado-Number(o.valorOrcado))}`}</span></div>
+      <div style="margin-top:8px;text-align:right"><button class="btn btn-danger btn-xs" onclick="delOrcamento('${o.id}')">✕ Remover</button></div>
+    </div>`;
+  }).join('')+`</div>`;
+}
+function openModalOrcamento(){
+  document.getElementById('orc-id').value='';document.getElementById('orc-mes-inp').value=document.getElementById('orc-mes')?.value||thisMonth();
+  document.getElementById('orc-valor').value='';openModal('modal-orcamento');
+}
+function saveOrcamento(){
+  const valor=Number(document.getElementById('orc-valor').value);const mes=document.getElementById('orc-mes-inp').value;
+  if(!valor||!mes){toast('Preencha todos os campos','error');return;}
+  DB.save('orcamentos',{id:document.getElementById('orc-id').value||uid(),mes,categoria:document.getElementById('orc-cat').value,valorOrcado:valor});
+  closeModal('modal-orcamento');renderOrcamento();toast('Meta salva!','success');
+}
+function delOrcamento(id){DB.del('orcamentos',id);renderOrcamento();}
+
+// ── RELATÓRIOS ────────────────────────────────────────────────────────────────
+function renderRelatorios(){
+  const mes=document.getElementById('rel-mes')?.value||thisMonth();
+  const trans=DB.get('transacoes').filter(t=>t.data?.startsWith(mes));
+  const ents=trans.filter(t=>t.tipo==='entrada'&&t.status==='pago');
+  const sais=trans.filter(t=>t.tipo==='saida'&&t.status==='pago');
+  const totE=ents.reduce((s,t)=>s+Number(t.valor||0),0);
+  const totS=sais.reduce((s,t)=>s+Number(t.valor||0),0);
+  const catE={};ents.forEach(t=>{catE[t.categoria||'Outros']=(catE[t.categoria||'Outros']||0)+Number(t.valor||0);});
+  const catS={};sais.forEach(t=>{catS[t.categoria||'Outros']=(catS[t.categoria||'Outros']||0)+Number(t.valor||0);});
+  const locs=DB.get('locacoes');const equips=DB.get('equipamentos');const clis=DB.get('clientes');
+  const eqCnt={};locs.forEach(l=>l.equipamentos?.forEach(le=>{eqCnt[le.equipId]=(eqCnt[le.equipId]||0)+1;}));
+  const topEq=Object.entries(eqCnt).sort((a,b)=>b[1]-a[1]).slice(0,5).map(([id,n])=>{const e=equips.find(x=>x.id===id);return{nome:e?`${e.tipo} ${e.marca} ${e.modelo}`.trim():'?',n};});
+  const cliCnt={};locs.forEach(l=>{cliCnt[l.clienteId]=(cliCnt[l.clienteId]||0)+1;});
+  const topCli=Object.entries(cliCnt).sort((a,b)=>b[1]-a[1]).slice(0,5).map(([id,n])=>{const c=clis.find(x=>x.id===id);return{nome:c?.nome||'?',n};});
+  document.getElementById('rel-content').innerHTML=`<div class="rel-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+    <div class="card"><div class="dash-panel-title">📥 Entradas por Categoria</div>
+      ${Object.entries(catE).sort((a,b)=>b[1]-a[1]).map(([c,v])=>`<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border);font-size:13px"><span style="color:var(--text-mid)">${esc(c)}</span><strong style="color:var(--green)">${fmtR(v)}</strong></div>`).join('')||'<p style="color:var(--text-dim);font-size:13px;padding:12px 0">Nenhuma entrada</p>'}
+      <div style="display:flex;justify-content:space-between;padding:8px 0;font-weight:700"><span>Total</span><span style="color:var(--green)">${fmtR(totE)}</span></div>
+    </div>
+    <div class="card"><div class="dash-panel-title">📤 Saídas por Categoria</div>
+      ${Object.entries(catS).sort((a,b)=>b[1]-a[1]).map(([c,v])=>`<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border);font-size:13px"><span style="color:var(--text-mid)">${esc(c)}</span><strong style="color:var(--red)">${fmtR(v)}</strong></div>`).join('')||'<p style="color:var(--text-dim);font-size:13px;padding:12px 0">Nenhuma saída</p>'}
+      <div style="display:flex;justify-content:space-between;padding:8px 0;font-weight:700"><span>Total</span><span style="color:var(--red)">${fmtR(totS)}</span></div>
+    </div>
+    <div class="card"><div class="dash-panel-title">💻 Equipamentos Mais Locados</div>
+      ${topEq.map((e,i)=>`<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border);font-size:13px"><span style="color:var(--text-mid)">${i+1}. ${esc(e.nome)}</span><strong>${e.n} loc.</strong></div>`).join('')||'<p style="color:var(--text-dim);font-size:13px;padding:12px 0">Nenhuma locação</p>'}
+    </div>
+    <div class="card"><div class="dash-panel-title">👥 Clientes com Mais Locações</div>
+      ${topCli.map((c,i)=>`<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border);font-size:13px"><span style="color:var(--text-mid)">${i+1}. ${esc(c.nome)}</span><strong>${c.n} loc.</strong></div>`).join('')||'<p style="color:var(--text-dim);font-size:13px;padding:12px 0">Nenhuma locação</p>'}
+    </div>
+    <div class="card" style="grid-column:1/-1"><div class="dash-panel-title">💹 Resumo do Mês — ${new Date(mes+'-15').toLocaleString('pt-BR',{month:'long',year:'numeric'})}</div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px">
+        <div><div style="font-size:11px;color:var(--text-mid);margin-bottom:4px">RECEITA</div><div style="font-size:22px;font-weight:700;color:var(--green)">${fmtR(totE)}</div></div>
+        <div><div style="font-size:11px;color:var(--text-mid);margin-bottom:4px">DESPESA</div><div style="font-size:22px;font-weight:700;color:var(--red)">${fmtR(totS)}</div></div>
+        <div><div style="font-size:11px;color:var(--text-mid);margin-bottom:4px">LUCRO</div><div style="font-size:22px;font-weight:700;color:${totE-totS>=0?'var(--green)':'var(--red)'}">${fmtR(totE-totS)}</div></div>
+        <div><div style="font-size:11px;color:var(--text-mid);margin-bottom:4px">TRANSAÇÕES</div><div style="font-size:22px;font-weight:700">${trans.length}</div></div>
+      </div>
+    </div>
+  </div>`;
+}
+
+// ── INIT ──────────────────────────────────────────────────────────────────────
+document.getElementById('topbar-date').textContent=new Date().toLocaleDateString('pt-BR',{weekday:'short',day:'numeric',month:'short',year:'numeric'});
+document.getElementById('fin-mes').value=thisMonth();
+document.getElementById('orc-mes').value=thisMonth();
+document.getElementById('rel-mes').value=thisMonth();
+renderDashboard();
+</script>
+</body>
+</html>
