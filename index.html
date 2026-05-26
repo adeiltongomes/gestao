@@ -325,6 +325,9 @@ tbody tr:hover{background:var(--surface-2)}
     </div>
     <div class="nav-section">
       <div class="nav-label">Operações</div>
+      <div class="nav-item" data-view="orcamentoscli">
+        <span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg></span>Orçamentos
+      </div>
       <div class="nav-item" data-view="locacoes">
         <span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg></span>Locações
       </div>
@@ -338,7 +341,7 @@ tbody tr:hover{background:var(--surface-2)}
     <div class="nav-section">
       <div class="nav-label">Análise</div>
       <div class="nav-item" data-view="orcamento">
-        <span class="nav-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></span>Orçamento
+        <span class="nav-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></span>Metas
       </div>
       <div class="nav-item" data-view="relatorios">
         <span class="nav-icon"><svg viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg></span>Relatórios
@@ -499,10 +502,31 @@ tbody tr:hover{background:var(--surface-2)}
       <div id="parc-content"></div>
     </div>
 
-    <!-- ORÇAMENTO -->
+    <!-- ORÇAMENTOS CLIENTES -->
+    <div id="view-orcamentoscli" class="view-section hidden">
+      <div class="sec-hdr">
+        <div class="sec-title">Orçamentos</div>
+        <input class="form-control s-search" id="search-orcamentos" placeholder="Buscar cliente…" oninput="renderOrcamentosCli()">
+        <select class="form-control" id="filter-orc-status" onchange="renderOrcamentosCli()" style="width:140px">
+          <option value="">Todos</option>
+          <option value="pendente">Pendente</option>
+          <option value="aprovado">Aprovado</option>
+          <option value="recusado">Recusado</option>
+        </select>
+        <button class="btn btn-primary" onclick="openModalOrcamentoCli()">+ Novo Orçamento</button>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Cliente</th><th>Descrição</th><th>Período</th><th>Valor Total</th><th>Pagamento</th><th>Status</th><th></th></tr></thead>
+          <tbody id="tb-orcamentos"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- METAS -->
     <div id="view-orcamento" class="view-section hidden">
       <div class="sec-hdr">
-        <div class="sec-title">Orçamento</div>
+        <div class="sec-title">Metas</div>
         <input type="month" class="form-control" id="orc-mes" style="width:160px" onchange="renderOrcamento()">
         <button class="btn btn-primary" onclick="openModalOrcamento()">+ Definir Meta</button>
       </div>
@@ -750,6 +774,54 @@ tbody tr:hover{background:var(--surface-2)}
   </div>
 </div>
 
+<!-- Modal Orçamento Cliente -->
+<div class="modal-overlay hidden" id="modal-orcamentocli">
+  <div class="modal modal-lg">
+    <div class="modal-hdr"><div class="modal-title" id="morccli-title">Novo Orçamento</div><button class="modal-close" onclick="closeModal('modal-orcamentocli')">×</button></div>
+    <div class="modal-body">
+      <input type="hidden" id="orccli-id">
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Cliente *</label><select class="form-control" id="orccli-cliente"></select></div>
+        <div class="form-group"><label class="form-label">Descrição / Título</label><input class="form-control" id="orccli-desc" placeholder="Ex: Locação de equipamentos — Evento X"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Data Início *</label><input class="form-control" id="orccli-inicio" type="date"></div>
+        <div class="form-group"><label class="form-label">Data Fim *</label><input class="form-control" id="orccli-fim" type="date"></div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Equipamentos</label>
+        <div id="orccli-equip-list" style="display:flex;flex-direction:column;gap:6px;max-height:160px;overflow-y:auto;padding:8px;background:var(--surface-2);border-radius:8px;border:1.5px solid var(--border)"></div>
+        <button class="btn btn-ghost btn-sm" style="margin-top:6px" onclick="addOrcEquip()">+ Adicionar Equipamento</button>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Valor Total (R$) *</label><input class="form-control" id="orccli-valor" type="number" step="0.01" placeholder="0,00"></div>
+        <div class="form-group"><label class="form-label">Forma de Pagamento</label>
+          <select class="form-control" id="orccli-pagamento" onchange="toggleOrcParc()">
+            <option value="avista">À Vista</option>
+            <option value="parcelado">Parcelado</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group hidden" id="orccli-parc-group">
+        <label class="form-label">Número de Parcelas</label>
+        <input class="form-control" id="orccli-parcelas" type="number" min="2" max="60" value="2">
+      </div>
+      <div class="form-group"><label class="form-label">Status</label>
+        <select class="form-control" id="orccli-status">
+          <option value="pendente">Pendente (aguardando aprovação)</option>
+          <option value="aprovado">Aprovado</option>
+          <option value="recusado">Recusado</option>
+        </select>
+      </div>
+      <div class="form-group"><label class="form-label">Observações</label><textarea class="form-control" id="orccli-obs" rows="2"></textarea></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modal-orcamentocli')">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveOrcamentoCli()">Salvar Orçamento</button>
+    </div>
+  </div>
+</div>
+
 <!-- Modal Parcelamento -->
 <div class="modal-overlay hidden" id="modal-parcelamento">
   <div class="modal">
@@ -836,8 +908,9 @@ const DB={
 
 // ── NAVIGATION ────────────────────────────────────────────────────────────────
 const VIEW_TITLES={dashboard:'Dashboard',clientes:'Clientes',funcionarios:'Funcionários',
-  equipamentos:'Equipamentos',estoque:'Estoque',locacoes:'Locações',
-  financeiro:'Financeiro',parcelamentos:'Parcelamentos',orcamento:'Orçamento',relatorios:'Relatórios'};
+  equipamentos:'Equipamentos',estoque:'Estoque',orcamentoscli:'Orçamentos',
+  locacoes:'Locações',financeiro:'Financeiro',parcelamentos:'Parcelamentos',
+  orcamento:'Metas',relatorios:'Relatórios'};
 
 function goView(v){
   document.querySelectorAll('.view-section').forEach(el=>el.classList.add('hidden'));
@@ -846,8 +919,8 @@ function goView(v){
   document.getElementById('page-title').textContent=VIEW_TITLES[v]||v;
   closeSidebar();
   ({dashboard:renderDashboard,clientes:renderClientes,funcionarios:renderFuncionarios,
-    equipamentos:renderEquipamentos,estoque:renderEstoque,locacoes:renderLocacoes,
-    financeiro:renderFinanceiro,parcelamentos:renderParcelamentos,
+    equipamentos:renderEquipamentos,estoque:renderEstoque,orcamentoscli:renderOrcamentosCli,
+    locacoes:renderLocacoes,financeiro:renderFinanceiro,parcelamentos:renderParcelamentos,
     orcamento:renderOrcamento,relatorios:renderRelatorios}[v]||function(){})();
 }
 
@@ -1089,11 +1162,16 @@ function saveLocacao(){
   if(item.status==='ativa')equipamentos.forEach(le=>{const e=DB.one('equipamentos',le.equipId);if(e){e.status='locado';DB.save('equipamentos',e);}});
   if(isNew){
     const cli=DB.one('clientes',clienteId);
+    const grupoId=uid();
     if(pagamento==='avista'){
-      DB.save('transacoes',{id:uid(),tipo:'entrada',categoria:'Locação de Equipamento',descricao:`Locação — ${cli?.nome||''}`,valor:Number(valor),data:inicio,status:'pendente',observacoes:item.observacoes});
+      DB.save('transacoes',{id:uid(),tipo:'entrada',categoria:'Locação de Equipamento',descricao:`Locação — ${cli?.nome||''}`,valor:Number(valor),data:inicio,status:'pendente',observacoes:item.observacoes,locacaoId:item.id});
     }else{
-      const parcelas=Array.from({length:numParcelas},(_,i)=>{const d=new Date(inicio+'T12:00:00');d.setMonth(d.getMonth()+i);return{vencimento:d.toISOString().slice(0,10),valor:Number(valor)/numParcelas,status:'pendente'};});
-      DB.save('parcelamentos',{id:uid(),tipo:'receber',descricao:`Locação — ${cli?.nome||''}`,nomeCliente:cli?.nome||'',valorTotal:Number(valor),parcelas});
+      const vlParcela=Number(valor)/numParcelas;
+      Array.from({length:numParcelas},(_,i)=>{
+        const d=new Date(inicio+'T12:00:00');d.setMonth(d.getMonth()+i);
+        DB.save('transacoes',{id:uid(),tipo:'entrada',categoria:'Locação de Equipamento',descricao:`Locação — ${cli?.nome||''} (${i+1}/${numParcelas})`,valor:vlParcela,data:d.toISOString().slice(0,10),status:'pendente',observacoes:item.observacoes,locacaoId:item.id,grupoId});
+      });
+      toast(`${numParcelas} parcelas criadas no Financeiro!`,'success');
     }
   }
   closeModal('modal-locacao');renderLocacoes();toast('Locação salva!','success');
@@ -1161,7 +1239,8 @@ function renderFinanceiro(){
     <td><span class="badge ${t.tipo==='entrada'?'badge-green':'badge-red'}">${t.tipo==='entrada'?'Entrada':'Saída'}</span></td>
     <td><strong style="color:${t.tipo==='entrada'?'var(--green)':'var(--red)'}">${fmtR(t.valor)}</strong></td>
     <td><span class="badge ${isPago(t.status)?'badge-green':'badge-orange'}">${fmtStatus(t.status)}</span></td>
-    <td><div class="td-actions"><button class="btn btn-ghost btn-xs" onclick="openModalTransacao('${t.tipo}','${t.id}')">✏</button><button class="btn btn-danger btn-xs" onclick="delTransacao('${t.id}')">✕</button></div></td></tr>`)
+    <td><div class="td-actions">${!isPago(t.status)?`<button class="btn btn-success btn-xs" onclick="marcarPago('${t.id}')" title="${t.tipo==='entrada'?'Marcar como Recebido':'Marcar como Pago'}">✓</button>`:''}
+    <button class="btn btn-ghost btn-xs" onclick="openModalTransacao('${t.tipo}','${t.id}')">✏</button><button class="btn btn-danger btn-xs" onclick="delTransacao('${t.id}')">✕</button></div></td></tr>`)
     .join(''):`<tr><td colspan="7"><div class="empty"><div class="empty-icon">💰</div><h3>Nenhuma transação neste mês</h3></div></td></tr>`;
 }
 function toggleTransParc(){
@@ -1226,6 +1305,12 @@ function saveTransacao(){
   closeModal('modal-transacao');renderFinanceiro();toast('Salvo!','success');
 }
 function delTransacao(id){if(!confirm('Excluir?'))return;DB.del('transacoes',id);renderFinanceiro();toast('Excluído.','info');}
+function marcarPago(id){
+  const t=DB.one('transacoes',id);if(!t)return;
+  t.status=t.tipo==='entrada'?'recebido':'pago';
+  DB.save('transacoes',t);renderFinanceiro();
+  toast(t.tipo==='entrada'?'Marcado como Recebido!':'Marcado como Pago!','success');
+}
 
 // ── PARCELAMENTOS ─────────────────────────────────────────────────────────────
 let parcTab='receber';
@@ -1279,7 +1364,133 @@ function saveParcelamento(){
 }
 function delParcelamento(id){if(!confirm('Excluir?'))return;DB.del('parcelamentos',id);renderParcelamentos();toast('Excluído.','info');}
 
-// ── ORÇAMENTO ─────────────────────────────────────────────────────────────────
+// ── ORÇAMENTOS CLIENTES ───────────────────────────────────────────────────────
+const ORC_BADGE={pendente:'badge-orange',aprovado:'badge-green',recusado:'badge-red'};
+let orcEquipLines=[];
+function renderOrcamentosCli(){
+  const q=(document.getElementById('search-orcamentos')?.value||'').toLowerCase();
+  const sf=document.getElementById('filter-orc-status')?.value||'';
+  const clis=DB.get('clientes');
+  let lista=DB.get('orcamentoscli');
+  if(q)lista=lista.filter(o=>{const c=clis.find(x=>x.id===o.clienteId);return (c?.nome||'').toLowerCase().includes(q)||(o.descricao||'').toLowerCase().includes(q);});
+  if(sf)lista=lista.filter(o=>o.status===sf);
+  lista=[...lista].sort((a,b)=>b.criado>a.criado?1:-1);
+  document.getElementById('tb-orcamentos').innerHTML=lista.length?lista.map(o=>{
+    const c=clis.find(x=>x.id===o.clienteId);
+    const pagLabel=o.pagamento==='parcelado'?`Parcelado ${o.numParcelas}x`:'À Vista';
+    return`<tr>
+      <td><strong>${esc(c?.nome||'—')}</strong></td>
+      <td>${esc(o.descricao||'—')}</td>
+      <td style="white-space:nowrap;font-size:12px;color:var(--text-mid)">${fmtD(o.inicio)} – ${fmtD(o.fim)}</td>
+      <td><strong style="color:var(--blue)">${fmtR(o.valorTotal)}</strong></td>
+      <td><span class="badge badge-gray">${pagLabel}</span></td>
+      <td><span class="badge ${ORC_BADGE[o.status]||'badge-gray'}">${o.status}</span></td>
+      <td><div class="td-actions">
+        ${o.status==='pendente'?`<button class="btn btn-success btn-xs" onclick="aprovarOrc('${o.id}')" title="Aprovar">✓</button><button class="btn btn-danger btn-xs" onclick="recusarOrc('${o.id}')" title="Recusar">✕</button>`:''}
+        ${o.status==='aprovado'?`<button class="btn btn-primary btn-xs" onclick="converterLocacao('${o.id}')" title="Converter em Locação">→ Locação</button>`:''}
+        <button class="btn btn-ghost btn-xs" onclick="openModalOrcamentoCli('${o.id}')">✏</button>
+        <button class="btn btn-danger btn-xs" onclick="delOrcamentoCli('${o.id}')">✕</button>
+      </div></td></tr>`;
+  }).join(''):`<tr><td colspan="7"><div class="empty"><div class="empty-icon">📄</div><h3>Nenhum orçamento encontrado</h3></div></td></tr>`;
+}
+function openModalOrcamentoCli(id){
+  orcEquipLines=[];
+  document.getElementById('orccli-equip-list').innerHTML='';
+  const o=id?DB.one('orcamentoscli',id):{};
+  document.getElementById('morccli-title').textContent=id?'Editar Orçamento':'Novo Orçamento';
+  document.getElementById('orccli-id').value=o.id||'';
+  // populate clientes
+  const sel=document.getElementById('orccli-cliente');
+  sel.innerHTML=DB.get('clientes').map(c=>`<option value="${c.id}"${o.clienteId===c.id?' selected':''}>${esc(c.nome)}</option>`).join('');
+  document.getElementById('orccli-desc').value=o.descricao||'';
+  document.getElementById('orccli-inicio').value=o.inicio||today();
+  document.getElementById('orccli-fim').value=o.fim||today();
+  document.getElementById('orccli-valor').value=o.valorTotal||'';
+  document.getElementById('orccli-pagamento').value=o.pagamento||'avista';
+  document.getElementById('orccli-parcelas').value=o.numParcelas||2;
+  document.getElementById('orccli-status').value=o.status||'pendente';
+  document.getElementById('orccli-obs').value=o.observacoes||'';
+  toggleOrcParc();
+  if(o.equipamentos?.length)o.equipamentos.forEach(eq=>addOrcEquip(eq.equipId,eq.descricao));
+  else addOrcEquip();
+  openModal('modal-orcamentocli');
+}
+function addOrcEquip(equipId,desc){
+  const lid=uid();orcEquipLines.push(lid);
+  const equips=DB.get('equipamentos');
+  const opts=equips.map(e=>`<option value="${e.id}"${equipId===e.id?' selected':''}>${esc(e.tipo+' '+e.marca+' '+e.modelo)}</option>`).join('');
+  const row=document.createElement('div');
+  row.id='oe-'+lid;
+  row.style.cssText='display:flex;gap:6px;align-items:center';
+  row.innerHTML=`<select class="form-control" id="oes-${lid}" style="flex:1"><option value="">Selecione…</option>${opts}</select>
+    <input class="form-control" id="oed-${lid}" style="flex:1" placeholder="Descrição/qtd" value="${esc(desc||'')}">
+    <button type="button" class="btn btn-danger btn-xs" onclick="removeOrcEquip('${lid}')">✕</button>`;
+  document.getElementById('orccli-equip-list').appendChild(row);
+}
+function removeOrcEquip(lid){document.getElementById('oe-'+lid)?.remove();orcEquipLines=orcEquipLines.filter(x=>x!==lid);}
+function toggleOrcParc(){
+  const v=document.getElementById('orccli-pagamento').value;
+  document.getElementById('orccli-parc-group').classList.toggle('hidden',v!=='parcelado');
+}
+function saveOrcamentoCli(){
+  const clienteId=document.getElementById('orccli-cliente').value;
+  if(!clienteId){toast('Selecione um cliente','error');return;}
+  const inicio=document.getElementById('orccli-inicio').value,fim=document.getElementById('orccli-fim').value;
+  if(!inicio||!fim){toast('Informe as datas','error');return;}
+  const valorTotal=Number(document.getElementById('orccli-valor').value);
+  if(!valorTotal){toast('Informe o valor total','error');return;}
+  const pagamento=document.getElementById('orccli-pagamento').value;
+  const numParcelas=pagamento==='parcelado'?Number(document.getElementById('orccli-parcelas').value)||2:1;
+  const equipamentos=orcEquipLines.map(lid=>({equipId:document.getElementById('oes-'+lid)?.value,descricao:document.getElementById('oed-'+lid)?.value})).filter(e=>e.equipId);
+  const item={
+    id:document.getElementById('orccli-id').value||uid(),
+    clienteId,descricao:document.getElementById('orccli-desc').value,
+    inicio,fim,equipamentos,valorTotal,pagamento,numParcelas,
+    status:document.getElementById('orccli-status').value,
+    observacoes:document.getElementById('orccli-obs').value,
+    criado:new Date().toISOString(),
+  };
+  DB.save('orcamentoscli',item);
+  closeModal('modal-orcamentocli');renderOrcamentosCli();toast('Orçamento salvo!','success');
+}
+function delOrcamentoCli(id){if(!confirm('Excluir este orçamento?'))return;DB.del('orcamentoscli',id);renderOrcamentosCli();toast('Excluído.','info');}
+function aprovarOrc(id){
+  const o=DB.one('orcamentoscli',id);if(!o)return;
+  o.status='aprovado';DB.save('orcamentoscli',o);renderOrcamentosCli();
+  toast('Orçamento aprovado! Clique em "→ Locação" para converter.','success');
+}
+function recusarOrc(id){
+  if(!confirm('Marcar como recusado?'))return;
+  const o=DB.one('orcamentoscli',id);if(!o)return;
+  o.status='recusado';DB.save('orcamentoscli',o);renderOrcamentosCli();toast('Orçamento recusado.','info');
+}
+function converterLocacao(id){
+  const o=DB.one('orcamentoscli',id);if(!o)return;
+  // Pre-fill locação modal from orçamento
+  locLines=[];document.getElementById('loc-equip-list').innerHTML='';
+  document.getElementById('mloc-title').textContent='Nova Locação (de Orçamento)';
+  document.getElementById('loc-id').value='';
+  const cliSel=document.getElementById('loc-cliente');
+  DB.get('clientes').forEach(c=>{const op=document.createElement('option');op.value=c.id;op.textContent=c.nome;if(c.id===o.clienteId)op.selected=true;cliSel.appendChild(op);});
+  cliSel.innerHTML=DB.get('clientes').map(c=>`<option value="${c.id}"${c.id===o.clienteId?' selected':''}>${esc(c.nome)}</option>`).join('');
+  document.getElementById('loc-inicio').value=o.inicio||today();
+  document.getElementById('loc-fim').value=o.fim||today();
+  document.getElementById('loc-valor').value=o.valorTotal||'';
+  document.getElementById('loc-pagamento').value=o.pagamento||'avista';
+  document.getElementById('loc-parcelas').value=o.numParcelas||2;
+  document.getElementById('loc-status').value='ativa';
+  document.getElementById('loc-obs').value=o.observacoes||'';
+  toggleParcelas();
+  if(o.equipamentos?.length)o.equipamentos.forEach(eq=>{addLocEquip();document.getElementById('ls-'+locLines[locLines.length-1]).value=eq.equipId;});
+  else addLocEquip();
+  // Mark orçamento as converted
+  o.convertidoEmLocacao=true;DB.save('orcamentoscli',o);
+  closeModal('modal-orcamentocli');
+  openModal('modal-locacao');
+  toast('Preencha a locação e salve!','info');
+}
+
+// ── ORÇAMENTO (METAS) ─────────────────────────────────────────────────────────
 function renderOrcamento(){
   const mes=document.getElementById('orc-mes')?.value||thisMonth();
   const orcs=DB.get('orcamentos').filter(o=>o.mes===mes);
