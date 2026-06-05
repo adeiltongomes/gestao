@@ -474,7 +474,7 @@ tbody tr:hover{background:var(--surface-2)}
         <input type="month" class="form-control" id="fin-mes" style="width:160px" onchange="renderFinanceiro()">
         <button class="btn btn-success" onclick="openModalTransacao('entrada')">+ Entrada</button>
         <button class="btn btn-danger" onclick="openModalTransacao('saida')">+ Saída</button>
-        <button class="btn btn-ghost" onclick="imprimirFinanceiro()">🖨 Imprimir</button>
+        <button class="btn btn-ghost" onclick="abrirModalImpressao()">🖨 Imprimir</button>
       </div>
       <div class="cards-row" id="fin-cards"></div>
       <div class="tabs">
@@ -870,6 +870,61 @@ tbody tr:hover{background:var(--surface-2)}
     <div class="modal-footer">
       <button class="btn btn-ghost" onclick="closeModal('modal-parcelamento')">Cancelar</button>
       <button class="btn btn-primary" onclick="saveParcelamento()">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Imprimir Financeiro -->
+<div class="modal-overlay hidden" id="modal-imprimir-fin">
+  <div class="modal">
+    <div class="modal-hdr"><div class="modal-title">🖨 Imprimir Extrato</div><button class="modal-close" onclick="closeModal('modal-imprimir-fin')">×</button></div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label class="form-label">Período</label>
+        <input class="form-control" id="print-mes" type="month">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Tipo de lançamento</label>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <label style="display:flex;align-items:center;gap:6px;cursor:pointer;padding:8px 14px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;flex:1;justify-content:center" id="lbl-tipo-todas"><input type="radio" name="print-tipo" value="todas" checked onchange="atualizarFiltroImpressao()"> Todas</label>
+          <label style="display:flex;align-items:center;gap:6px;cursor:pointer;padding:8px 14px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;flex:1;justify-content:center" id="lbl-tipo-entrada"><input type="radio" name="print-tipo" value="entrada" onchange="atualizarFiltroImpressao()"> Entradas</label>
+          <label style="display:flex;align-items:center;gap:6px;cursor:pointer;padding:8px 14px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;flex:1;justify-content:center" id="lbl-tipo-saida"><input type="radio" name="print-tipo" value="saida" onchange="atualizarFiltroImpressao()"> Saídas</label>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Categoria <span style="font-weight:400;color:var(--text-dim)">(deixe em branco para todas)</span></label>
+        <select class="form-control" id="print-cat" onchange="atualizarFiltroImpressao()">
+          <option value="">Todas as categorias</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Cliente / Fornecedor <span style="font-weight:400;color:var(--text-dim)">(deixe em branco para todos)</span></label>
+        <input class="form-control" id="print-pessoa" placeholder="Ex: João Silva..." oninput="atualizarFiltroImpressao()">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Status</label>
+        <select class="form-control" id="print-status" onchange="atualizarFiltroImpressao()">
+          <option value="">Todos</option>
+          <option value="pago">Pago / Recebido</option>
+          <option value="pendente">Pendente</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Agrupar por</label>
+        <select class="form-control" id="print-grupo">
+          <option value="nenhum">Sem agrupamento (lista simples)</option>
+          <option value="categoria">Categoria</option>
+          <option value="pessoa">Cliente / Fornecedor</option>
+          <option value="tipo">Tipo (Entrada / Saída)</option>
+        </select>
+      </div>
+      <div id="print-preview" style="padding:10px 14px;background:var(--surface-2);border:1.5px solid var(--border);border-radius:8px;font-size:13px;color:var(--text-mid);text-align:center">
+        Calculando...
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modal-imprimir-fin')">Cancelar</button>
+      <button class="btn btn-primary" onclick="executarImpressaoFin()">🖨 Gerar PDF</button>
     </div>
   </div>
 </div>
@@ -1346,46 +1401,117 @@ function saveTransacao(){
   closeModal('modal-transacao');renderFinanceiro();toast('Salvo!','success');
 }
 function delTransacao(id){if(!confirm('Excluir?'))return;DB.del('transacoes',id);renderFinanceiro();toast('Excluído.','info');}
-function imprimirFinanceiro(){
+function abrirModalImpressao(){
   const mes=document.getElementById('fin-mes')?.value||thisMonth();
-  const mesLabel=new Date(mes+'-15').toLocaleString('pt-BR',{month:'long',year:'numeric'});
+  document.getElementById('print-mes').value=mes;
+  document.getElementById('print-pessoa').value='';
+  document.getElementById('print-status').value='';
+  document.getElementById('print-grupo').value='nenhum';
+  document.querySelectorAll('input[name="print-tipo"]').forEach(r=>{r.checked=r.value==='todas';});
+  // popular categorias com base nas transações do mês
+  const cats=[...new Set(DB.get('transacoes').filter(t=>t.data?.startsWith(mes)).map(t=>t.categoria||'Outros'))].sort();
+  const sel=document.getElementById('print-cat');
+  sel.innerHTML='<option value="">Todas as categorias</option>'+cats.map(c=>`<option value="${c}">${esc(c)}</option>`).join('');
+  atualizarFiltroImpressao();
+  openModal('modal-imprimir-fin');
+}
+function _filtrarTransacoes(){
+  const mes=document.getElementById('print-mes').value||thisMonth();
+  const tipo=document.querySelector('input[name="print-tipo"]:checked')?.value||'todas';
+  const cat=document.getElementById('print-cat').value;
+  const pessoa=(document.getElementById('print-pessoa').value||'').toLowerCase().trim();
+  const status=document.getElementById('print-status').value;
   let lista=DB.get('transacoes').filter(t=>t.data?.startsWith(mes));
-  if(finTab==='entrada')lista=lista.filter(t=>t.tipo==='entrada');
-  else if(finTab==='saida')lista=lista.filter(t=>t.tipo==='saida');
-  lista=[...lista].sort((a,b)=>a.data>b.data?1:-1);
-  const totE=lista.filter(t=>t.tipo==='entrada'&&isPago(t.status)).reduce((s,t)=>s+Number(t.valor||0),0);
-  const totS=lista.filter(t=>t.tipo==='saida'&&isPago(t.status)).reduce((s,t)=>s+Number(t.valor||0),0);
-  const tabLabel=finTab==='entrada'?'Entradas':finTab==='saida'?'Saídas':'Todas as Transações';
-  const catMap={};
-  lista.forEach(t=>{const k=(t.tipo==='entrada'?'📥 ':'📤 ')+(t.categoria||'Outros');if(!catMap[k])catMap[k]=0;catMap[k]+=Number(t.valor||0);});
-  const w=window.open('','_blank','width=900,height=800');
-  w.document.write(_printHead(`Extrato Financeiro — ${mesLabel}`,`Extrato Financeiro · ${mesLabel}`)+`
-  <h1 class="titulo">Extrato Financeiro</h1>
-  <p class="subtitulo">${tabLabel} · ${mesLabel}</p>
-  <div class="resumo">
-    ${finTab!=='saida'?`<div class="res-card green"><div class="res-lbl">Entradas Recebidas</div><div class="res-val">${fmtR(totE)}</div></div>`:''}
-    ${finTab!=='entrada'?`<div class="res-card red"><div class="res-lbl">Saídas Pagas</div><div class="res-val">${fmtR(totS)}</div></div>`:''}
-    ${finTab==='todas'?`<div class="res-card blue"><div class="res-lbl">Saldo</div><div class="res-val">${fmtR(totE-totS)}</div></div>`:''}
-    <div class="res-card"><div class="res-lbl">Lançamentos</div><div class="res-val">${lista.length}</div></div>
-  </div>
-  <div class="sec-titulo">Por Categoria</div>
-  <table><thead><tr><th>Categoria</th><th class="r">Total</th></tr></thead><tbody>
-    ${Object.entries(catMap).sort((a,b)=>b[1]-a[1]).map(([c,v])=>`<tr><td>${esc(c)}</td><td class="r">${fmtR(v)}</td></tr>`).join('')}
-  </tbody></table>
-  <div class="sec-titulo">Lançamentos</div>
-  <table><thead><tr><th>Data</th><th>Descrição / Pessoa</th><th>Categoria</th><th>Tipo</th><th class="r">Valor</th><th>Status</th></tr></thead>
-  <tbody>${lista.map(t=>`<tr>
+  if(tipo!=='todas')lista=lista.filter(t=>t.tipo===tipo);
+  if(cat)lista=lista.filter(t=>(t.categoria||'Outros')===cat);
+  if(pessoa)lista=lista.filter(t=>(t.pessoa||'').toLowerCase().includes(pessoa));
+  if(status==='pago')lista=lista.filter(t=>isPago(t.status));
+  else if(status==='pendente')lista=lista.filter(t=>!isPago(t.status));
+  return lista.sort((a,b)=>a.data>b.data?1:-1);
+}
+function atualizarFiltroImpressao(){
+  const lista=_filtrarTransacoes();
+  const totE=lista.filter(t=>t.tipo==='entrada').reduce((s,t)=>s+Number(t.valor||0),0);
+  const totS=lista.filter(t=>t.tipo==='saida').reduce((s,t)=>s+Number(t.valor||0),0);
+  // atualizar categorias quando tipo muda
+  const mes=document.getElementById('print-mes').value||thisMonth();
+  const tipo=document.querySelector('input[name="print-tipo"]:checked')?.value||'todas';
+  let base=DB.get('transacoes').filter(t=>t.data?.startsWith(mes));
+  if(tipo!=='todas')base=base.filter(t=>t.tipo===tipo);
+  const cats=[...new Set(base.map(t=>t.categoria||'Outros'))].sort();
+  const sel=document.getElementById('print-cat');
+  const curCat=sel.value;
+  sel.innerHTML='<option value="">Todas as categorias</option>'+cats.map(c=>`<option value="${c}"${c===curCat?' selected':''}>${esc(c)}</option>`).join('');
+  const prev=document.getElementById('print-preview');
+  if(!lista.length){prev.innerHTML='<span style="color:var(--red)">Nenhum lançamento encontrado com esses filtros.</span>';return;}
+  prev.innerHTML=`<strong>${lista.length}</strong> lançamento${lista.length!==1?'s':''} encontrado${lista.length!==1?'s':''}
+    ${totE>0?` · Entradas: <strong style="color:#16a34a">${fmtR(totE)}</strong>`:''}
+    ${totS>0?` · Saídas: <strong style="color:#dc2626">${fmtR(totS)}</strong>`:''}
+    ${totE>0&&totS>0?` · Saldo: <strong style="color:${totE-totS>=0?'#16a34a':'#dc2626'}">${fmtR(totE-totS)}</strong>`:''}`;
+}
+function executarImpressaoFin(){
+  const lista=_filtrarTransacoes();
+  if(!lista.length){toast('Nenhum lançamento encontrado com esses filtros.','error');return;}
+  const mes=document.getElementById('print-mes').value||thisMonth();
+  const mesLabel=new Date(mes+'-15').toLocaleString('pt-BR',{month:'long',year:'numeric'});
+  const tipo=document.querySelector('input[name="print-tipo"]:checked')?.value||'todas';
+  const cat=document.getElementById('print-cat').value;
+  const pessoa=document.getElementById('print-pessoa').value.trim();
+  const status=document.getElementById('print-status').value;
+  const grupo=document.getElementById('print-grupo').value;
+  const totE=lista.filter(t=>t.tipo==='entrada').reduce((s,t)=>s+Number(t.valor||0),0);
+  const totS=lista.filter(t=>t.tipo==='saida').reduce((s,t)=>s+Number(t.valor||0),0);
+  const cor=t=>t.tipo==='entrada'?'#16a34a':'#dc2626';
+  const tipoLabel={todas:'Todas as Transações',entrada:'Entradas',saida:'Saídas'}[tipo];
+  const filtrosDesc=[cat?`Categoria: ${cat}`:'',pessoa?`Pessoa: ${pessoa}`:'',status==='pago'?'Status: Pago/Recebido':status==='pendente'?'Status: Pendente':''].filter(Boolean).join(' · ');
+  const mkRow=t=>`<tr>
     <td>${fmtD(t.data)}</td>
     <td>${esc(t.descricao)}${t.pessoa?`<div class="pessoa">👤 ${esc(t.pessoa)}</div>`:''}</td>
     <td>${esc(t.categoria||'—')}</td>
-    <td style="color:${t.tipo==='entrada'?'#16a34a':'#dc2626'};font-weight:600">${t.tipo==='entrada'?'Entrada':'Saída'}</td>
-    <td class="r" style="color:${t.tipo==='entrada'?'#16a34a':'#dc2626'}">${fmtR(t.valor)}</td>
+    ${tipo==='todas'?`<td style="color:${cor(t)};font-weight:600">${t.tipo==='entrada'?'Entrada':'Saída'}</td>`:''}
+    <td class="r" style="color:${cor(t)}">${fmtR(t.valor)}</td>
     <td>${esc(fmtStatus(t.status))}</td>
-  </tr>`).join('')}</tbody>
-  ${finTab==='todas'?`<tfoot><tr><td colspan="4">Entradas recebidas</td><td class="r" style="color:#16a34a">${fmtR(totE)}</td><td></td></tr>
-    <tr><td colspan="4">Saídas pagas</td><td class="r" style="color:#dc2626">${fmtR(totS)}</td><td></td></tr>
-    <tr><td colspan="4"><strong>Saldo</strong></td><td class="r" style="color:${totE-totS>=0?'#16a34a':'#dc2626'}"><strong>${fmtR(totE-totS)}</strong></td><td></td></tr></tfoot>`:''}
-  </table>
+  </tr>`;
+  const thTipo=tipo==='todas'?'<th>Tipo</th>':'';
+  const mkTable=(rows,totais)=>`<table><thead><tr><th>Data</th><th>Descrição</th><th>Categoria</th>${thTipo}<th class="r">Valor</th><th>Status</th></tr></thead>
+    <tbody>${rows.map(mkRow).join('')}</tbody>
+    <tfoot>${totais}</tfoot></table>`;
+  const mkTotais=(itens)=>{
+    const e=itens.filter(t=>t.tipo==='entrada').reduce((s,t)=>s+Number(t.valor||0),0);
+    const s=itens.filter(t=>t.tipo==='saida').reduce((s,t)=>s+Number(t.valor||0),0);
+    const cols=tipo==='todas'?6:5;
+    return(e>0?`<tr><td colspan="${cols-1}">Total Entradas</td><td class="r" style="color:#16a34a">${fmtR(e)}</td></tr>`:'')+
+           (s>0?`<tr><td colspan="${cols-1}">Total Saídas</td><td class="r" style="color:#dc2626">${fmtR(s)}</td></tr>`:'')+
+           (e>0&&s>0?`<tr><td colspan="${cols-1}"><strong>Saldo</strong></td><td class="r" style="color:${e-s>=0?'#16a34a':'#dc2626'}"><strong>${fmtR(e-s)}</strong></td></tr>`:'');
+  };
+  let corpo='';
+  if(grupo==='categoria'){
+    const map={};lista.forEach(t=>{const k=t.categoria||'Outros';if(!map[k])map[k]=[];map[k].push(t);});
+    corpo=Object.entries(map).sort((a,b)=>a[0].localeCompare(b[0])).map(([c,itens])=>
+      `<div class="sec-titulo">${esc(c)}</div>${mkTable(itens,mkTotais(itens))}`).join('');
+  }else if(grupo==='pessoa'){
+    const map={};lista.forEach(t=>{const k=t.pessoa||'(sem pessoa)';if(!map[k])map[k]=[];map[k].push(t);});
+    corpo=Object.entries(map).sort((a,b)=>a[0].localeCompare(b[0])).map(([p,itens])=>
+      `<div class="sec-titulo">👤 ${esc(p)}</div>${mkTable(itens,mkTotais(itens))}`).join('');
+  }else if(grupo==='tipo'){
+    const ents=lista.filter(t=>t.tipo==='entrada');
+    const sais=lista.filter(t=>t.tipo==='saida');
+    corpo=(ents.length?`<div class="sec-titulo">📥 Entradas</div>${mkTable(ents,mkTotais(ents))}`:'')+
+          (sais.length?`<div class="sec-titulo">📤 Saídas</div>${mkTable(sais,mkTotais(sais))}` :'');
+  }else{
+    corpo=mkTable(lista,mkTotais(lista));
+  }
+  const w=window.open('','_blank','width=960,height=850');
+  w.document.write(_printHead(`Extrato — ${mesLabel}`,`Extrato Financeiro · ${mesLabel}`)+`
+  <h1 class="titulo">Extrato Financeiro — ${tipoLabel}</h1>
+  <p class="subtitulo">${mesLabel}${filtrosDesc?' · '+filtrosDesc:''}</p>
+  <div class="resumo">
+    ${totE>0?`<div class="res-card green"><div class="res-lbl">Total Entradas</div><div class="res-val">${fmtR(totE)}</div></div>`:''}
+    ${totS>0?`<div class="res-card red"><div class="res-lbl">Total Saídas</div><div class="res-val">${fmtR(totS)}</div></div>`:''}
+    ${totE>0&&totS>0?`<div class="res-card blue"><div class="res-lbl">Saldo</div><div class="res-val">${fmtR(totE-totS)}</div></div>`:''}
+    <div class="res-card"><div class="res-lbl">Lançamentos</div><div class="res-val">${lista.length}</div></div>
+  </div>
+  ${corpo}
   <div class="ft"><span>AccertTech — Sistema de Gestão</span><span>Impresso em ${new Date().toLocaleDateString('pt-BR')}</span></div>
   <div class="no-print"><button class="btn-p" onclick="window.print()">🖨 Imprimir / Salvar PDF</button></div>
   </body></html>`);
