@@ -766,6 +766,22 @@ tbody tr:hover{background:var(--surface-2)}
         Serão criados <strong id="trans-parc-qtd">2</strong> lançamentos mensais com status <strong>Pendente</strong>. Marque cada um como pago conforme for recebendo/pagando.
       </div>
       <div class="form-group"><label class="form-label">Observações</label><textarea class="form-control" id="trans-obs" rows="2"></textarea></div>
+      <div class="form-group">
+        <label class="form-label">Comprovante</label>
+        <div id="trans-comp-preview" style="display:none;margin-bottom:8px;position:relative">
+          <div style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--surface-2);border:1.5px solid var(--border);border-radius:8px">
+            <span id="trans-comp-icon" style="font-size:22px">📄</span>
+            <span id="trans-comp-nome" style="flex:1;font-size:13px;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis"></span>
+            <button type="button" onclick="verComprovantePreview()" class="btn btn-ghost btn-xs" style="flex-shrink:0">👁 Ver</button>
+            <button type="button" onclick="removeComprovante()" class="btn btn-danger btn-xs" style="flex-shrink:0">✕ Remover</button>
+          </div>
+        </div>
+        <label id="trans-comp-label" for="trans-comp-input" style="display:flex;align-items:center;gap:10px;padding:12px 14px;background:var(--surface-2);border:1.5px dashed var(--border);border-radius:8px;cursor:pointer;font-size:13px;color:var(--text-mid);transition:border-color .2s" onmouseover="this.style.borderColor='var(--blue)'" onmouseout="this.style.borderColor='var(--border)'">
+          <span style="font-size:20px">📎</span>
+          <span>Clique para anexar comprovante <span style="font-size:11px">(imagem ou PDF, máx. 5 MB)</span></span>
+          <input type="file" id="trans-comp-input" accept="image/*,.pdf" style="display:none" onchange="loadComprovante(this)">
+        </label>
+      </div>
     </div>
     <div class="modal-footer">
       <button class="btn btn-ghost" onclick="closeModal('modal-transacao')">Cancelar</button>
@@ -1219,6 +1235,7 @@ function addCat(type,selId){
 const CATS_E=CATS_DEF_E;
 const CATS_S=CATS_DEF_S;
 let finTab='todas';
+let transComprovante=null;
 function setFinTab(t){finTab=t;document.querySelectorAll('#view-financeiro .tab').forEach((el,i)=>el.classList.toggle('active',['todas','entrada','saida'][i]===t));renderFinanceiro();}
 function renderFinanceiro(){
   const mes=document.getElementById('fin-mes')?.value||thisMonth();
@@ -1240,6 +1257,7 @@ function renderFinanceiro(){
     <td><strong style="color:${t.tipo==='entrada'?'var(--green)':'var(--red)'}">${fmtR(t.valor)}</strong></td>
     <td><span class="badge ${isPago(t.status)?'badge-green':'badge-orange'}">${fmtStatus(t.status)}</span></td>
     <td><div class="td-actions">${!isPago(t.status)?`<button class="btn btn-success btn-xs" onclick="marcarPago('${t.id}')" title="${t.tipo==='entrada'?'Marcar como Recebido':'Marcar como Pago'}">✓</button>`:''}
+    ${t.comprovante?`<button class="btn btn-ghost btn-xs" onclick="verComprovante('${t.id}')" title="Ver comprovante">📎</button>`:''}
     <button class="btn btn-ghost btn-xs" onclick="openModalTransacao('${t.tipo}','${t.id}')">✏</button><button class="btn btn-danger btn-xs" onclick="delTransacao('${t.id}')">✕</button></div></td></tr>`)
     .join(''):`<tr><td colspan="7"><div class="empty"><div class="empty-icon">💰</div><h3>Nenhuma transação neste mês</h3></div></td></tr>`;
 }
@@ -1263,6 +1281,18 @@ function openModalTransacao(tipo,id){
   document.getElementById('trans-nparc').value=1;
   document.getElementById('trans-parc-info').style.display='none';
   document.getElementById('trans-status-group').style.display='block';
+  // comprovante
+  transComprovante=t.comprovante||null;
+  document.getElementById('trans-comp-input').value='';
+  if(transComprovante){
+    document.getElementById('trans-comp-icon').textContent=transComprovante.tipo==='pdf'?'📄':'🖼';
+    document.getElementById('trans-comp-nome').textContent=transComprovante.nome||'Comprovante';
+    document.getElementById('trans-comp-preview').style.display='block';
+    document.getElementById('trans-comp-label').style.display='none';
+  }else{
+    document.getElementById('trans-comp-preview').style.display='none';
+    document.getElementById('trans-comp-label').style.display='flex';
+  }
   openModal('modal-transacao');
 }
 function saveTransacao(){
@@ -1301,10 +1331,49 @@ function saveTransacao(){
     valor:Number(valor),data:dataBase,
     status:document.getElementById('trans-status').value,
     observacoes:obs,
+    comprovante:transComprovante||undefined,
   });
   closeModal('modal-transacao');renderFinanceiro();toast('Salvo!','success');
 }
 function delTransacao(id){if(!confirm('Excluir?'))return;DB.del('transacoes',id);renderFinanceiro();toast('Excluído.','info');}
+function loadComprovante(input){
+  const file=input.files[0];if(!file)return;
+  if(file.size>5*1024*1024){toast('Arquivo muito grande. Máx. 5 MB.','error');input.value='';return;}
+  const isPdf=file.type==='application/pdf';
+  const reader=new FileReader();
+  reader.onload=e=>{
+    transComprovante={data:e.target.result,nome:file.name,tipo:isPdf?'pdf':'img'};
+    document.getElementById('trans-comp-icon').textContent=isPdf?'📄':'🖼';
+    document.getElementById('trans-comp-nome').textContent=file.name;
+    document.getElementById('trans-comp-preview').style.display='block';
+    document.getElementById('trans-comp-label').style.display='none';
+  };
+  reader.readAsDataURL(file);
+}
+function removeComprovante(){
+  transComprovante=null;
+  document.getElementById('trans-comp-input').value='';
+  document.getElementById('trans-comp-preview').style.display='none';
+  document.getElementById('trans-comp-label').style.display='flex';
+}
+function verComprovantePreview(){
+  if(!transComprovante)return;
+  _abrirComprovante(transComprovante);
+}
+function verComprovante(id){
+  const t=DB.one('transacoes',id);
+  if(!t?.comprovante){toast('Sem comprovante anexado.','info');return;}
+  _abrirComprovante(t.comprovante);
+}
+function _abrirComprovante(comp){
+  const w=window.open('','_blank');
+  if(comp.tipo==='pdf'){
+    w.document.write(`<!DOCTYPE html><html><head><title>${comp.nome||'Comprovante'}</title><style>*{margin:0;padding:0}body{background:#1e1e1e;height:100vh;display:flex;flex-direction:column}iframe{flex:1;border:none}</style></head><body><iframe src="${comp.data}"></iframe></body></html>`);
+  }else{
+    w.document.write(`<!DOCTYPE html><html><head><title>${comp.nome||'Comprovante'}</title><style>*{margin:0;padding:0;box-sizing:border-box}body{background:#1e1e1e;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}img{max-width:100%;max-height:95vh;border-radius:8px;box-shadow:0 8px 40px rgba(0,0,0,.6)}</style></head><body><img src="${comp.data}" alt="${comp.nome||'Comprovante'}"></body></html>`);
+  }
+  w.document.close();
+}
 function marcarPago(id){
   const t=DB.one('transacoes',id);if(!t)return;
   t.status=t.tipo==='entrada'?'recebido':'pago';
