@@ -1405,7 +1405,6 @@ function abrirModalImpressao(){
   const mes=document.getElementById('fin-mes')?.value||thisMonth();
   document.getElementById('print-mes').value=mes;
   document.getElementById('print-pessoa').value='';
-  document.getElementById('print-status').value='';
   document.getElementById('print-grupo').value='nenhum';
   document.querySelectorAll('input[name="print-tipo"]').forEach(r=>{r.checked=r.value==='todas';});
   // popular categorias com base nas transações do mês
@@ -1442,6 +1441,12 @@ function atualizarFiltroImpressao(){
   const sel=document.getElementById('print-cat');
   const curCat=sel.value;
   sel.innerHTML='<option value="">Todas as categorias</option>'+cats.map(c=>`<option value="${c}"${c===curCat?' selected':''}>${esc(c)}</option>`).join('');
+  // ajustar label do status conforme o tipo
+  const sSel=document.getElementById('print-status');
+  const curStatus=sSel.value;
+  const labelPago=tipo==='saida'?'Pago':tipo==='entrada'?'Recebido':'Pago / Recebido';
+  sSel.innerHTML=`<option value="">Todos</option><option value="pago">${labelPago}</option><option value="pendente">Pendente</option>`;
+  if(curStatus)sSel.value=curStatus;
   const prev=document.getElementById('print-preview');
   if(!lista.length){prev.innerHTML='<span style="color:var(--red)">Nenhum lançamento encontrado com esses filtros.</span>';return;}
   prev.innerHTML=`<strong>${lista.length}</strong> lançamento${lista.length!==1?'s':''} encontrado${lista.length!==1?'s':''}
