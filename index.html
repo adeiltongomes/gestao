@@ -538,6 +538,7 @@ tbody tr:hover{background:var(--surface-2)}
       <div class="sec-hdr">
         <div class="sec-title">Relatórios</div>
         <input type="month" class="form-control" id="rel-mes" style="width:160px" onchange="renderRelatorios()">
+        <button class="btn btn-ghost" onclick="imprimirRelatorio()">🖨 Imprimir Relatório</button>
       </div>
       <div id="rel-content"></div>
     </div>
@@ -749,6 +750,10 @@ tbody tr:hover{background:var(--surface-2)}
       <div class="form-row">
         <div class="form-group"><label class="form-label">Valor (R$) *</label><input class="form-control" id="trans-valor" type="number" step="0.01" placeholder="0,00"></div>
         <div class="form-group"><label class="form-label">Data</label><input class="form-control" id="trans-data" type="date"></div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Cliente / Fornecedor <span style="font-weight:400;color:var(--text-dim)">(de quem recebeu ou para quem pagou)</span></label>
+        <input class="form-control" id="trans-pessoa" placeholder="Ex: João Silva, Fornecedor ABC...">
       </div>
       <div class="form-row">
         <div class="form-group"><label class="form-label">Em quantas vezes?</label>
@@ -1252,7 +1257,7 @@ function renderFinanceiro(){
   let lista=finTab==='entrada'?ents:finTab==='saida'?sais:trans;
   lista=[...lista].sort((a,b)=>b.data>a.data?1:-1);
   document.getElementById('tb-financeiro').innerHTML=lista.length?lista.map(t=>`
-    <tr><td>${fmtD(t.data)}</td><td>${esc(t.descricao)}</td><td><span class="badge badge-gray">${esc(t.categoria||'—')}</span></td>
+    <tr><td>${fmtD(t.data)}</td><td>${esc(t.descricao)}${t.pessoa?`<div style="font-size:11px;color:var(--text-mid);margin-top:2px">👤 ${esc(t.pessoa)}</div>`:''}</td><td><span class="badge badge-gray">${esc(t.categoria||'—')}</span></td>
     <td><span class="badge ${t.tipo==='entrada'?'badge-green':'badge-red'}">${t.tipo==='entrada'?'Entrada':'Saída'}</span></td>
     <td><strong style="color:${t.tipo==='entrada'?'var(--green)':'var(--red)'}">${fmtR(t.valor)}</strong></td>
     <td><span class="badge ${isPago(t.status)?'badge-green':'badge-orange'}">${fmtStatus(t.status)}</span></td>
@@ -1277,6 +1282,7 @@ function openModalTransacao(tipo,id){
   document.getElementById('trans-valor').value=t.valor||'';
   document.getElementById('trans-data').value=t.data||today();
   document.getElementById('trans-status').value=t.status||(tp==='entrada'?'recebido':'pago');
+  document.getElementById('trans-pessoa').value=t.pessoa||'';
   document.getElementById('trans-obs').value=t.observacoes||'';
   document.getElementById('trans-nparc').value=1;
   document.getElementById('trans-parc-info').style.display='none';
@@ -1302,6 +1308,7 @@ function saveTransacao(){
   const tipo=document.getElementById('trans-tipo').value;
   const n=Number(document.getElementById('trans-nparc').value)||1;
   const cat=document.getElementById('trans-cat').value;
+  const pessoa=document.getElementById('trans-pessoa').value.trim();
   const obs=document.getElementById('trans-obs').value;
   const dataBase=document.getElementById('trans-data').value||today();
   const grupoId=uid();
@@ -1316,6 +1323,7 @@ function saveTransacao(){
         valor:vlParcela,
         data:d.toISOString().slice(0,10),
         status:'pendente',
+        pessoa:pessoa||undefined,
         observacoes:obs,
         grupoId,
       });
@@ -1330,6 +1338,7 @@ function saveTransacao(){
     tipo,categoria:cat,descricao:desc,
     valor:Number(valor),data:dataBase,
     status:document.getElementById('trans-status').value,
+    pessoa:pessoa||undefined,
     observacoes:obs,
     comprovante:transComprovante||undefined,
   });
@@ -1605,13 +1614,15 @@ function renderRelatorios(){
   const topEq=Object.entries(eqCnt).sort((a,b)=>b[1]-a[1]).slice(0,5).map(([id,n])=>{const e=equips.find(x=>x.id===id);return{nome:e?`${e.tipo} ${e.marca} ${e.modelo}`.trim():'?',n};});
   const cliCnt={};locs.forEach(l=>{cliCnt[l.clienteId]=(cliCnt[l.clienteId]||0)+1;});
   const topCli=Object.entries(cliCnt).sort((a,b)=>b[1]-a[1]).slice(0,5).map(([id,n])=>{const c=clis.find(x=>x.id===id);return{nome:c?.nome||'?',n};});
+  const mesLabel=new Date(mes+'-15').toLocaleString('pt-BR',{month:'long',year:'numeric'});
+  const mkCatRows=(entries,cor)=>entries.sort((a,b)=>b[1]-a[1]).map(([c,v])=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--border);font-size:13px"><span style="color:var(--text-mid)">${esc(c)}</span><strong style="color:${cor}">${fmtR(v)}</strong></div>`).join('');
   document.getElementById('rel-content').innerHTML=`<div class="rel-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
-    <div class="card"><div class="dash-panel-title">📥 Entradas por Categoria</div>
-      ${Object.entries(catE).sort((a,b)=>b[1]-a[1]).map(([c,v])=>`<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border);font-size:13px"><span style="color:var(--text-mid)">${esc(c)}</span><strong style="color:var(--green)">${fmtR(v)}</strong></div>`).join('')||'<p style="color:var(--text-dim);font-size:13px;padding:12px 0">Nenhuma entrada</p>'}
+    <div class="card"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px"><span class="dash-panel-title" style="margin:0">📥 Entradas por Categoria</span><button class="btn btn-ghost btn-xs" onclick="imprimirCategoria('entrada','${mes}')">🖨 Imprimir</button></div>
+      ${mkCatRows(Object.entries(catE),'var(--green)')||'<p style="color:var(--text-dim);font-size:13px;padding:12px 0">Nenhuma entrada</p>'}
       <div style="display:flex;justify-content:space-between;padding:8px 0;font-weight:700"><span>Total</span><span style="color:var(--green)">${fmtR(totE)}</span></div>
     </div>
-    <div class="card"><div class="dash-panel-title">📤 Saídas por Categoria</div>
-      ${Object.entries(catS).sort((a,b)=>b[1]-a[1]).map(([c,v])=>`<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border);font-size:13px"><span style="color:var(--text-mid)">${esc(c)}</span><strong style="color:var(--red)">${fmtR(v)}</strong></div>`).join('')||'<p style="color:var(--text-dim);font-size:13px;padding:12px 0">Nenhuma saída</p>'}
+    <div class="card"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px"><span class="dash-panel-title" style="margin:0">📤 Saídas por Categoria</span><button class="btn btn-ghost btn-xs" onclick="imprimirCategoria('saida','${mes}')">🖨 Imprimir</button></div>
+      ${mkCatRows(Object.entries(catS),'var(--red)')||'<p style="color:var(--text-dim);font-size:13px;padding:12px 0">Nenhuma saída</p>'}
       <div style="display:flex;justify-content:space-between;padding:8px 0;font-weight:700"><span>Total</span><span style="color:var(--red)">${fmtR(totS)}</span></div>
     </div>
     <div class="card"><div class="dash-panel-title">💻 Equipamentos Mais Locados</div>
@@ -1620,7 +1631,7 @@ function renderRelatorios(){
     <div class="card"><div class="dash-panel-title">👥 Clientes com Mais Locações</div>
       ${topCli.map((c,i)=>`<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border);font-size:13px"><span style="color:var(--text-mid)">${i+1}. ${esc(c.nome)}</span><strong>${c.n} loc.</strong></div>`).join('')||'<p style="color:var(--text-dim);font-size:13px;padding:12px 0">Nenhuma locação</p>'}
     </div>
-    <div class="card" style="grid-column:1/-1"><div class="dash-panel-title">💹 Resumo do Mês — ${new Date(mes+'-15').toLocaleString('pt-BR',{month:'long',year:'numeric'})}</div>
+    <div class="card" style="grid-column:1/-1"><div class="dash-panel-title">💹 Resumo do Mês — ${mesLabel}</div>
       <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px">
         <div><div style="font-size:11px;color:var(--text-mid);margin-bottom:4px">RECEITA</div><div style="font-size:22px;font-weight:700;color:var(--green)">${fmtR(totE)}</div></div>
         <div><div style="font-size:11px;color:var(--text-mid);margin-bottom:4px">DESPESA</div><div style="font-size:22px;font-weight:700;color:var(--red)">${fmtR(totS)}</div></div>
@@ -1629,6 +1640,109 @@ function renderRelatorios(){
       </div>
     </div>
   </div>`;
+}
+
+function _printHead(titulo,subtitulo){
+  const emp=DB.get('empresa')||DB.get('empresas')?.[0]||{};
+  const nomeEmp=emp.nome||emp.fantasia||'AccertTech';
+  return`<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><title>${titulo}</title>
+  <style>
+    @page{size:A4;margin:14mm 16mm}
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:Arial,Helvetica,sans-serif;font-size:13px;color:#0f172a;background:#fff}
+    .hd{background:#1e40af;color:#fff;padding:12px 18px;display:flex;justify-content:space-between;align-items:center;border-radius:6px 6px 0 0;margin-bottom:0}
+    .hd-emp{font-size:14px;font-weight:700}.hd-sub{font-size:11px;opacity:.8}
+    .hd-date{font-size:11px;opacity:.8;text-align:right}
+    .acento{height:4px;background:linear-gradient(90deg,#3b82f6,#60a5fa);margin-bottom:18px}
+    .titulo{font-size:22px;font-weight:700;color:#1e40af;margin-bottom:4px}
+    .subtitulo{font-size:13px;color:#64748b;margin-bottom:18px}
+    table{width:100%;border-collapse:collapse;margin-bottom:16px}
+    thead th{background:#1e3a8a;color:#fff;padding:7px 10px;font-size:11px;text-transform:uppercase;letter-spacing:.6px;text-align:left}
+    thead th.r{text-align:right}
+    tbody tr:nth-child(even) td{background:#f8fafc}
+    tbody td{padding:7px 10px;border-bottom:1px solid #e2e8f0;font-size:12.5px;vertical-align:middle}
+    tbody td.r{text-align:right;font-weight:700}
+    tbody td.pessoa{font-size:11px;color:#64748b}
+    tfoot td{padding:8px 10px;font-weight:700;font-size:13px;border-top:2px solid #1e3a8a}
+    tfoot td.r{text-align:right}
+    .resumo{display:flex;gap:12px;margin-bottom:18px;flex-wrap:wrap}
+    .res-card{flex:1;min-width:120px;border:1.5px solid #e2e8f0;border-radius:8px;padding:10px 14px}
+    .res-lbl{font-size:10px;text-transform:uppercase;letter-spacing:.7px;color:#64748b;margin-bottom:4px}
+    .res-val{font-size:20px;font-weight:700}
+    .res-card.green .res-val{color:#16a34a}.res-card.red .res-val{color:#dc2626}.res-card.blue .res-val{color:#2563eb}
+    .sec-titulo{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#1e40af;margin:18px 0 8px;border-bottom:2px solid #bfdbfe;padding-bottom:4px}
+    .ft{margin-top:20px;padding-top:10px;border-top:1px solid #e2e8f0;display:flex;justify-content:space-between;font-size:10px;color:#94a3b8}
+    .no-print{text-align:center;margin:20px 0}
+    .btn-p{padding:10px 28px;background:#1e40af;color:#fff;border:none;border-radius:7px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit}
+    @media print{.no-print{display:none}body{font-size:12px}}
+  </style></head><body>
+  <div class="hd"><div><div class="hd-emp">${nomeEmp}</div><div class="hd-sub">${subtitulo}</div></div><div class="hd-date">Gerado em ${new Date().toLocaleDateString('pt-BR',{day:'2-digit',month:'long',year:'numeric'})}</div></div>
+  <div class="acento"></div>`;
+}
+
+function imprimirRelatorio(){
+  const mes=document.getElementById('rel-mes')?.value||thisMonth();
+  const mesLabel=new Date(mes+'-15').toLocaleString('pt-BR',{month:'long',year:'numeric'});
+  const trans=DB.get('transacoes').filter(t=>t.data?.startsWith(mes));
+  const ents=trans.filter(t=>t.tipo==='entrada'&&isPago(t.status));
+  const sais=trans.filter(t=>t.tipo==='saida'&&isPago(t.status));
+  const totE=ents.reduce((s,t)=>s+Number(t.valor||0),0);
+  const totS=sais.reduce((s,t)=>s+Number(t.valor||0),0);
+  const catE={};ents.forEach(t=>{catE[t.categoria||'Outros']=(catE[t.categoria||'Outros']||0)+Number(t.valor||0);});
+  const catS={};sais.forEach(t=>{catS[t.categoria||'Outros']=(catS[t.categoria||'Outros']||0)+Number(t.valor||0);});
+  const mkRows=(lista,cor)=>lista.sort((a,b)=>a.data>b.data?1:-1).map((t,i)=>`<tr><td>${fmtD(t.data)}</td><td>${esc(t.descricao)}${t.pessoa?`<div class="pessoa">👤 ${esc(t.pessoa)}</div>`:''}</td><td>${esc(t.categoria||'—')}</td><td class="r" style="color:${cor}">${fmtR(t.valor)}</td><td>${esc(fmtStatus(t.status))}</td></tr>`).join('');
+  const mkCatRows=(catObj,cor)=>Object.entries(catObj).sort((a,b)=>b[1]-a[1]).map(([c,v])=>`<tr><td>${esc(c)}</td><td class="r" style="color:${cor}">${fmtR(v)}</td></tr>`).join('');
+  const w=window.open('','_blank','width=900,height=800');
+  w.document.write(_printHead(`Relatório Financeiro — ${mesLabel}`,`Relatório Financeiro · ${mesLabel}`)+`
+  <h1 class="titulo">Relatório Financeiro</h1>
+  <p class="subtitulo">${mesLabel}</p>
+  <div class="resumo">
+    <div class="res-card green"><div class="res-lbl">Receitas</div><div class="res-val">${fmtR(totE)}</div></div>
+    <div class="res-card red"><div class="res-lbl">Despesas</div><div class="res-val">${fmtR(totS)}</div></div>
+    <div class="res-card blue"><div class="res-lbl">Saldo</div><div class="res-val">${fmtR(totE-totS)}</div></div>
+    <div class="res-card"><div class="res-lbl">Lançamentos</div><div class="res-val">${trans.length}</div></div>
+  </div>
+  <div class="sec-titulo">📥 Entradas por Categoria</div>
+  <table><thead><tr><th>Categoria</th><th class="r">Total</th></tr></thead><tbody>${mkCatRows(catE,'#16a34a')}</tbody>
+    <tfoot><tr><td>Total Entradas</td><td class="r" style="color:#16a34a">${fmtR(totE)}</td></tr></tfoot></table>
+  <div class="sec-titulo">📤 Saídas por Categoria</div>
+  <table><thead><tr><th>Categoria</th><th class="r">Total</th></tr></thead><tbody>${mkCatRows(catS,'#dc2626')}</tbody>
+    <tfoot><tr><td>Total Saídas</td><td class="r" style="color:#dc2626">${fmtR(totS)}</td></tr></tfoot></table>
+  ${ents.length?`<div class="sec-titulo">📋 Detalhamento de Entradas</div>
+  <table><thead><tr><th>Data</th><th>Descrição</th><th>Categoria</th><th class="r">Valor</th><th>Status</th></tr></thead><tbody>${mkRows(ents,'#16a34a')}</tbody>
+    <tfoot><tr><td colspan="3">Total</td><td class="r" style="color:#16a34a">${fmtR(totE)}</td><td></td></tr></tfoot></table>`:''}
+  ${sais.length?`<div class="sec-titulo">📋 Detalhamento de Saídas</div>
+  <table><thead><tr><th>Data</th><th>Descrição</th><th>Categoria</th><th class="r">Valor</th><th>Status</th></tr></thead><tbody>${mkRows(sais,'#dc2626')}</tbody>
+    <tfoot><tr><td colspan="3">Total</td><td class="r" style="color:#dc2626">${fmtR(totS)}</td><td></td></tr></tfoot></table>`:''}
+  <div class="ft"><span>AccertTech — Sistema de Gestão</span><span>Impresso em ${new Date().toLocaleDateString('pt-BR')}</span></div>
+  <div class="no-print"><button class="btn-p" onclick="window.print()">🖨 Imprimir / Salvar PDF</button></div>
+  </body></html>`);
+  w.document.close();
+}
+
+function imprimirCategoria(tipo,mes){
+  const mesLabel=new Date(mes+'-15').toLocaleString('pt-BR',{month:'long',year:'numeric'});
+  const trans=DB.get('transacoes').filter(t=>t.data?.startsWith(mes)&&t.tipo===tipo&&isPago(t.status));
+  const catMap={};trans.forEach(t=>{const k=t.categoria||'Outros';if(!catMap[k])catMap[k]=[];catMap[k].push(t);});
+  const total=trans.reduce((s,t)=>s+Number(t.valor||0),0);
+  const cor=tipo==='entrada'?'#16a34a':'#dc2626';
+  const titulo=tipo==='entrada'?'Entradas por Categoria':'Saídas por Categoria';
+  const w=window.open('','_blank','width=900,height=800');
+  w.document.write(_printHead(`${titulo} — ${mesLabel}`,`${titulo} · ${mesLabel}`)+`
+  <h1 class="titulo">${tipo==='entrada'?'📥':'📤'} ${titulo}</h1>
+  <p class="subtitulo">${mesLabel}</p>
+  ${Object.entries(catMap).sort((a,b)=>b[1].reduce((s,t)=>s+Number(t.valor||0),0)-a[1].reduce((s,t)=>s+Number(t.valor||0),0)).map(([cat,itens])=>{
+    const totCat=itens.reduce((s,t)=>s+Number(t.valor||0),0);
+    return`<div class="sec-titulo">${esc(cat)} — <span style="color:${cor}">${fmtR(totCat)}</span></div>
+    <table><thead><tr><th>Data</th><th>Descrição</th><th class="r">Valor</th><th>Status</th></tr></thead>
+    <tbody>${itens.sort((a,b)=>a.data>b.data?1:-1).map(t=>`<tr><td>${fmtD(t.data)}</td><td>${esc(t.descricao)}${t.pessoa?`<div class="pessoa">👤 ${esc(t.pessoa)}</div>`:''}</td><td class="r" style="color:${cor}">${fmtR(t.valor)}</td><td>${esc(fmtStatus(t.status))}</td></tr>`).join('')}</tbody>
+    <tfoot><tr><td colspan="2">Subtotal — ${esc(cat)}</td><td class="r" style="color:${cor}">${fmtR(totCat)}</td><td></td></tr></tfoot></table>`;
+  }).join('')}
+  <div style="display:flex;justify-content:space-between;padding:10px 0;font-size:15px;font-weight:700;border-top:2px solid #1e3a8a;margin-top:8px"><span>TOTAL GERAL</span><span style="color:${cor}">${fmtR(total)}</span></div>
+  <div class="ft"><span>AccertTech — Sistema de Gestão</span><span>Impresso em ${new Date().toLocaleDateString('pt-BR')}</span></div>
+  <div class="no-print"><button class="btn-p" onclick="window.print()">🖨 Imprimir / Salvar PDF</button></div>
+  </body></html>`);
+  w.document.close();
 }
 
 // ── INIT ──────────────────────────────────────────────────────────────────────
