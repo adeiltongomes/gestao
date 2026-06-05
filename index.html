@@ -474,6 +474,7 @@ tbody tr:hover{background:var(--surface-2)}
         <input type="month" class="form-control" id="fin-mes" style="width:160px" onchange="renderFinanceiro()">
         <button class="btn btn-success" onclick="openModalTransacao('entrada')">+ Entrada</button>
         <button class="btn btn-danger" onclick="openModalTransacao('saida')">+ Saída</button>
+        <button class="btn btn-ghost" onclick="imprimirFinanceiro()">🖨 Imprimir</button>
       </div>
       <div class="cards-row" id="fin-cards"></div>
       <div class="tabs">
@@ -1345,6 +1346,51 @@ function saveTransacao(){
   closeModal('modal-transacao');renderFinanceiro();toast('Salvo!','success');
 }
 function delTransacao(id){if(!confirm('Excluir?'))return;DB.del('transacoes',id);renderFinanceiro();toast('Excluído.','info');}
+function imprimirFinanceiro(){
+  const mes=document.getElementById('fin-mes')?.value||thisMonth();
+  const mesLabel=new Date(mes+'-15').toLocaleString('pt-BR',{month:'long',year:'numeric'});
+  let lista=DB.get('transacoes').filter(t=>t.data?.startsWith(mes));
+  if(finTab==='entrada')lista=lista.filter(t=>t.tipo==='entrada');
+  else if(finTab==='saida')lista=lista.filter(t=>t.tipo==='saida');
+  lista=[...lista].sort((a,b)=>a.data>b.data?1:-1);
+  const totE=lista.filter(t=>t.tipo==='entrada'&&isPago(t.status)).reduce((s,t)=>s+Number(t.valor||0),0);
+  const totS=lista.filter(t=>t.tipo==='saida'&&isPago(t.status)).reduce((s,t)=>s+Number(t.valor||0),0);
+  const tabLabel=finTab==='entrada'?'Entradas':finTab==='saida'?'Saídas':'Todas as Transações';
+  const catMap={};
+  lista.forEach(t=>{const k=(t.tipo==='entrada'?'📥 ':'📤 ')+(t.categoria||'Outros');if(!catMap[k])catMap[k]=0;catMap[k]+=Number(t.valor||0);});
+  const w=window.open('','_blank','width=900,height=800');
+  w.document.write(_printHead(`Extrato Financeiro — ${mesLabel}`,`Extrato Financeiro · ${mesLabel}`)+`
+  <h1 class="titulo">Extrato Financeiro</h1>
+  <p class="subtitulo">${tabLabel} · ${mesLabel}</p>
+  <div class="resumo">
+    ${finTab!=='saida'?`<div class="res-card green"><div class="res-lbl">Entradas Recebidas</div><div class="res-val">${fmtR(totE)}</div></div>`:''}
+    ${finTab!=='entrada'?`<div class="res-card red"><div class="res-lbl">Saídas Pagas</div><div class="res-val">${fmtR(totS)}</div></div>`:''}
+    ${finTab==='todas'?`<div class="res-card blue"><div class="res-lbl">Saldo</div><div class="res-val">${fmtR(totE-totS)}</div></div>`:''}
+    <div class="res-card"><div class="res-lbl">Lançamentos</div><div class="res-val">${lista.length}</div></div>
+  </div>
+  <div class="sec-titulo">Por Categoria</div>
+  <table><thead><tr><th>Categoria</th><th class="r">Total</th></tr></thead><tbody>
+    ${Object.entries(catMap).sort((a,b)=>b[1]-a[1]).map(([c,v])=>`<tr><td>${esc(c)}</td><td class="r">${fmtR(v)}</td></tr>`).join('')}
+  </tbody></table>
+  <div class="sec-titulo">Lançamentos</div>
+  <table><thead><tr><th>Data</th><th>Descrição / Pessoa</th><th>Categoria</th><th>Tipo</th><th class="r">Valor</th><th>Status</th></tr></thead>
+  <tbody>${lista.map(t=>`<tr>
+    <td>${fmtD(t.data)}</td>
+    <td>${esc(t.descricao)}${t.pessoa?`<div class="pessoa">👤 ${esc(t.pessoa)}</div>`:''}</td>
+    <td>${esc(t.categoria||'—')}</td>
+    <td style="color:${t.tipo==='entrada'?'#16a34a':'#dc2626'};font-weight:600">${t.tipo==='entrada'?'Entrada':'Saída'}</td>
+    <td class="r" style="color:${t.tipo==='entrada'?'#16a34a':'#dc2626'}">${fmtR(t.valor)}</td>
+    <td>${esc(fmtStatus(t.status))}</td>
+  </tr>`).join('')}</tbody>
+  ${finTab==='todas'?`<tfoot><tr><td colspan="4">Entradas recebidas</td><td class="r" style="color:#16a34a">${fmtR(totE)}</td><td></td></tr>
+    <tr><td colspan="4">Saídas pagas</td><td class="r" style="color:#dc2626">${fmtR(totS)}</td><td></td></tr>
+    <tr><td colspan="4"><strong>Saldo</strong></td><td class="r" style="color:${totE-totS>=0?'#16a34a':'#dc2626'}"><strong>${fmtR(totE-totS)}</strong></td><td></td></tr></tfoot>`:''}
+  </table>
+  <div class="ft"><span>AccertTech — Sistema de Gestão</span><span>Impresso em ${new Date().toLocaleDateString('pt-BR')}</span></div>
+  <div class="no-print"><button class="btn-p" onclick="window.print()">🖨 Imprimir / Salvar PDF</button></div>
+  </body></html>`);
+  w.document.close();
+}
 function loadComprovante(input){
   const file=input.files[0];if(!file)return;
   if(file.size>5*1024*1024){toast('Arquivo muito grande. Máx. 5 MB.','error');input.value='';return;}
