@@ -1378,14 +1378,22 @@ function renderFinanceiro(){
     const allCats=[...new Set(allTrans.map(t=>t.categoria||'').filter(Boolean))].sort();
     catSel.innerHTML='<option value="">Todas as categorias</option>'+allCats.map(c=>`<option value="${esc(c)}"${c===catAtual?' selected':''}>${esc(c)}</option>`).join('');
   }
-  // aplicar filtros
+  // aplicar filtros de texto/categoria/status
   if(busca)lista=lista.filter(t=>(t.descricao||'').toLowerCase().includes(busca)||(t.pessoa||'').toLowerCase().includes(busca));
   if(catF)lista=lista.filter(t=>(t.categoria||'')===catF);
   if(statusF==='pago')lista=lista.filter(t=>isPago(t.status));
   else if(statusF==='pendente')lista=lista.filter(t=>!isPago(t.status));
+  // Expandir grupos de parcelamento: ao ver qualquer parcela, incluir TODAS as irmãs (de qualquer mês)
+  const grupoIds=new Set(lista.map(t=>t.grupoId).filter(Boolean));
+  if(grupoIds.size>0){
+    const jaIds=new Set(lista.map(t=>t.id));
+    const extras=allTrans.filter(t=>t.grupoId&&grupoIds.has(t.grupoId)&&!jaIds.has(t.id));
+    if(extras.length){lista=[...lista,...extras];lista.sort((a,b)=>b.data>a.data?1:-1);}
+  }
+  const temGrupo=grupoIds.size>0;
   const countEl=document.getElementById('fin-count');
   if(countEl){
-    if(lista.length)countEl.textContent=hasFilter?`${lista.length} resultado${lista.length>1?'s':''} (todos os meses)`:lista.length+` registro${lista.length>1?'s':''}`;
+    if(lista.length)countEl.textContent=hasFilter||temGrupo?`${lista.length} registro${lista.length>1?'s':''} (todas as parcelas)`:lista.length+` registro${lista.length>1?'s':''}`;
     else countEl.textContent=hasFilter?'Nenhum resultado':'';
   }
   document.getElementById('tb-financeiro').innerHTML=lista.length?lista.map(t=>`
