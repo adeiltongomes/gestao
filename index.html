@@ -1370,16 +1370,7 @@ function renderFinanceiro(){
   const mes=document.getElementById('fin-mes')?.value||thisMonth();
   const allTrans=DB.get('transacoes');
   const transMes=allTrans.filter(t=>t.data?.startsWith(mes));
-  const ents=transMes.filter(t=>t.tipo==='entrada');const sais=transMes.filter(t=>t.tipo==='saida');
-  const totE=ents.filter(t=>isPago(t.status)).reduce((s,t)=>s+Number(t.valor||0),0);
-  const totS=sais.filter(t=>isPago(t.status)).reduce((s,t)=>s+Number(t.valor||0),0);
-  const totPend=transMes.filter(t=>!isPago(t.status)).reduce((s,t)=>s+Number(t.valor||0),0);
-  document.getElementById('fin-cards').innerHTML=`
-    <div class="card green"><div class="card-label">Entradas (pagas)</div><div class="card-value">${fmtR(totE)}</div></div>
-    <div class="card red"><div class="card-label">Saídas (pagas)</div><div class="card-value">${fmtR(totS)}</div></div>
-    <div class="card blue"><div class="card-label">Saldo</div><div class="card-value">${fmtR(totE-totS)}</div></div>
-    <div class="card orange"><div class="card-label">Pendentes</div><div class="card-value">${fmtR(totPend)}</div></div>`;
-  // ler filtros antes para decidir escopo de busca
+  // ler filtros antes para calcular totais e escopo corretos
   const busca=(document.getElementById('fin-busca')?.value||'').toLowerCase().trim();
   const catF=document.getElementById('fin-cat')?.value||'';
   const statusF=document.getElementById('fin-status-f')?.value||'';
@@ -1430,6 +1421,17 @@ function renderFinanceiro(){
     if(extras.length){lista=[...lista,...extras];lista.sort((a,b)=>b.data>a.data?1:-1);}
   }
   const temGrupo=grupoIds.size>0;
+  // calcular totais a partir da lista filtrada
+  const base4cards=hasFilter?lista:transMes;
+  const totE=base4cards.filter(t=>t.tipo==='entrada'&&isPago(t.status)).reduce((s,t)=>s+Number(t.valor||0),0);
+  const totS=base4cards.filter(t=>t.tipo==='saida'&&isPago(t.status)).reduce((s,t)=>s+Number(t.valor||0),0);
+  const totPend=base4cards.filter(t=>!isPago(t.status)).reduce((s,t)=>s+Number(t.valor||0),0);
+  const cardLabel=hasFilter?'filtrado':'do mês';
+  document.getElementById('fin-cards').innerHTML=`
+    <div class="card green"><div class="card-label">Entradas (${cardLabel})</div><div class="card-value">${fmtR(totE)}</div></div>
+    <div class="card red"><div class="card-label">Saídas (${cardLabel})</div><div class="card-value">${fmtR(totS)}</div></div>
+    <div class="card blue"><div class="card-label">Saldo (${cardLabel})</div><div class="card-value">${fmtR(totE-totS)}</div></div>
+    <div class="card orange"><div class="card-label">Pendentes (${cardLabel})</div><div class="card-value">${fmtR(totPend)}</div></div>`;
   const countEl=document.getElementById('fin-count');
   if(countEl){
     let label=lista.length?`${lista.length} registro${lista.length>1?'s':''}`:hasFilter?'Nenhum resultado':'';
