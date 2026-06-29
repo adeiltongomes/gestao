@@ -1566,22 +1566,31 @@ function _filtrarTransacoes(){
   const cat=document.getElementById('print-cat').value;
   const pessoa=(document.getElementById('print-pessoa').value||'').toLowerCase().trim();
   const status=document.getElementById('print-status').value;
-  let lista=DB.get('transacoes').filter(t=>t.data?.startsWith(mes));
+  const allTrans=DB.get('transacoes');
+  // com pessoa ou categoria: busca em TODOS os meses
+  const hasExtraFilter=!!(cat||pessoa);
+  let lista=hasExtraFilter?allTrans:allTrans.filter(t=>t.data?.startsWith(mes));
   if(tipo!=='todas')lista=lista.filter(t=>t.tipo===tipo);
   if(cat)lista=lista.filter(t=>(t.categoria||'Outros')===cat);
   if(pessoa)lista=lista.filter(t=>(t.pessoa||'').toLowerCase().includes(pessoa));
   if(status==='pago')lista=lista.filter(t=>isPago(t.status));
   else if(status==='pendente')lista=lista.filter(t=>!isPago(t.status));
+  // expandir grupos de parcelamento: ao encontrar qualquer parcela, incluir todas as irmãs
+  const grupoIds=new Set(lista.map(t=>t.grupoId).filter(Boolean));
+  if(grupoIds.size>0){
+    const jaIds=new Set(lista.map(t=>t.id));
+    const extras=allTrans.filter(t=>t.grupoId&&grupoIds.has(t.grupoId)&&!jaIds.has(t.id));
+    if(extras.length)lista=[...lista,...extras];
+  }
   return lista.sort((a,b)=>a.data>b.data?1:-1);
 }
 function atualizarFiltroImpressao(){
   const lista=_filtrarTransacoes();
   const totE=lista.filter(t=>t.tipo==='entrada').reduce((s,t)=>s+Number(t.valor||0),0);
   const totS=lista.filter(t=>t.tipo==='saida').reduce((s,t)=>s+Number(t.valor||0),0);
-  // atualizar categorias quando tipo muda
-  const mes=document.getElementById('print-mes').value||thisMonth();
+  // categorias: sempre de todas as transações para não sumir ao filtrar
   const tipo=document.querySelector('input[name="print-tipo"]:checked')?.value||'todas';
-  let base=DB.get('transacoes').filter(t=>t.data?.startsWith(mes));
+  let base=DB.get('transacoes');
   if(tipo!=='todas')base=base.filter(t=>t.tipo===tipo);
   const cats=[...new Set(base.map(t=>t.categoria||'Outros'))].sort();
   const sel=document.getElementById('print-cat');
@@ -1593,9 +1602,12 @@ function atualizarFiltroImpressao(){
   const labelPago=tipo==='saida'?'Pago':tipo==='entrada'?'Recebido':'Pago / Recebido';
   sSel.innerHTML=`<option value="">Todos</option><option value="pago">${labelPago}</option><option value="pendente">Pendente</option>`;
   if(curStatus)sSel.value=curStatus;
+  const pessoa=(document.getElementById('print-pessoa').value||'').trim();
+  const cat=document.getElementById('print-cat').value;
+  const hasExtraFilter=!!(cat||pessoa);
   const prev=document.getElementById('print-preview');
   if(!lista.length){prev.innerHTML='<span style="color:var(--red)">Nenhum lançamento encontrado com esses filtros.</span>';return;}
-  prev.innerHTML=`<strong>${lista.length}</strong> lançamento${lista.length!==1?'s':''} encontrado${lista.length!==1?'s':''}
+  prev.innerHTML=`<strong>${lista.length}</strong> lançamento${lista.length!==1?'s':''} encontrado${lista.length!==1?'s':''}${hasExtraFilter?' (todos os meses, todas as parcelas)':''}
     ${totE>0?` · Entradas: <strong style="color:#16a34a">${fmtR(totE)}</strong>`:''}
     ${totS>0?` · Saídas: <strong style="color:#dc2626">${fmtR(totS)}</strong>`:''}
     ${totE>0&&totS>0?` · Saldo: <strong style="color:${totE-totS>=0?'#16a34a':'#dc2626'}">${fmtR(totE-totS)}</strong>`:''}`;
@@ -1614,10 +1626,11 @@ function executarImpressaoFin(){
   const totS=lista.filter(t=>t.tipo==='saida').reduce((s,t)=>s+Number(t.valor||0),0);
   const cor=t=>t.tipo==='entrada'?'#16a34a':'#dc2626';
   const tipoLabel={todas:'Todas as Transações',entrada:'Entradas',saida:'Saídas'}[tipo];
-  const filtrosDesc=[cat?`Categoria: ${cat}`:'',pessoa?`Pessoa: ${pessoa}`:'',status==='pago'?'Status: Pago/Recebido':status==='pendente'?'Status: Pendente':''].filter(Boolean).join(' · ');
+  const hasExtraFilter=!!(cat||pessoa);
+  const filtrosDesc=[cat?`Categoria: ${cat}`:'',pessoa?`Pessoa: ${pessoa}`:'',status==='pago'?'Status: Pago/Recebido':status==='pendente'?'Status: Pendente':'',hasExtraFilter?'(todos os meses / todas as parcelas)':''].filter(Boolean).join(' · ');
   const mkRow=t=>`<tr>
-    <td>${fmtD(t.data)}</td>
-    <td>${esc(t.descricao)}${t.pessoa?`<div class="pessoa">👤 ${esc(t.pessoa)}</div>`:''}</td>
+    <td>${fmtD(t.data)}${t.dataCompra?`<div style="font-size:10px;color:#6b7280">Compra: ${fmtD(t.dataCompra)}</div>`:''}</td>
+    <td>${esc(t.descricao)}${t.pessoa?`<div class="pessoa">👤 ${esc(t.pessoa)}</div>`:''}${t.formaPagamento?`<div style="font-size:10px;color:#6b7280">💳 ${esc(t.formaPagamento)}</div>`:''}</td>
     <td>${esc(t.categoria||'—')}</td>
     ${tipo==='todas'?`<td style="color:${cor(t)};font-weight:600">${t.tipo==='entrada'?'Entrada':'Saída'}</td>`:''}
     <td class="r" style="color:${cor(t)}">${fmtR(t.valor)}</td>
