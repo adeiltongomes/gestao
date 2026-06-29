@@ -790,6 +790,18 @@ tbody tr:hover{background:var(--surface-2)}
       <div id="trans-cart-info" style="display:none;background:#fef3c7;border:1px solid #fbbf24;border-radius:8px;padding:10px 13px;font-size:12.5px;color:#92400e;margin-bottom:8px">
         💳 <strong>Cartão de Crédito</strong> — <span id="trans-cart-resumo">1x à vista</span>
       </div>
+      <div id="trans-vencimento-group" style="display:none">
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">📅 Vencimento da 1ª parcela *</label>
+            <input class="form-control" id="trans-vencimento" type="date" oninput="toggleTransParc()">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Preview das parcelas</label>
+            <div id="trans-parc-preview" style="font-size:12px;color:var(--text-mid);padding:8px 12px;background:var(--bg3);border-radius:6px;line-height:1.9;min-height:38px;border:1px solid var(--border)">—</div>
+          </div>
+        </div>
+      </div>
       <div class="form-group">
         <label class="form-label">Cliente / Fornecedor <span style="font-weight:400;color:var(--text-dim)">(de quem recebeu ou para quem pagou)</span></label>
         <input class="form-control" id="trans-pessoa" placeholder="Ex: João Silva, Fornecedor ABC...">
@@ -1339,44 +1351,52 @@ function limparFiltrosFinanceiro(){
 }
 function renderFinanceiro(){
   const mes=document.getElementById('fin-mes')?.value||thisMonth();
-  const trans=DB.get('transacoes').filter(t=>t.data?.startsWith(mes));
-  const ents=trans.filter(t=>t.tipo==='entrada');const sais=trans.filter(t=>t.tipo==='saida');
+  const allTrans=DB.get('transacoes');
+  const transMes=allTrans.filter(t=>t.data?.startsWith(mes));
+  const ents=transMes.filter(t=>t.tipo==='entrada');const sais=transMes.filter(t=>t.tipo==='saida');
   const totE=ents.filter(t=>isPago(t.status)).reduce((s,t)=>s+Number(t.valor||0),0);
   const totS=sais.filter(t=>isPago(t.status)).reduce((s,t)=>s+Number(t.valor||0),0);
-  const totPend=trans.filter(t=>!isPago(t.status)).reduce((s,t)=>s+Number(t.valor||0),0);
+  const totPend=transMes.filter(t=>!isPago(t.status)).reduce((s,t)=>s+Number(t.valor||0),0);
   document.getElementById('fin-cards').innerHTML=`
     <div class="card green"><div class="card-label">Entradas (pagas)</div><div class="card-value">${fmtR(totE)}</div></div>
     <div class="card red"><div class="card-label">Saídas (pagas)</div><div class="card-value">${fmtR(totS)}</div></div>
     <div class="card blue"><div class="card-label">Saldo</div><div class="card-value">${fmtR(totE-totS)}</div></div>
     <div class="card orange"><div class="card-label">Pendentes</div><div class="card-value">${fmtR(totPend)}</div></div>`;
-  let lista=finTab==='entrada'?ents:finTab==='saida'?sais:trans;
-  lista=[...lista].sort((a,b)=>b.data>a.data?1:-1);
-  // popular select de categorias sem perder seleção atual
-  const catSel=document.getElementById('fin-cat');
-  if(catSel){
-    const catAtual=catSel.value;
-    const cats=[...new Set(lista.map(t=>t.categoria||'').filter(Boolean))].sort();
-    catSel.innerHTML='<option value="">Todas as categorias</option>'+cats.map(c=>`<option value="${esc(c)}"${c===catAtual?' selected':''}>${esc(c)}</option>`).join('');
-  }
-  // aplicar filtros
+  // ler filtros antes para decidir escopo de busca
   const busca=(document.getElementById('fin-busca')?.value||'').toLowerCase().trim();
   const catF=document.getElementById('fin-cat')?.value||'';
   const statusF=document.getElementById('fin-status-f')?.value||'';
+  const hasFilter=!!(busca||catF||statusF);
+  // com filtro ativo: busca em TODAS as transações (todos os meses, todas as parcelas)
+  const base=hasFilter?allTrans:transMes;
+  let lista=finTab==='entrada'?base.filter(t=>t.tipo==='entrada'):finTab==='saida'?base.filter(t=>t.tipo==='saida'):base;
+  lista=[...lista].sort((a,b)=>b.data>a.data?1:-1);
+  // popular select de categorias usando TODAS as transações (para não sumir ao trocar mês)
+  const catSel=document.getElementById('fin-cat');
+  if(catSel){
+    const catAtual=catSel.value;
+    const allCats=[...new Set(allTrans.map(t=>t.categoria||'').filter(Boolean))].sort();
+    catSel.innerHTML='<option value="">Todas as categorias</option>'+allCats.map(c=>`<option value="${esc(c)}"${c===catAtual?' selected':''}>${esc(c)}</option>`).join('');
+  }
+  // aplicar filtros
   if(busca)lista=lista.filter(t=>(t.descricao||'').toLowerCase().includes(busca)||(t.pessoa||'').toLowerCase().includes(busca));
   if(catF)lista=lista.filter(t=>(t.categoria||'')===catF);
   if(statusF==='pago')lista=lista.filter(t=>isPago(t.status));
   else if(statusF==='pendente')lista=lista.filter(t=>!isPago(t.status));
   const countEl=document.getElementById('fin-count');
-  if(countEl)countEl.textContent=lista.length?`${lista.length} registro${lista.length>1?'s':''}`:busca||catF||statusF?'Nenhum resultado':'';
+  if(countEl){
+    if(lista.length)countEl.textContent=hasFilter?`${lista.length} resultado${lista.length>1?'s':''} (todos os meses)`:lista.length+` registro${lista.length>1?'s':''}`;
+    else countEl.textContent=hasFilter?'Nenhum resultado':'';
+  }
   document.getElementById('tb-financeiro').innerHTML=lista.length?lista.map(t=>`
-    <tr><td>${fmtD(t.data)}</td><td>${esc(t.descricao)}${t.pessoa?`<div style="font-size:11px;color:var(--text-mid);margin-top:2px">👤 ${esc(t.pessoa)}</div>`:''}${t.formaPagamento?`<div style="font-size:11px;color:var(--text-dim);margin-top:1px">💳 ${esc(t.formaPagamento)}</div>`:''}</td><td><span class="badge badge-gray">${esc(t.categoria||'—')}</span></td>
+    <tr><td>${fmtD(t.data)}</td><td>${esc(t.descricao)}${t.dataCompra?`<div style="font-size:11px;color:var(--text-dim);margin-top:2px">🛒 Compra: ${fmtD(t.dataCompra)}</div>`:''}${t.pessoa?`<div style="font-size:11px;color:var(--text-mid);margin-top:2px">👤 ${esc(t.pessoa)}</div>`:''}${t.formaPagamento?`<div style="font-size:11px;color:var(--text-dim);margin-top:1px">💳 ${esc(t.formaPagamento)}</div>`:''}</td><td><span class="badge badge-gray">${esc(t.categoria||'—')}</span></td>
     <td><span class="badge ${t.tipo==='entrada'?'badge-green':'badge-red'}">${t.tipo==='entrada'?'Entrada':'Saída'}</span></td>
     <td><strong style="color:${t.tipo==='entrada'?'var(--green)':'var(--red)'}">${fmtR(t.valor)}</strong></td>
     <td><span class="badge ${isPago(t.status)?'badge-green':'badge-orange'}">${fmtStatus(t.status)}</span></td>
     <td><div class="td-actions">${!isPago(t.status)?`<button class="btn btn-success btn-xs" onclick="marcarPago('${t.id}')" title="${t.tipo==='entrada'?'Marcar como Recebido':'Marcar como Pago'}">✓</button>`:''}
     ${t.comprovante?`<button class="btn btn-ghost btn-xs" onclick="verComprovante('${t.id}')" title="Ver comprovante">📎</button>`:''}
     <button class="btn btn-ghost btn-xs" onclick="openModalTransacao('${t.tipo}','${t.id}')">✏</button><button class="btn btn-danger btn-xs" onclick="delTransacao('${t.id}')">✕</button></div></td></tr>`)
-    .join(''):`<tr><td colspan="7"><div class="empty"><div class="empty-icon">💰</div><h3>Nenhuma transação neste mês</h3></div></td></tr>`;
+    .join(''):`<tr><td colspan="7"><div class="empty"><div class="empty-icon">💰</div><h3>${hasFilter?'Nenhum resultado encontrado':'Nenhuma transação neste mês'}</h3></div></td></tr>`;
 }
 function toggleTransParc(){
   const n=Number(document.getElementById('trans-nparc').value)||1;
@@ -1385,6 +1405,27 @@ function toggleTransParc(){
   document.getElementById('trans-parc-info').style.display=parc?'block':'none';
   document.getElementById('trans-status-group').style.display=parc?'none':'block';
   if(parc)document.getElementById('trans-parc-qtd').textContent=n;
+  // mostrar grupo de vencimento quando parcelado ou cartão de crédito
+  const vencGroup=document.getElementById('trans-vencimento-group');
+  if(vencGroup)vencGroup.style.display=(parc||isCartao)?'block':'none';
+  // preview das parcelas
+  if(parc){
+    const val=Number(document.getElementById('trans-valor')?.value)||0;
+    const venc=document.getElementById('trans-vencimento')?.value;
+    const preview=document.getElementById('trans-parc-preview');
+    if(preview){
+      if(val&&venc){
+        const rows=Array.from({length:Math.min(n,6)},(_,i)=>{
+          const d=new Date(venc+'T12:00:00');d.setMonth(d.getMonth()+i);
+          return `${i+1}ª: ${fmtD(d.toISOString().slice(0,10))} — <strong>${fmtR(val/n)}</strong>`;
+        });
+        if(n>6)rows.push(`...e mais ${n-6} parcelas`);
+        preview.innerHTML=rows.join('<br>');
+      }else{
+        preview.textContent=!venc?'Informe o vencimento da 1ª parcela':!val?'Informe o valor':'';
+      }
+    }
+  }
   if(isCartao){
     const val=Number(document.getElementById('trans-valor')?.value)||0;
     const resumo=n>1&&val?(n+'x de '+fmtR(val/n)):(n===1?'1x à vista (sem parcelamento)':'Informe o valor para calcular');
@@ -1428,6 +1469,10 @@ function openModalTransacao(tipo,id){
   if(formaEl){formaEl.value=t.formaPagamento||'';}
   const lbl=document.getElementById('trans-nparc-label');if(lbl)lbl.textContent='Em quantas vezes?';
   const nparc=document.getElementById('trans-nparc');if(nparc)nparc.style.outline='';
+  // vencimento
+  const vencEl=document.getElementById('trans-vencimento');if(vencEl)vencEl.value=t.vencimento||'';
+  const vencGroup=document.getElementById('trans-vencimento-group');if(vencGroup)vencGroup.style.display='none';
+  const prevEl=document.getElementById('trans-parc-preview');if(prevEl)prevEl.textContent='—';
   // comprovante
   transComprovante=t.comprovante||null;
   document.getElementById('trans-comp-input').value='';
@@ -1453,17 +1498,22 @@ function saveTransacao(){
   const obs=document.getElementById('trans-obs').value;
   const forma=document.getElementById('trans-forma')?.value||'';
   const dataBase=document.getElementById('trans-data').value||today();
+  const vencBase=document.getElementById('trans-vencimento')?.value||dataBase;
   const grupoId=uid();
 
   if(n>1){
+    if(!document.getElementById('trans-vencimento')?.value){
+      toast('Informe o vencimento da 1ª parcela','error');return;
+    }
     const vlParcela=Number(valor)/n;
     Array.from({length:n},(_,i)=>{
-      const d=new Date(dataBase+'T12:00:00');d.setMonth(d.getMonth()+i);
+      const d=new Date(vencBase+'T12:00:00');d.setMonth(d.getMonth()+i);
       DB.save('transacoes',{
         id:uid(),tipo,categoria:cat,
         descricao:`${desc} (${i+1}/${n})`,
         valor:vlParcela,
         data:d.toISOString().slice(0,10),
+        dataCompra:dataBase,
         status:'pendente',
         pessoa:pessoa||undefined,
         observacoes:obs,
@@ -1472,7 +1522,7 @@ function saveTransacao(){
       });
     });
     closeModal('modal-transacao');renderFinanceiro();
-    toast(`${n} parcelas criadas! (${fmtR(vlParcela)}/mês) Marque cada uma conforme for ${tipo==='entrada'?'recebendo':'pagando'}.`,'success');
+    toast(`${n} parcelas criadas! (${fmtR(vlParcela)}/mês) Vencimentos a partir de ${fmtD(vencBase)}.`,'success');
     return;
   }
 
