@@ -1612,15 +1612,36 @@ function setPrintPeriodo(tipo){
 }
 function abrirModalImpressao(){
   const mes=document.getElementById('fin-mes')?.value||thisMonth();
-  // default: mês atual
-  const ini=new Date(mes+'-01');
-  const fim=new Date(mes+'-01');fim.setMonth(fim.getMonth()+1);fim.setDate(0);
-  document.getElementById('print-data-ini').value=ini.toISOString().slice(0,10);
-  document.getElementById('print-data-fim').value=fim.toISOString().slice(0,10);
-  document.getElementById('print-pessoa').value='';
-  document.getElementById('print-grupo').value='nenhum';
-  document.querySelectorAll('input[name="print-tipo"]').forEach(r=>{r.checked=r.value==='todas';});
-  atualizarFiltroImpressao();
+  const dataIni=document.getElementById('fin-data-ini')?.value||'';
+  const dataFim=document.getElementById('fin-data-fim')?.value||'';
+  const catAtiva=document.getElementById('fin-cat')?.value||'';
+  const statusAtivo=document.getElementById('fin-status-f')?.value||'';
+  const buscaAtiva=(document.getElementById('fin-busca')?.value||'').trim();
+  const hasFilter=!!(dataIni||dataFim||catAtiva||statusAtivo||buscaAtiva);
+  if(hasFilter){
+    // pré-preenche com os filtros ativos da tela
+    document.getElementById('print-data-ini').value=dataIni;
+    document.getElementById('print-data-fim').value=dataFim;
+    document.getElementById('print-pessoa').value=buscaAtiva;
+    document.getElementById('print-grupo').value='nenhum';
+    const tipoAtivo=finTab||'todas';
+    document.querySelectorAll('input[name="print-tipo"]').forEach(r=>{r.checked=r.value===tipoAtivo;});
+    atualizarFiltroImpressao();
+    // aplica categoria e status após popular os selects
+    if(catAtiva){const s=document.getElementById('print-cat');if(s)[...s.options].forEach(o=>{o.selected=o.value===catAtiva;});}
+    if(statusAtivo){const s=document.getElementById('print-status');if(s)s.value=statusAtivo;}
+    atualizarFiltroImpressao();
+  }else{
+    // sem filtro ativo: default mês atual
+    const ini=new Date(mes+'-01');
+    const fim=new Date(mes+'-01');fim.setMonth(fim.getMonth()+1);fim.setDate(0);
+    document.getElementById('print-data-ini').value=ini.toISOString().slice(0,10);
+    document.getElementById('print-data-fim').value=fim.toISOString().slice(0,10);
+    document.getElementById('print-pessoa').value='';
+    document.getElementById('print-grupo').value='nenhum';
+    document.querySelectorAll('input[name="print-tipo"]').forEach(r=>{r.checked=r.value==='todas';});
+    atualizarFiltroImpressao();
+  }
   openModal('modal-imprimir-fin');
 }
 function _filtrarTransacoes(){
