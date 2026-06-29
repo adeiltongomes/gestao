@@ -1642,11 +1642,16 @@ function _filtrarTransacoes(){
   if(pessoa)lista=lista.filter(t=>(t.pessoa||'').toLowerCase().includes(pessoa));
   if(status==='pago')lista=lista.filter(t=>isPago(t.status));
   else if(status==='pendente')lista=lista.filter(t=>!isPago(t.status));
-  // expandir grupos de parcelamento: ao encontrar qualquer parcela, incluir todas as irmãs
+  // expandir grupos de parcelamento: incluir irmãs respeitando filtro de datas
   const grupoIds=new Set(lista.map(t=>t.grupoId).filter(Boolean));
   if(grupoIds.size>0){
     const jaIds=new Set(lista.map(t=>t.id));
-    const extras=allTrans.filter(t=>t.grupoId&&grupoIds.has(t.grupoId)&&!jaIds.has(t.id));
+    const extras=allTrans.filter(t=>{
+      if(!t.grupoId||!grupoIds.has(t.grupoId)||jaIds.has(t.id))return false;
+      if(dataIni&&t.data<dataIni)return false;
+      if(dataFim&&t.data>dataFim)return false;
+      return true;
+    });
     if(extras.length)lista=[...lista,...extras];
   }
   return lista.sort((a,b)=>a.data>b.data?1:-1);
