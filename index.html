@@ -488,11 +488,16 @@ tbody tr:hover{background:var(--surface-2)}
         <button class="tab" onclick="setFinTab('saida')">Saídas</button>
       </div>
       <div class="fin-filters">
-        <input type="text" class="form-control s-search" id="fin-busca" placeholder="🔍 Buscar descrição ou pessoa..." oninput="renderFinanceiro()" style="flex:1;min-width:180px">
-        <select class="form-control" id="fin-cat" onchange="renderFinanceiro()" style="width:190px">
+        <div style="display:flex;align-items:center;gap:6px;flex-shrink:0">
+          <input type="date" class="form-control" id="fin-data-ini" onchange="renderFinanceiro()" title="Data início" style="width:145px">
+          <span style="color:var(--text-dim);font-size:13px;white-space:nowrap">até</span>
+          <input type="date" class="form-control" id="fin-data-fim" onchange="renderFinanceiro()" title="Data fim" style="width:145px">
+        </div>
+        <input type="text" class="form-control s-search" id="fin-busca" placeholder="🔍 Buscar descrição ou pessoa..." oninput="renderFinanceiro()" style="flex:1;min-width:160px">
+        <select class="form-control" id="fin-cat" onchange="renderFinanceiro()" style="width:180px">
           <option value="">Todas as categorias</option>
         </select>
-        <select class="form-control" id="fin-status-f" onchange="renderFinanceiro()" style="width:150px">
+        <select class="form-control" id="fin-status-f" onchange="renderFinanceiro()" style="width:145px">
           <option value="">Todos os status</option>
           <option value="pago">Pago / Recebido</option>
           <option value="pendente">Pendente</option>
@@ -926,7 +931,17 @@ tbody tr:hover{background:var(--surface-2)}
     <div class="modal-body">
       <div class="form-group">
         <label class="form-label">Período</label>
-        <input class="form-control" id="print-mes" type="month">
+        <div style="display:flex;align-items:center;gap:8px">
+          <input class="form-control" id="print-data-ini" type="date" onchange="atualizarFiltroImpressao()" style="flex:1">
+          <span style="color:var(--text-dim);white-space:nowrap;font-size:13px">até</span>
+          <input class="form-control" id="print-data-fim" type="date" onchange="atualizarFiltroImpressao()" style="flex:1">
+        </div>
+        <div style="margin-top:6px;display:flex;gap:6px;flex-wrap:wrap">
+          <button type="button" class="btn btn-ghost btn-sm" onclick="setPrintPeriodo('mes')">Mês atual</button>
+          <button type="button" class="btn btn-ghost btn-sm" onclick="setPrintPeriodo('trimestre')">Últimos 3 meses</button>
+          <button type="button" class="btn btn-ghost btn-sm" onclick="setPrintPeriodo('ano')">Ano atual</button>
+          <button type="button" class="btn btn-ghost btn-sm" onclick="setPrintPeriodo('tudo')">Tudo</button>
+        </div>
       </div>
       <div class="form-group">
         <label class="form-label">Tipo de lançamento</label>
@@ -1347,6 +1362,8 @@ function limparFiltrosFinanceiro(){
   const b=document.getElementById('fin-busca');if(b)b.value='';
   const c=document.getElementById('fin-cat');if(c)c.value='';
   const s=document.getElementById('fin-status-f');if(s)s.value='';
+  const di=document.getElementById('fin-data-ini');if(di)di.value='';
+  const df=document.getElementById('fin-data-fim');if(df)df.value='';
   renderFinanceiro();
 }
 function renderFinanceiro(){
@@ -1366,9 +1383,24 @@ function renderFinanceiro(){
   const busca=(document.getElementById('fin-busca')?.value||'').toLowerCase().trim();
   const catF=document.getElementById('fin-cat')?.value||'';
   const statusF=document.getElementById('fin-status-f')?.value||'';
-  const hasFilter=!!(busca||catF||statusF);
-  // com filtro ativo: busca em TODAS as transações (todos os meses, todas as parcelas)
-  const base=hasFilter?allTrans:transMes;
+  const dataIni=document.getElementById('fin-data-ini')?.value||'';
+  const dataFim=document.getElementById('fin-data-fim')?.value||'';
+  const hasDateRange=!!(dataIni||dataFim);
+  const hasFilter=!!(busca||catF||statusF||hasDateRange);
+  // definir escopo de busca
+  let base;
+  if(hasDateRange){
+    base=allTrans.filter(t=>{
+      if(!t.data)return false;
+      if(dataIni&&t.data<dataIni)return false;
+      if(dataFim&&t.data>dataFim)return false;
+      return true;
+    });
+  }else if(busca||catF||statusF){
+    base=allTrans;
+  }else{
+    base=transMes;
+  }
   let lista=finTab==='entrada'?base.filter(t=>t.tipo==='entrada'):finTab==='saida'?base.filter(t=>t.tipo==='saida'):base;
   lista=[...lista].sort((a,b)=>b.data>a.data?1:-1);
   // popular select de categorias usando TODAS as transações (para não sumir ao trocar mês)
@@ -1393,8 +1425,12 @@ function renderFinanceiro(){
   const temGrupo=grupoIds.size>0;
   const countEl=document.getElementById('fin-count');
   if(countEl){
-    if(lista.length)countEl.textContent=hasFilter||temGrupo?`${lista.length} registro${lista.length>1?'s':''} (todas as parcelas)`:lista.length+` registro${lista.length>1?'s':''}`;
-    else countEl.textContent=hasFilter?'Nenhum resultado':'';
+    let label=lista.length?`${lista.length} registro${lista.length>1?'s':''}`:hasFilter?'Nenhum resultado':'';
+    if(lista.length&&(hasDateRange||temGrupo)){
+      const extra=hasDateRange?`${dataIni?fmtD(dataIni):'início'} → ${dataFim?fmtD(dataFim):'hoje'}`:'todas as parcelas';
+      label=`${lista.length} registro${lista.length>1?'s':''} · ${extra}`;
+    }
+    countEl.textContent=label;
   }
   document.getElementById('tb-financeiro').innerHTML=lista.length?lista.map(t=>`
     <tr><td>${fmtD(t.data)}</td><td>${esc(t.descricao)}${t.dataCompra?`<div style="font-size:11px;color:var(--text-dim);margin-top:2px">🛒 Compra: ${fmtD(t.dataCompra)}</div>`:''}${t.pessoa?`<div style="font-size:11px;color:var(--text-mid);margin-top:2px">👤 ${esc(t.pessoa)}</div>`:''}${t.formaPagamento?`<div style="font-size:11px;color:var(--text-dim);margin-top:1px">💳 ${esc(t.formaPagamento)}</div>`:''}</td><td><span class="badge badge-gray">${esc(t.categoria||'—')}</span></td>
@@ -1547,29 +1583,51 @@ function saveTransacao(){
   closeModal('modal-transacao');renderFinanceiro();toast('Salvo!','success');
 }
 function delTransacao(id){if(!confirm('Excluir?'))return;DB.del('transacoes',id);renderFinanceiro();toast('Excluído.','info');}
+function setPrintPeriodo(tipo){
+  const hoje=new Date();const ano=hoje.getFullYear();const mes=hoje.getMonth();
+  let ini,fim;
+  if(tipo==='mes'){
+    ini=new Date(ano,mes,1);fim=new Date(ano,mes+1,0);
+  }else if(tipo==='trimestre'){
+    ini=new Date(ano,mes-2,1);fim=new Date(ano,mes+1,0);
+  }else if(tipo==='ano'){
+    ini=new Date(ano,0,1);fim=new Date(ano,11,31);
+  }else{
+    document.getElementById('print-data-ini').value='';
+    document.getElementById('print-data-fim').value='';
+    atualizarFiltroImpressao();return;
+  }
+  document.getElementById('print-data-ini').value=ini.toISOString().slice(0,10);
+  document.getElementById('print-data-fim').value=fim.toISOString().slice(0,10);
+  atualizarFiltroImpressao();
+}
 function abrirModalImpressao(){
   const mes=document.getElementById('fin-mes')?.value||thisMonth();
-  document.getElementById('print-mes').value=mes;
+  // default: mês atual
+  const ini=new Date(mes+'-01');
+  const fim=new Date(mes+'-01');fim.setMonth(fim.getMonth()+1);fim.setDate(0);
+  document.getElementById('print-data-ini').value=ini.toISOString().slice(0,10);
+  document.getElementById('print-data-fim').value=fim.toISOString().slice(0,10);
   document.getElementById('print-pessoa').value='';
   document.getElementById('print-grupo').value='nenhum';
   document.querySelectorAll('input[name="print-tipo"]').forEach(r=>{r.checked=r.value==='todas';});
-  // popular categorias com base nas transações do mês
-  const cats=[...new Set(DB.get('transacoes').filter(t=>t.data?.startsWith(mes)).map(t=>t.categoria||'Outros'))].sort();
-  const sel=document.getElementById('print-cat');
-  sel.innerHTML='<option value="">Todas as categorias</option>'+cats.map(c=>`<option value="${c}">${esc(c)}</option>`).join('');
   atualizarFiltroImpressao();
   openModal('modal-imprimir-fin');
 }
 function _filtrarTransacoes(){
-  const mes=document.getElementById('print-mes').value||thisMonth();
+  const dataIni=document.getElementById('print-data-ini')?.value||'';
+  const dataFim=document.getElementById('print-data-fim')?.value||'';
   const tipo=document.querySelector('input[name="print-tipo"]:checked')?.value||'todas';
   const cat=document.getElementById('print-cat').value;
   const pessoa=(document.getElementById('print-pessoa').value||'').toLowerCase().trim();
   const status=document.getElementById('print-status').value;
   const allTrans=DB.get('transacoes');
-  // com pessoa ou categoria: busca em TODOS os meses
-  const hasExtraFilter=!!(cat||pessoa);
-  let lista=hasExtraFilter?allTrans:allTrans.filter(t=>t.data?.startsWith(mes));
+  let lista=allTrans.filter(t=>{
+    if(!t.data)return false;
+    if(dataIni&&t.data<dataIni)return false;
+    if(dataFim&&t.data>dataFim)return false;
+    return true;
+  });
   if(tipo!=='todas')lista=lista.filter(t=>t.tipo===tipo);
   if(cat)lista=lista.filter(t=>(t.categoria||'Outros')===cat);
   if(pessoa)lista=lista.filter(t=>(t.pessoa||'').toLowerCase().includes(pessoa));
@@ -1605,9 +1663,12 @@ function atualizarFiltroImpressao(){
   const pessoa=(document.getElementById('print-pessoa').value||'').trim();
   const cat=document.getElementById('print-cat').value;
   const hasExtraFilter=!!(cat||pessoa);
+  const dataIni2=document.getElementById('print-data-ini')?.value||'';
+  const dataFim2=document.getElementById('print-data-fim')?.value||'';
+  const periodoLabel=dataIni2||dataFim2?`${dataIni2?fmtD(dataIni2):'início'} até ${dataFim2?fmtD(dataFim2):'hoje'}`:'(sem filtro de data)';
   const prev=document.getElementById('print-preview');
   if(!lista.length){prev.innerHTML='<span style="color:var(--red)">Nenhum lançamento encontrado com esses filtros.</span>';return;}
-  prev.innerHTML=`<strong>${lista.length}</strong> lançamento${lista.length!==1?'s':''} encontrado${lista.length!==1?'s':''}${hasExtraFilter?' (todos os meses, todas as parcelas)':''}
+  prev.innerHTML=`<strong>${lista.length}</strong> lançamento${lista.length!==1?'s':''} · ${periodoLabel}
     ${totE>0?` · Entradas: <strong style="color:#16a34a">${fmtR(totE)}</strong>`:''}
     ${totS>0?` · Saídas: <strong style="color:#dc2626">${fmtR(totS)}</strong>`:''}
     ${totE>0&&totS>0?` · Saldo: <strong style="color:${totE-totS>=0?'#16a34a':'#dc2626'}">${fmtR(totE-totS)}</strong>`:''}`;
@@ -1615,8 +1676,9 @@ function atualizarFiltroImpressao(){
 function executarImpressaoFin(){
   const lista=_filtrarTransacoes();
   if(!lista.length){toast('Nenhum lançamento encontrado com esses filtros.','error');return;}
-  const mes=document.getElementById('print-mes').value||thisMonth();
-  const mesLabel=new Date(mes+'-15').toLocaleString('pt-BR',{month:'long',year:'numeric'});
+  const dataIni=document.getElementById('print-data-ini')?.value||'';
+  const dataFim=document.getElementById('print-data-fim')?.value||'';
+  const mesLabel=dataIni&&dataFim?`${fmtD(dataIni)} a ${fmtD(dataFim)}`:dataIni?`A partir de ${fmtD(dataIni)}`:dataFim?`Até ${fmtD(dataFim)}`:'Todos os períodos';
   const tipo=document.querySelector('input[name="print-tipo"]:checked')?.value||'todas';
   const cat=document.getElementById('print-cat').value;
   const pessoa=document.getElementById('print-pessoa').value.trim();
@@ -1626,8 +1688,7 @@ function executarImpressaoFin(){
   const totS=lista.filter(t=>t.tipo==='saida').reduce((s,t)=>s+Number(t.valor||0),0);
   const cor=t=>t.tipo==='entrada'?'#16a34a':'#dc2626';
   const tipoLabel={todas:'Todas as Transações',entrada:'Entradas',saida:'Saídas'}[tipo];
-  const hasExtraFilter=!!(cat||pessoa);
-  const filtrosDesc=[cat?`Categoria: ${cat}`:'',pessoa?`Pessoa: ${pessoa}`:'',status==='pago'?'Status: Pago/Recebido':status==='pendente'?'Status: Pendente':'',hasExtraFilter?'(todos os meses / todas as parcelas)':''].filter(Boolean).join(' · ');
+  const filtrosDesc=[cat?`Categoria: ${cat}`:'',pessoa?`Pessoa: ${pessoa}`:'',status==='pago'?'Status: Pago/Recebido':status==='pendente'?'Status: Pendente':''].filter(Boolean).join(' · ');
   const mkRow=t=>`<tr>
     <td>${fmtD(t.data)}${t.dataCompra?`<div style="font-size:10px;color:#6b7280">Compra: ${fmtD(t.dataCompra)}</div>`:''}</td>
     <td>${esc(t.descricao)}${t.pessoa?`<div class="pessoa">👤 ${esc(t.pessoa)}</div>`:''}${t.formaPagamento?`<div style="font-size:10px;color:#6b7280">💳 ${esc(t.formaPagamento)}</div>`:''}</td>
@@ -1668,7 +1729,7 @@ function executarImpressaoFin(){
   const w=window.open('','_blank','width=960,height=850');
   w.document.write(_printHead(`Extrato — ${mesLabel}`,`Extrato Financeiro · ${mesLabel}`)+`
   <h1 class="titulo">Extrato Financeiro — ${tipoLabel}</h1>
-  <p class="subtitulo">${mesLabel}${filtrosDesc?' · '+filtrosDesc:''}</p>
+  <p class="subtitulo">📅 ${mesLabel}${filtrosDesc?' · '+filtrosDesc:''}</p>
   <div class="resumo">
     ${totE>0?`<div class="res-card green"><div class="res-lbl">Total Entradas</div><div class="res-val">${fmtR(totE)}</div></div>`:''}
     ${totS>0?`<div class="res-card red"><div class="res-lbl">Total Saídas</div><div class="res-val">${fmtR(totS)}</div></div>`:''}
