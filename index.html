@@ -1415,11 +1415,18 @@ function renderFinanceiro(){
   if(catF)lista=lista.filter(t=>(t.categoria||'')===catF);
   if(statusF==='pago')lista=lista.filter(t=>isPago(t.status));
   else if(statusF==='pendente')lista=lista.filter(t=>!isPago(t.status));
-  // Expandir grupos de parcelamento: ao ver qualquer parcela, incluir TODAS as irmãs (de qualquer mês)
+  // Expandir grupos de parcelamento: incluir irmãs respeitando filtro de datas
   const grupoIds=new Set(lista.map(t=>t.grupoId).filter(Boolean));
   if(grupoIds.size>0){
     const jaIds=new Set(lista.map(t=>t.id));
-    const extras=allTrans.filter(t=>t.grupoId&&grupoIds.has(t.grupoId)&&!jaIds.has(t.id));
+    const extras=allTrans.filter(t=>{
+      if(!t.grupoId||!grupoIds.has(t.grupoId)||jaIds.has(t.id))return false;
+      if(hasDateRange){
+        if(dataIni&&t.data<dataIni)return false;
+        if(dataFim&&t.data>dataFim)return false;
+      }
+      return true;
+    });
     if(extras.length){lista=[...lista,...extras];lista.sort((a,b)=>b.data>a.data?1:-1);}
   }
   const temGrupo=grupoIds.size>0;
