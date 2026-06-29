@@ -110,6 +110,11 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;background:
 .sec-title{font-size:18px;font-weight:800;flex:1;min-width:120px;color:var(--text);letter-spacing:-.03em}
 .sec-hdr .s-search{flex:1;min-width:160px;max-width:280px}
 
+/* FILTROS FINANCEIRO */
+.fin-filters{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:16px;padding:12px 16px;background:var(--bg3);border-radius:var(--radius);border:1px solid var(--border)}
+.fin-filters .form-control{background:var(--bg2);border-color:var(--border)}
+.fin-result-count{font-size:12px;color:var(--text-dim);white-space:nowrap}
+
 /* BUTTONS */
 .btn{
   display:inline-flex;align-items:center;gap:6px;padding:9px 18px;
@@ -482,6 +487,19 @@ tbody tr:hover{background:var(--surface-2)}
         <button class="tab" onclick="setFinTab('entrada')">Entradas</button>
         <button class="tab" onclick="setFinTab('saida')">Saídas</button>
       </div>
+      <div class="fin-filters">
+        <input type="text" class="form-control s-search" id="fin-busca" placeholder="🔍 Buscar descrição ou pessoa..." oninput="renderFinanceiro()" style="flex:1;min-width:180px">
+        <select class="form-control" id="fin-cat" onchange="renderFinanceiro()" style="width:190px">
+          <option value="">Todas as categorias</option>
+        </select>
+        <select class="form-control" id="fin-status-f" onchange="renderFinanceiro()" style="width:150px">
+          <option value="">Todos os status</option>
+          <option value="pago">Pago / Recebido</option>
+          <option value="pendente">Pendente</option>
+        </select>
+        <span class="fin-result-count" id="fin-count"></span>
+        <button class="btn btn-ghost btn-sm" onclick="limparFiltrosFinanceiro()" title="Limpar filtros">✕ Limpar</button>
+      </div>
       <div class="table-wrap">
         <table>
           <thead><tr><th>Data</th><th>Descrição</th><th>Categoria</th><th>Tipo</th><th>Valor</th><th>Status</th><th></th></tr></thead>
@@ -749,24 +767,39 @@ tbody tr:hover{background:var(--surface-2)}
         </div>
       </div>
       <div class="form-row">
-        <div class="form-group"><label class="form-label">Valor (R$) *</label><input class="form-control" id="trans-valor" type="number" step="0.01" placeholder="0,00"></div>
+        <div class="form-group"><label class="form-label">Valor (R$) *</label><input class="form-control" id="trans-valor" type="number" step="0.01" placeholder="0,00" oninput="toggleTransParc()"></div>
         <div class="form-group"><label class="form-label">Data</label><input class="form-control" id="trans-data" type="date"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Forma de Pagamento</label>
+          <select class="form-control" id="trans-forma" onchange="onFormaChange()">
+            <option value="">Não informado</option>
+            <option value="Dinheiro">Dinheiro</option>
+            <option value="Pix">Pix</option>
+            <option value="Cartão de Débito">Cartão de Débito</option>
+            <option value="Cartão de Crédito">💳 Cartão de Crédito</option>
+            <option value="Boleto">Boleto</option>
+            <option value="Transferência">Transferência Bancária</option>
+            <option value="Cheque">Cheque</option>
+          </select>
+        </div>
+        <div class="form-group" id="trans-nparc-group"><label class="form-label" id="trans-nparc-label">Em quantas vezes?</label>
+          <input class="form-control" id="trans-nparc" type="number" min="1" max="60" value="1" placeholder="1 = à vista" oninput="toggleTransParc()">
+        </div>
+      </div>
+      <div id="trans-cart-info" style="display:none;background:#fef3c7;border:1px solid #fbbf24;border-radius:8px;padding:10px 13px;font-size:12.5px;color:#92400e;margin-bottom:8px">
+        💳 <strong>Cartão de Crédito</strong> — <span id="trans-cart-resumo">1x à vista</span>
       </div>
       <div class="form-group">
         <label class="form-label">Cliente / Fornecedor <span style="font-weight:400;color:var(--text-dim)">(de quem recebeu ou para quem pagou)</span></label>
         <input class="form-control" id="trans-pessoa" placeholder="Ex: João Silva, Fornecedor ABC...">
       </div>
-      <div class="form-row">
-        <div class="form-group"><label class="form-label">Em quantas vezes?</label>
-          <input class="form-control" id="trans-nparc" type="number" min="1" max="60" value="1" placeholder="1 = à vista" oninput="toggleTransParc()">
-        </div>
-        <div class="form-group" id="trans-status-group"><label class="form-label">Status</label>
-          <select class="form-control" id="trans-status">
-            <option value="pago">Pago</option>
-            <option value="recebido">Recebido</option>
-            <option value="pendente">Pendente</option>
-          </select>
-        </div>
+      <div class="form-group" id="trans-status-group"><label class="form-label">Status</label>
+        <select class="form-control" id="trans-status">
+          <option value="pago">Pago</option>
+          <option value="recebido">Recebido</option>
+          <option value="pendente">Pendente</option>
+        </select>
       </div>
       <div id="trans-parc-info" style="display:none;background:var(--blue-bg);border:1px solid #bfdbfe;border-radius:8px;padding:10px 13px;font-size:12.5px;color:var(--blue-text);margin-bottom:12px">
         Serão criados <strong id="trans-parc-qtd">2</strong> lançamentos mensais com status <strong>Pendente</strong>. Marque cada um como pago conforme for recebendo/pagando.
@@ -1298,6 +1331,12 @@ const CATS_S=CATS_DEF_S;
 let finTab='todas';
 let transComprovante=null;
 function setFinTab(t){finTab=t;document.querySelectorAll('#view-financeiro .tab').forEach((el,i)=>el.classList.toggle('active',['todas','entrada','saida'][i]===t));renderFinanceiro();}
+function limparFiltrosFinanceiro(){
+  const b=document.getElementById('fin-busca');if(b)b.value='';
+  const c=document.getElementById('fin-cat');if(c)c.value='';
+  const s=document.getElementById('fin-status-f');if(s)s.value='';
+  renderFinanceiro();
+}
 function renderFinanceiro(){
   const mes=document.getElementById('fin-mes')?.value||thisMonth();
   const trans=DB.get('transacoes').filter(t=>t.data?.startsWith(mes));
@@ -1312,8 +1351,25 @@ function renderFinanceiro(){
     <div class="card orange"><div class="card-label">Pendentes</div><div class="card-value">${fmtR(totPend)}</div></div>`;
   let lista=finTab==='entrada'?ents:finTab==='saida'?sais:trans;
   lista=[...lista].sort((a,b)=>b.data>a.data?1:-1);
+  // popular select de categorias sem perder seleção atual
+  const catSel=document.getElementById('fin-cat');
+  if(catSel){
+    const catAtual=catSel.value;
+    const cats=[...new Set(lista.map(t=>t.categoria||'').filter(Boolean))].sort();
+    catSel.innerHTML='<option value="">Todas as categorias</option>'+cats.map(c=>`<option value="${esc(c)}"${c===catAtual?' selected':''}>${esc(c)}</option>`).join('');
+  }
+  // aplicar filtros
+  const busca=(document.getElementById('fin-busca')?.value||'').toLowerCase().trim();
+  const catF=document.getElementById('fin-cat')?.value||'';
+  const statusF=document.getElementById('fin-status-f')?.value||'';
+  if(busca)lista=lista.filter(t=>(t.descricao||'').toLowerCase().includes(busca)||(t.pessoa||'').toLowerCase().includes(busca));
+  if(catF)lista=lista.filter(t=>(t.categoria||'')===catF);
+  if(statusF==='pago')lista=lista.filter(t=>isPago(t.status));
+  else if(statusF==='pendente')lista=lista.filter(t=>!isPago(t.status));
+  const countEl=document.getElementById('fin-count');
+  if(countEl)countEl.textContent=lista.length?`${lista.length} registro${lista.length>1?'s':''}`:busca||catF||statusF?'Nenhum resultado':'';
   document.getElementById('tb-financeiro').innerHTML=lista.length?lista.map(t=>`
-    <tr><td>${fmtD(t.data)}</td><td>${esc(t.descricao)}${t.pessoa?`<div style="font-size:11px;color:var(--text-mid);margin-top:2px">👤 ${esc(t.pessoa)}</div>`:''}</td><td><span class="badge badge-gray">${esc(t.categoria||'—')}</span></td>
+    <tr><td>${fmtD(t.data)}</td><td>${esc(t.descricao)}${t.pessoa?`<div style="font-size:11px;color:var(--text-mid);margin-top:2px">👤 ${esc(t.pessoa)}</div>`:''}${t.formaPagamento?`<div style="font-size:11px;color:var(--text-dim);margin-top:1px">💳 ${esc(t.formaPagamento)}</div>`:''}</td><td><span class="badge badge-gray">${esc(t.categoria||'—')}</span></td>
     <td><span class="badge ${t.tipo==='entrada'?'badge-green':'badge-red'}">${t.tipo==='entrada'?'Entrada':'Saída'}</span></td>
     <td><strong style="color:${t.tipo==='entrada'?'var(--green)':'var(--red)'}">${fmtR(t.valor)}</strong></td>
     <td><span class="badge ${isPago(t.status)?'badge-green':'badge-orange'}">${fmtStatus(t.status)}</span></td>
@@ -1324,10 +1380,33 @@ function renderFinanceiro(){
 }
 function toggleTransParc(){
   const n=Number(document.getElementById('trans-nparc').value)||1;
+  const isCartao=document.getElementById('trans-forma')?.value==='Cartão de Crédito';
   const parc=n>1;
   document.getElementById('trans-parc-info').style.display=parc?'block':'none';
   document.getElementById('trans-status-group').style.display=parc?'none':'block';
   if(parc)document.getElementById('trans-parc-qtd').textContent=n;
+  if(isCartao){
+    const val=Number(document.getElementById('trans-valor')?.value)||0;
+    const resumo=n>1&&val?(n+'x de '+fmtR(val/n)):(n===1?'1x à vista (sem parcelamento)':'Informe o valor para calcular');
+    const el=document.getElementById('trans-cart-resumo');if(el)el.textContent=resumo;
+    document.getElementById('trans-cart-info').style.display='block';
+  }else{
+    document.getElementById('trans-cart-info').style.display='none';
+  }
+}
+function onFormaChange(){
+  const forma=document.getElementById('trans-forma')?.value||'';
+  const isCartao=forma==='Cartão de Crédito';
+  const nparc=document.getElementById('trans-nparc');
+  const lbl=document.getElementById('trans-nparc-label');
+  if(isCartao){
+    if(lbl)lbl.textContent='Parcelamento (em quantas vezes?) *';
+    if(nparc){nparc.style.outline='2px solid #f59e0b';nparc.focus();}
+  }else{
+    if(lbl)lbl.textContent='Em quantas vezes?';
+    if(nparc)nparc.style.outline='';
+  }
+  toggleTransParc();
 }
 function openModalTransacao(tipo,id){
   const t=id?DB.one('transacoes',id):{};const tp=t.tipo||tipo;
@@ -1342,7 +1421,13 @@ function openModalTransacao(tipo,id){
   document.getElementById('trans-obs').value=t.observacoes||'';
   document.getElementById('trans-nparc').value=1;
   document.getElementById('trans-parc-info').style.display='none';
+  document.getElementById('trans-cart-info').style.display='none';
   document.getElementById('trans-status-group').style.display='block';
+  // forma de pagamento
+  const formaEl=document.getElementById('trans-forma');
+  if(formaEl){formaEl.value=t.formaPagamento||'';}
+  const lbl=document.getElementById('trans-nparc-label');if(lbl)lbl.textContent='Em quantas vezes?';
+  const nparc=document.getElementById('trans-nparc');if(nparc)nparc.style.outline='';
   // comprovante
   transComprovante=t.comprovante||null;
   document.getElementById('trans-comp-input').value='';
@@ -1366,6 +1451,7 @@ function saveTransacao(){
   const cat=document.getElementById('trans-cat').value;
   const pessoa=document.getElementById('trans-pessoa').value.trim();
   const obs=document.getElementById('trans-obs').value;
+  const forma=document.getElementById('trans-forma')?.value||'';
   const dataBase=document.getElementById('trans-data').value||today();
   const grupoId=uid();
 
@@ -1381,11 +1467,12 @@ function saveTransacao(){
         status:'pendente',
         pessoa:pessoa||undefined,
         observacoes:obs,
+        formaPagamento:forma||undefined,
         grupoId,
       });
     });
     closeModal('modal-transacao');renderFinanceiro();
-    toast(`${n} lançamentos criados! Marque cada um conforme for ${tipo==='entrada'?'recebendo':'pagando'}.`,'success');
+    toast(`${n} parcelas criadas! (${fmtR(vlParcela)}/mês) Marque cada uma conforme for ${tipo==='entrada'?'recebendo':'pagando'}.`,'success');
     return;
   }
 
@@ -1396,6 +1483,7 @@ function saveTransacao(){
     status:document.getElementById('trans-status').value,
     pessoa:pessoa||undefined,
     observacoes:obs,
+    formaPagamento:forma||undefined,
     comprovante:transComprovante||undefined,
   });
   closeModal('modal-transacao');renderFinanceiro();toast('Salvo!','success');
