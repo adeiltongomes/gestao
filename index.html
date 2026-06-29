@@ -291,7 +291,37 @@ tbody tr:hover{background:var(--surface-2)}
 </style>
 </head>
 <body>
-<div id="app">
+
+<!-- LOGIN -->
+<div id="login-ov" style="position:fixed;inset:0;background:#0f172a;display:flex;align-items:center;justify-content:center;z-index:9999;padding:20px">
+  <div style="background:#1e293b;border:1px solid rgba(255,255,255,.08);border-radius:16px;padding:40px 36px;width:100%;max-width:380px;box-shadow:0 24px 64px rgba(0,0,0,.5)">
+    <div style="text-align:center;margin-bottom:32px">
+      <div style="width:52px;height:52px;border-radius:14px;background:linear-gradient(135deg,#3b82f6,#6366f1);display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:800;color:#fff;margin:0 auto 14px;box-shadow:0 8px 24px rgba(59,130,246,.4)">A</div>
+      <div style="font-size:20px;font-weight:700;color:#f1f5f9;letter-spacing:-.02em">AccertTech</div>
+      <div style="font-size:13px;color:#64748b;margin-top:4px">Gestão de Locações</div>
+    </div>
+    <div style="margin-bottom:14px">
+      <label style="display:block;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.8px;color:#64748b;margin-bottom:6px">Usuário</label>
+      <input id="lg-user" type="text" placeholder="Digite seu usuário" autocomplete="username"
+        style="width:100%;padding:11px 14px;background:#0f172a;border:1.5px solid #334155;border-radius:9px;color:#f1f5f9;font-size:14px;font-family:inherit;outline:none;transition:border .15s"
+        onfocus="this.style.borderColor='#3b82f6'" onblur="this.style.borderColor='#334155'"
+        onkeydown="if(event.key==='Enter')document.getElementById('lg-pass').focus()">
+    </div>
+    <div style="margin-bottom:22px">
+      <label style="display:block;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.8px;color:#64748b;margin-bottom:6px">Senha</label>
+      <input id="lg-pass" type="password" placeholder="Digite sua senha" autocomplete="current-password"
+        style="width:100%;padding:11px 14px;background:#0f172a;border:1.5px solid #334155;border-radius:9px;color:#f1f5f9;font-size:14px;font-family:inherit;outline:none;transition:border .15s"
+        onfocus="this.style.borderColor='#3b82f6'" onblur="this.style.borderColor='#334155'"
+        onkeydown="if(event.key==='Enter')doLogin()">
+    </div>
+    <div id="lg-err" style="display:none;background:rgba(239,68,68,.12);border:1px solid rgba(239,68,68,.3);border-radius:8px;padding:9px 12px;font-size:13px;color:#f87171;margin-bottom:14px;text-align:center"></div>
+    <button onclick="doLogin()" style="width:100%;padding:12px;background:linear-gradient(135deg,#3b82f6,#6366f1);color:#fff;border:none;border-radius:9px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;transition:opacity .15s" onmouseover="this.style.opacity='.88'" onmouseout="this.style.opacity='1'">
+      Entrar
+    </button>
+  </div>
+</div>
+
+<div id="app" class="hidden">
 
 <div id="sidebar-overlay" onclick="closeSidebar()"></div>
 
@@ -364,6 +394,7 @@ tbody tr:hover{background:var(--surface-2)}
     <div id="page-title">Dashboard</div>
     <div id="topbar-right">
       <span id="topbar-date"></span>
+      <button onclick="logout()" title="Sair" style="background:none;border:1px solid var(--border);border-radius:8px;padding:6px 12px;font-size:12px;font-weight:600;color:var(--text-mid);cursor:pointer;display:flex;align-items:center;gap:5px;transition:all .15s" onmouseover="this.style.background='var(--red-bg)';this.style.color='var(--red)';this.style.borderColor='var(--red)'" onmouseout="this.style.background='none';this.style.color='var(--text-mid)';this.style.borderColor='var(--border)'">⎋ Sair</button>
     </div>
   </div>
 
@@ -2177,12 +2208,44 @@ function imprimirCategoria(tipo,mes){
   w.document.close();
 }
 
+// ── AUTH ──────────────────────────────────────────────────────────────────────
+const _USERS=[{user:'adeilton',pass:'Laisa@1000',nome:'Adeilton'}];
+function doLogin(){
+  const u=(document.getElementById('lg-user')?.value||'').trim().toLowerCase();
+  const p=document.getElementById('lg-pass')?.value||'';
+  const found=_USERS.find(x=>x.user===u&&x.pass===p);
+  const err=document.getElementById('lg-err');
+  if(!found){
+    if(err){err.textContent='Usuário ou senha incorretos.';err.style.display='block';}
+    const passEl=document.getElementById('lg-pass');
+    if(passEl){passEl.style.borderColor='#ef4444';setTimeout(()=>{passEl.style.borderColor='#334155';},1500);}
+    return;
+  }
+  sessionStorage.setItem('gc_ok','1');
+  sessionStorage.setItem('gc_user',JSON.stringify(found));
+  document.getElementById('login-ov').style.display='none';
+  document.getElementById('app').classList.remove('hidden');
+  initApp();
+}
+function logout(){
+  sessionStorage.removeItem('gc_ok');
+  sessionStorage.removeItem('gc_user');
+  location.reload();
+}
+function initApp(){
+  document.getElementById('topbar-date').textContent=new Date().toLocaleDateString('pt-BR',{weekday:'short',day:'numeric',month:'short',year:'numeric'});
+  document.getElementById('fin-mes').value=thisMonth();
+  document.getElementById('orc-mes').value=thisMonth();
+  document.getElementById('rel-mes').value=thisMonth();
+  renderDashboard();
+}
+
 // ── INIT ──────────────────────────────────────────────────────────────────────
-document.getElementById('topbar-date').textContent=new Date().toLocaleDateString('pt-BR',{weekday:'short',day:'numeric',month:'short',year:'numeric'});
-document.getElementById('fin-mes').value=thisMonth();
-document.getElementById('orc-mes').value=thisMonth();
-document.getElementById('rel-mes').value=thisMonth();
-renderDashboard();
+if(sessionStorage.getItem('gc_ok')){
+  document.getElementById('login-ov').style.display='none';
+  document.getElementById('app').classList.remove('hidden');
+  initApp();
+}
 </script>
 </body>
 </html>
