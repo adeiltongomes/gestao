@@ -1051,6 +1051,12 @@ thead th.r{text-align:right}
           <option value="pendente">Pendente</option>
         </select>
       </div>
+      <div class="form-group" id="trans-conta-group">
+        <label class="form-label">Conta Bancária <span style="font-weight:400;color:var(--text-dim)">(de qual conta saiu/entrou)</span></label>
+        <select class="form-control" id="trans-conta">
+          <option value="">— Sem vínculo com conta —</option>
+        </select>
+      </div>
       <div id="trans-parc-info" style="display:none;background:var(--blue-bg);border:1px solid #bfdbfe;border-radius:8px;padding:10px 13px;font-size:12.5px;color:var(--blue-text);margin-bottom:12px">
         Serão criados <strong id="trans-parc-qtd">2</strong> lançamentos mensais com status <strong>Pendente</strong>. Marque cada um como pago conforme for recebendo/pagando.
       </div>
@@ -1856,6 +1862,7 @@ function renderFinanceiro(){
       <td style="white-space:nowrap;font-variant-numeric:tabular-nums">
         <div style="font-size:13px;font-weight:600;color:var(--text)">${fmtD(t.data)}</div>
         ${t.formaPagamento?`<div style="font-size:10.5px;color:var(--text-dim);margin-top:2px">${esc(t.formaPagamento)}</div>`:''}
+        ${t.contaId?(()=>{const _c=DB.one('contas_bancarias',t.contaId);return _c?`<div style="font-size:10px;color:var(--blue-text);margin-top:2px;display:flex;align-items:center;gap:3px">🏦 ${esc(_c.nome)}</div>`:'';})():''}
       </td>
       <td>
         <div style="font-weight:600;color:var(--text)">${esc(t.descricao)}</div>
@@ -1979,6 +1986,14 @@ function openModalTransacao(tipo,id){
   const vencEl=document.getElementById('trans-vencimento');if(vencEl)vencEl.value=t.vencimento||'';
   const vencGroup=document.getElementById('trans-vencimento-group');if(vencGroup)vencGroup.style.display='none';
   const prevEl=document.getElementById('trans-parc-preview');if(prevEl)prevEl.textContent='—';
+  // conta bancária
+  const contaSelEl=document.getElementById('trans-conta');
+  if(contaSelEl){
+    const contas=DB.get('contas_bancarias')||[];
+    contaSelEl.innerHTML=`<option value="">— Sem vínculo com conta —</option>`+
+      contas.map(c=>`<option value="${c.id}">${esc(c.nome)}${c.banco?' — '+esc(c.banco):''} (${fmtR(Number(c.saldo||0))})</option>`).join('');
+    contaSelEl.value=t.contaId||'';
+  }
   // comprovante
   transComprovante=t.comprovante||null;
   document.getElementById('trans-comp-input').value='';
@@ -2032,16 +2047,32 @@ function saveTransacao(){
     return;
   }
 
+  const existingId=document.getElementById('trans-id').value;
+  const oldT=existingId?DB.one('transacoes',existingId):null;
+  const contaId=document.getElementById('trans-conta')?.value||'';
+  const newStatus=document.getElementById('trans-status').value;
+  const isPaid=newStatus==='pago'||newStatus==='recebido';
+  // reverse old balance if was paid with a conta
+  if(oldT&&(oldT.status==='pago'||oldT.status==='recebido')&&oldT.contaId){
+    const oldC=DB.one('contas_bancarias',oldT.contaId);
+    if(oldC){const d=oldT.tipo==='entrada'?-Number(oldT.valor||0):Number(oldT.valor||0);oldC.saldo=Number(oldC.saldo||0)+d;DB.save('contas_bancarias',oldC);}
+  }
   DB.save('transacoes',{
-    id:document.getElementById('trans-id').value||uid(),
+    id:existingId||uid(),
     tipo,categoria:cat,descricao:desc,
     valor:Number(valor),data:dataBase,
-    status:document.getElementById('trans-status').value,
+    status:newStatus,
     pessoa:pessoa||undefined,
     observacoes:obs,
     formaPagamento:forma||undefined,
+    contaId:contaId||undefined,
     comprovante:transComprovante||undefined,
   });
+  // apply new balance if paid with a conta
+  if(isPaid&&contaId){
+    const newC=DB.one('contas_bancarias',contaId);
+    if(newC){const d=tipo==='entrada'?Number(valor):-Number(valor);newC.saldo=Number(newC.saldo||0)+d;DB.save('contas_bancarias',newC);renderContasBancarias();}
+  }
   closeModal('modal-transacao');renderFinanceiro();toast('Salvo!','success');
 }
 function delTransacao(id){if(!confirm('Excluir?'))return;DB.del('transacoes',id);renderFinanceiro();toast('Excluído.','info');}
