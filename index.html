@@ -258,6 +258,50 @@ tbody tr:hover{background:var(--surface-2)}
 .progress-bar{height:7px;background:var(--surface-2);border-radius:4px;overflow:hidden;margin-top:4px;border:1px solid var(--border)}
 .progress-fill{height:100%;border-radius:4px;transition:width .4s}
 
+/* UTILIDADES RELATÓRIO */
+.r{text-align:right}
+thead th.r{text-align:right}
+
+/* Sidebar mais polido */
+.sidebar-logo .logo-text h1{font-size:13.5px}
+.nav-item{border-radius:8px;margin:1px 8px;padding:9px 12px;font-size:13px}
+.nav-item.active{background:rgba(59,130,246,.18);color:#93c5fd;border-left-color:var(--blue)}
+
+/* Topbar */
+#topbar{box-shadow:0 1px 0 var(--border);border-bottom:none}
+
+/* Cards melhorados */
+.card{border-radius:14px}
+.card-value{font-size:26px;font-weight:800}
+.card::before{height:4px}
+
+/* Tabela mais elegante */
+thead th{font-size:10px;letter-spacing:.1em;background:var(--bg)}
+tbody tr:hover{background:#f8fafc}
+
+/* Parcelamento card hover */
+.card[style*="margin-bottom"]:hover{box-shadow:var(--shadow)}
+
+/* Form label uppercase menor */
+.form-label{font-size:10.5px;letter-spacing:.07em}
+
+/* Botão primário com gradiente suave */
+.btn-primary{background:linear-gradient(135deg,#3b82f6 0%,#2563eb 100%)}
+.btn-primary:hover{background:linear-gradient(135deg,#2563eb 0%,#1d4ed8 100%)}
+
+/* Seção header refinada */
+.sec-hdr{padding-bottom:4px;border-bottom:2px solid var(--border);margin-bottom:22px}
+.sec-title{font-size:17px}
+
+/* Filtros melhorados */
+.fin-filters{background:var(--surface);border-radius:10px}
+
+/* Modal footer mais elegante */
+.modal-footer{border-top:1.5px solid var(--border)}
+
+/* Badge refinado */
+.badge{padding:3px 9px;font-size:11px;border-radius:6px;font-weight:700;letter-spacing:.02em}
+
 /* MOBILE NAV */
 #mob-nav{display:none}
 
@@ -554,8 +598,15 @@ tbody tr:hover{background:var(--surface-2)}
     <div id="view-parcelamentos" class="view-section hidden">
       <div class="sec-hdr">
         <div class="sec-title">Parcelamentos</div>
+        <input class="form-control s-search" id="search-parc" placeholder="Buscar descrição ou pessoa…" oninput="renderParcelamentos()" style="max-width:260px">
+        <select class="form-control" id="filter-parc-status" onchange="renderParcelamentos()" style="width:160px">
+          <option value="">Todos</option>
+          <option value="pendente">Com pendentes</option>
+          <option value="pago">Quitados</option>
+        </select>
         <button class="btn btn-primary" onclick="openModalParcelamento()">+ Novo Parcelamento</button>
       </div>
+      <div id="parc-summary" style="display:none;margin-bottom:16px"></div>
       <div class="tabs">
         <button class="tab active" onclick="setParcTab('receber')">A Receber</button>
         <button class="tab" onclick="setParcTab('pagar')">A Pagar</button>
@@ -598,8 +649,63 @@ tbody tr:hover{background:var(--surface-2)}
     <div id="view-relatorios" class="view-section hidden">
       <div class="sec-hdr">
         <div class="sec-title">Relatórios</div>
-        <input type="month" class="form-control" id="rel-mes" style="width:160px" onchange="renderRelatorios()">
-        <button class="btn btn-ghost" onclick="imprimirRelatorio()">🖨 Imprimir Relatório</button>
+        <button class="btn btn-ghost" onclick="imprimirRelatorio()">🖨 Imprimir</button>
+      </div>
+      <!-- Painel de filtros -->
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px;margin-bottom:20px;box-shadow:var(--shadow-sm)">
+        <div style="font-size:11px;font-weight:700;color:var(--text-mid);letter-spacing:.07em;text-transform:uppercase;margin-bottom:12px">Filtros do Relatório</div>
+        <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end">
+          <div>
+            <div style="font-size:11px;color:var(--text-mid);font-weight:600;margin-bottom:5px">Período</div>
+            <div style="display:flex;gap:6px;align-items:center">
+              <input type="date" class="form-control" id="rel-ini" onchange="renderRelatorios()" style="width:145px">
+              <span style="color:var(--text-dim);font-size:13px">até</span>
+              <input type="date" class="form-control" id="rel-fim" onchange="renderRelatorios()" style="width:145px">
+            </div>
+          </div>
+          <div>
+            <div style="font-size:11px;color:var(--text-mid);font-weight:600;margin-bottom:5px">Atalhos</div>
+            <div style="display:flex;gap:4px">
+              <button class="btn btn-ghost btn-sm" onclick="setRelPeriodo('mes')">Este mês</button>
+              <button class="btn btn-ghost btn-sm" onclick="setRelPeriodo('trim')">Trimestre</button>
+              <button class="btn btn-ghost btn-sm" onclick="setRelPeriodo('ano')">Este ano</button>
+              <button class="btn btn-ghost btn-sm" onclick="setRelPeriodo('tudo')">Tudo</button>
+            </div>
+          </div>
+          <div>
+            <div style="font-size:11px;color:var(--text-mid);font-weight:600;margin-bottom:5px">Tipo</div>
+            <select class="form-control" id="rel-tipo" onchange="renderRelatorios()" style="width:160px">
+              <option value="">Entradas e Saídas</option>
+              <option value="entrada">Apenas Entradas</option>
+              <option value="saida">Apenas Saídas</option>
+            </select>
+          </div>
+          <div>
+            <div style="font-size:11px;color:var(--text-mid);font-weight:600;margin-bottom:5px">Status</div>
+            <select class="form-control" id="rel-status" onchange="renderRelatorios()" style="width:145px">
+              <option value="">Todos</option>
+              <option value="pago">Pago / Recebido</option>
+              <option value="pendente">Pendente</option>
+            </select>
+          </div>
+          <div style="flex:1;min-width:180px">
+            <div style="font-size:11px;color:var(--text-mid);font-weight:600;margin-bottom:5px">Cliente / Fornecedor</div>
+            <input type="text" class="form-control" id="rel-pessoa" placeholder="Filtrar por nome…" oninput="renderRelatorios()">
+          </div>
+          <div style="flex:1;min-width:160px">
+            <div style="font-size:11px;color:var(--text-mid);font-weight:600;margin-bottom:5px">Categoria</div>
+            <select class="form-control" id="rel-cat" onchange="renderRelatorios()">
+              <option value="">Todas as categorias</option>
+            </select>
+          </div>
+        </div>
+      </div>
+      <!-- Tabs de relatório -->
+      <div class="tabs" style="margin-bottom:20px">
+        <button class="tab active" onclick="setRelTab('resumo')">Resumo</button>
+        <button class="tab" onclick="setRelTab('categorias')">Por Categoria</button>
+        <button class="tab" onclick="setRelTab('pessoas')">Por Cliente/Fornecedor</button>
+        <button class="tab" onclick="setRelTab('pendentes')">Pendências</button>
       </div>
       <div id="rel-content"></div>
     </div>
@@ -953,30 +1059,55 @@ tbody tr:hover{background:var(--surface-2)}
 
 <!-- Modal Parcelamento -->
 <div class="modal-overlay hidden" id="modal-parcelamento">
-  <div class="modal">
+  <div class="modal" style="max-width:620px">
     <div class="modal-hdr"><div class="modal-title" id="mparc-title">Novo Parcelamento</div><button class="modal-close" onclick="closeModal('modal-parcelamento')">×</button></div>
     <div class="modal-body">
       <input type="hidden" id="parc-id">
       <div class="form-row">
         <div class="form-group"><label class="form-label">Tipo</label>
-          <select class="form-control" id="parc-tipo">
+          <select class="form-control" id="parc-tipo" onchange="calcParcPreview()">
             <option value="receber">A Receber</option><option value="pagar">A Pagar</option>
           </select>
         </div>
-        <div class="form-group"><label class="form-label">Descrição *</label><input class="form-control" id="parc-desc" placeholder="Ex: Locação João Silva"></div>
+        <div class="form-group"><label class="form-label">Cliente / Fornecedor</label>
+          <input class="form-control" id="parc-nome" placeholder="Nome" list="dl-pessoas-parc" autocomplete="off">
+          <datalist id="dl-pessoas-parc"></datalist>
+        </div>
       </div>
-      <div class="form-row">
-        <div class="form-group"><label class="form-label">Valor Total (R$) *</label><input class="form-control" id="parc-valor" type="number" step="0.01" placeholder="0,00"></div>
-        <div class="form-group"><label class="form-label">Nº de Parcelas *</label><input class="form-control" id="parc-n" type="number" min="2" max="60" value="2"></div>
+      <div class="form-group"><label class="form-label">Descrição *</label><input class="form-control" id="parc-desc" placeholder="Ex: Locação João Silva"></div>
+      <!-- Cálculo automático -->
+      <div style="background:var(--surface-2);border:1px solid var(--border);border-radius:10px;padding:16px;margin-bottom:16px">
+        <div style="font-size:11px;font-weight:700;color:var(--text-mid);letter-spacing:.06em;text-transform:uppercase;margin-bottom:12px">Cálculo do Parcelamento</div>
+        <div class="form-row">
+          <div class="form-group" style="margin-bottom:0"><label class="form-label">Valor Total (R$) *</label>
+            <input class="form-control" id="parc-valor" type="number" step="0.01" placeholder="0,00" oninput="calcParcPreview()">
+          </div>
+          <div class="form-group" style="margin-bottom:0"><label class="form-label">Entrada / 1º Pagamento (R$)</label>
+            <input class="form-control" id="parc-entrada" type="number" step="0.01" placeholder="0,00 (opcional)" oninput="calcParcPreview()">
+          </div>
+        </div>
+        <!-- Resumo do cálculo -->
+        <div id="parc-calc-resumo" style="display:none;margin-top:12px;padding:10px 14px;background:var(--blue-bg);border:1px solid #bfdbfe;border-radius:8px;font-size:13px;color:var(--blue-text)"></div>
+        <div class="form-row" style="margin-top:12px">
+          <div class="form-group" style="margin-bottom:0"><label class="form-label">Nº de Parcelas (restantes) *</label>
+            <input class="form-control" id="parc-n" type="number" min="1" max="60" value="2" oninput="calcParcPreview()">
+          </div>
+          <div class="form-group" style="margin-bottom:0"><label class="form-label">1ª Parcela em</label>
+            <input class="form-control" id="parc-inicio" type="date" oninput="calcParcPreview()">
+          </div>
+        </div>
       </div>
-      <div class="form-row">
-        <div class="form-group"><label class="form-label">1ª Parcela em</label><input class="form-control" id="parc-inicio" type="date"></div>
-        <div class="form-group"><label class="form-label">Cliente / Fornecedor</label><input class="form-control" id="parc-nome" placeholder="Nome"></div>
+      <!-- Preview da tabela de parcelas -->
+      <div id="parc-preview-wrap" style="display:none">
+        <div style="font-size:11px;font-weight:700;color:var(--text-mid);letter-spacing:.06em;text-transform:uppercase;margin-bottom:8px">Cronograma de Pagamentos</div>
+        <div style="border:1px solid var(--border);border-radius:8px;overflow:hidden;font-size:12.5px">
+          <div id="parc-preview-table"></div>
+        </div>
       </div>
     </div>
     <div class="modal-footer">
       <button class="btn btn-ghost" onclick="closeModal('modal-parcelamento')">Cancelar</button>
-      <button class="btn btn-primary" onclick="saveParcelamento()">Salvar</button>
+      <button class="btn btn-primary" onclick="saveParcelamento()">Salvar Parcelamento</button>
     </div>
   </div>
 </div>
@@ -1101,7 +1232,7 @@ const DB={
 };
 
 // ── NAVIGATION ────────────────────────────────────────────────────────────────
-const VIEW_TITLES={dashboard:'Dashboard',clientes:'Clientes',funcionarios:'Funcionários',
+const VIEW_TITLES={dashboard:'Dashboard',clientes:'Clientes / Fornecedores',funcionarios:'Funcionários',
   equipamentos:'Equipamentos',estoque:'Estoque',orcamentoscli:'Orçamentos',
   locacoes:'Locações',financeiro:'Financeiro',parcelamentos:'Parcelamentos',
   orcamento:'Metas',relatorios:'Relatórios'};
@@ -1115,7 +1246,7 @@ function goView(v){
   ({dashboard:renderDashboard,clientes:renderClientes,funcionarios:renderFuncionarios,
     equipamentos:renderEquipamentos,estoque:renderEstoque,orcamentoscli:renderOrcamentosCli,
     locacoes:renderLocacoes,financeiro:renderFinanceiro,parcelamentos:renderParcelamentos,
-    orcamento:renderOrcamento,relatorios:renderRelatorios}[v]||function(){})();
+    orcamento:renderOrcamento,relatorios:()=>{setRelPeriodo('mes');}}[v]||function(){})();
 }
 
 function toggleSidebar(){
@@ -1942,30 +2073,114 @@ function marcarPago(id){
 // ── PARCELAMENTOS ─────────────────────────────────────────────────────────────
 let parcTab='receber';
 function setParcTab(t){parcTab=t;document.querySelectorAll('#view-parcelamentos .tab').forEach((el,i)=>el.classList.toggle('active',['receber','pagar'][i]===t));renderParcelamentos();}
+function calcParcPreview(){
+  const total=Number(document.getElementById('parc-valor')?.value)||0;
+  const entrada=Number(document.getElementById('parc-entrada')?.value)||0;
+  const n=Number(document.getElementById('parc-n')?.value)||1;
+  const inicio=document.getElementById('parc-inicio')?.value;
+  const saldo=Math.max(0,total-entrada);
+  const vlParc=n>0?saldo/n:0;
+  const resumo=document.getElementById('parc-calc-resumo');
+  const prevWrap=document.getElementById('parc-preview-wrap');
+  const prevTbl=document.getElementById('parc-preview-table');
+  if(!total){if(resumo)resumo.style.display='none';if(prevWrap)prevWrap.style.display='none';return;}
+  if(resumo){
+    resumo.style.display='block';
+    const tipo=document.getElementById('parc-tipo')?.value==='receber'?'receber':'pagar';
+    resumo.innerHTML=`<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:12px">
+      <div><div style="font-size:10px;opacity:.7;margin-bottom:2px">TOTAL</div><strong>${fmtR(total)}</strong></div>
+      ${entrada>0?`<div><div style="font-size:10px;opacity:.7;margin-bottom:2px">ENTRADA</div><strong style="color:#16a34a">${fmtR(entrada)}</strong></div>
+      <div><div style="font-size:10px;opacity:.7;margin-bottom:2px">SALDO</div><strong>${fmtR(saldo)}</strong></div>`:''}
+      <div><div style="font-size:10px;opacity:.7;margin-bottom:2px">${n}X DE</div><strong>${fmtR(vlParc)}</strong></div>
+    </div>`;
+  }
+  if(inicio&&n>0&&vlParc>0&&prevWrap&&prevTbl){
+    prevWrap.style.display='block';
+    const rows=[];
+    if(entrada>0){
+      rows.push(`<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 12px;background:#f0fdf4;border-bottom:1px solid var(--border)">
+        <div style="display:flex;align-items:center;gap:8px"><span style="font-size:11px;font-weight:700;background:#16a34a;color:#fff;padding:2px 7px;border-radius:4px">ENTRADA</span><span style="font-size:12px;color:var(--text-mid)">Hoje</span></div>
+        <strong style="color:#16a34a">${fmtR(entrada)}</strong></div>`);
+    }
+    for(let i=0;i<Math.min(n,12);i++){
+      const d=new Date(inicio+'T12:00:00');d.setMonth(d.getMonth()+i);
+      rows.push(`<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 12px;${i<n-1?'border-bottom:1px solid var(--border)':''}">
+        <div style="display:flex;align-items:center;gap:8px"><span style="font-size:11px;color:var(--text-dim);min-width:42px">${i+1}/${n}</span><span style="font-size:12px;color:var(--text-mid)">${fmtD(d.toISOString().slice(0,10))}</span></div>
+        <strong>${fmtR(vlParc)}</strong></div>`);
+    }
+    if(n>12)rows.push(`<div style="padding:8px 12px;font-size:12px;color:var(--text-dim);text-align:center">...e mais ${n-12} parcelas</div>`);
+    prevTbl.innerHTML=rows.join('');
+  }else if(prevWrap){prevWrap.style.display='none';}
+}
 function renderParcelamentos(){
-  const lista=DB.get('parcelamentos').filter(p=>p.tipo===parcTab);
-  if(!lista.length){document.getElementById('parc-content').innerHTML=`<div class="empty"><div class="empty-icon">📅</div><h3>Nenhum parcelamento cadastrado</h3></div>`;return;}
+  const q=(document.getElementById('search-parc')?.value||'').toLowerCase();
+  const sf=document.getElementById('filter-parc-status')?.value||'';
+  let lista=DB.get('parcelamentos').filter(p=>p.tipo===parcTab);
+  if(q)lista=lista.filter(p=>p.descricao?.toLowerCase().includes(q)||p.nomeCliente?.toLowerCase().includes(q));
+  if(sf==='pendente')lista=lista.filter(p=>p.parcelas?.some(x=>x.status==='pendente'));
+  if(sf==='pago')lista=lista.filter(p=>p.parcelas?.every(x=>x.status==='pago'));
+  // summary bar
+  const sumEl=document.getElementById('parc-summary');
+  if(lista.length&&sumEl){
+    const totGeral=lista.reduce((s,p)=>s+Number(p.valorTotal||0),0);
+    const totPago=lista.reduce((s,p)=>s+(p.parcelas?.filter(x=>x.status==='pago').reduce((a,x)=>a+Number(x.valor||0),0)||0),0);
+    const totPend=lista.reduce((s,p)=>s+(p.parcelas?.filter(x=>x.status==='pendente').reduce((a,x)=>a+Number(x.valor||0),0)||0),0);
+    const cor=parcTab==='receber'?'var(--emerald)':'var(--red)';
+    sumEl.style.display='block';
+    sumEl.innerHTML=`<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px">
+      <div class="card" style="padding:14px"><div class="card-label">Total Geral</div><div style="font-size:20px;font-weight:800;color:${cor}">${fmtR(totGeral)}</div></div>
+      <div class="card" style="padding:14px"><div class="card-label">Já ${parcTab==='receber'?'Recebido':'Pago'}</div><div style="font-size:20px;font-weight:800;color:var(--emerald)">${fmtR(totPago)}</div></div>
+      <div class="card" style="padding:14px"><div class="card-label">Pendente</div><div style="font-size:20px;font-weight:800;color:var(--amber)">${fmtR(totPend)}</div></div>
+      <div class="card" style="padding:14px"><div class="card-label">Contratos</div><div style="font-size:20px;font-weight:800">${lista.length}</div></div>
+    </div>`;
+  }else if(sumEl)sumEl.style.display='none';
+  if(!lista.length){document.getElementById('parc-content').innerHTML=`<div class="empty"><div class="empty-icon">📅</div><h3>Nenhum parcelamento encontrado</h3></div>`;return;}
   document.getElementById('parc-content').innerHTML=lista.map(p=>{
-    const pago=p.parcelas?.filter(x=>x.status==='pago').length||0;const tot=p.parcelas?.length||0;
-    const vlPago=p.parcelas?.filter(x=>x.status==='pago').reduce((s,x)=>s+Number(x.valor||0),0)||0;
+    const parcsTot=p.parcelas||[];
+    const pago=parcsTot.filter(x=>x.status==='pago').length;
+    const tot=parcsTot.length;
+    const vlPago=parcsTot.filter(x=>x.status==='pago').reduce((s,x)=>s+Number(x.valor||0),0);
+    const vlPend=parcsTot.filter(x=>x.status==='pendente').reduce((s,x)=>s+Number(x.valor||0),0);
     const perc=tot?Math.round(pago/tot*100):0;
-    return`<div class="card" style="margin-bottom:12px">
-      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px">
-        <div><div style="font-weight:600;font-size:14px">${esc(p.descricao)}</div><div style="font-size:12px;color:var(--text-mid)">${esc(p.nomeCliente||'')}</div></div>
-        <div style="text-align:right"><div style="font-weight:700;color:${p.tipo==='receber'?'var(--green)':'var(--red)'}">${fmtR(p.valorTotal)}</div><div style="font-size:11px;color:var(--text-mid)">${pago}/${tot} pagas · ${fmtR(vlPago)} recebido</div></div>
+    const cor=p.tipo==='receber'?'var(--emerald)':'var(--red)';
+    const proxPend=parcsTot.find(x=>x.status==='pendente');
+    const quitado=pago===tot&&tot>0;
+    return`<div class="card" style="margin-bottom:12px;${quitado?'opacity:.7':''}">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px">
+        <div>
+          <div style="font-weight:700;font-size:14.5px;letter-spacing:-.01em">${esc(p.descricao)}</div>
+          ${p.nomeCliente?`<div style="font-size:12px;color:var(--text-mid);margin-top:3px">👤 ${esc(p.nomeCliente)}</div>`:''}
+          ${proxPend&&!quitado?`<div style="font-size:11.5px;color:var(--amber-text);margin-top:4px;background:var(--amber-bg);padding:2px 8px;border-radius:4px;display:inline-block">Próximo: ${fmtD(proxPend.vencimento)} — ${fmtR(proxPend.valor)}</div>`:''}
+        </div>
+        <div style="text-align:right;flex-shrink:0;margin-left:16px">
+          <div style="font-weight:800;font-size:16px;color:${cor}">${fmtR(p.valorTotal)}</div>
+          ${p.entrada?`<div style="font-size:11px;color:var(--emerald-text)">Entrada: ${fmtR(p.entrada)}</div>`:''}
+          <div style="font-size:11px;color:var(--text-mid);margin-top:2px">${pago}/${tot} pagas · Pend: ${fmtR(vlPend)}</div>
+          ${quitado?'<span class="badge badge-green" style="margin-top:4px">Quitado</span>':''}
+        </div>
       </div>
-      <div class="progress-bar"><div class="progress-fill" style="width:${perc}%;background:${p.tipo==='receber'?'var(--green)':'var(--blue)'}"></div></div>
-      <div style="margin-top:10px;display:flex;flex-direction:column;gap:3px">
-        ${p.parcelas?.map((par,i)=>`<div style="display:flex;align-items:center;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border)">
-          <div style="display:flex;align-items:center;gap:8px">
-            <span style="font-size:11px;color:var(--text-dim);min-width:28px">${i+1}/${tot}</span>
-            <span class="badge ${par.status==='pago'?'badge-green':'badge-orange'}">${par.status==='pago'?'Pago':'Pendente'}</span>
-            <span style="font-size:12px;color:var(--text-mid)">${fmtD(par.vencimento)}</span>
-          </div>
-          <div style="display:flex;align-items:center;gap:8px"><strong>${fmtR(par.valor)}</strong>${par.status==='pendente'?`<button class="btn btn-success btn-xs" onclick="pagarParcela('${p.id}',${i})">✓ Pagar</button>`:''}</div>
-        </div>`).join('')}
-      </div>
-      <div style="margin-top:8px;display:flex;justify-content:flex-end"><button class="btn btn-danger btn-xs" onclick="delParcelamento('${p.id}')">✕ Excluir</button></div>
+      <div class="progress-bar"><div class="progress-fill" style="width:${perc}%;background:${cor}"></div></div>
+      <div style="font-size:11px;color:var(--text-dim);margin-top:4px;margin-bottom:10px">${perc}% pago</div>
+      <details style="margin-top:4px">
+        <summary style="font-size:12px;color:var(--text-mid);cursor:pointer;user-select:none;padding:4px 0">Ver parcelas (${tot})</summary>
+        <div style="margin-top:8px;border:1px solid var(--border);border-radius:8px;overflow:hidden">
+          ${p.entrada?`<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 12px;background:#f0fdf4;border-bottom:1px solid var(--border)">
+            <div style="display:flex;align-items:center;gap:8px"><span class="badge badge-green">Entrada</span></div>
+            <strong style="color:var(--emerald)">${fmtR(p.entrada)}</strong></div>`:''}
+          ${parcsTot.map((par,i)=>`<div style="display:flex;align-items:center;justify-content:space-between;padding:9px 12px;${i<tot-1?'border-bottom:1px solid var(--border)':''}${par.status==='pago'?';background:var(--surface-2)':''}">
+            <div style="display:flex;align-items:center;gap:8px">
+              <span style="font-size:11px;color:var(--text-dim);min-width:36px">${i+1}/${tot}</span>
+              <span class="badge ${par.status==='pago'?'badge-green':'badge-orange'}">${par.status==='pago'?'Pago':'Pendente'}</span>
+              <span style="font-size:12px;color:var(--text-mid)">${fmtD(par.vencimento)}</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px">
+              <strong>${fmtR(par.valor)}</strong>
+              ${par.status==='pendente'?`<button class="btn btn-success btn-xs" onclick="pagarParcela('${p.id}',${i})">✓ Pagar</button>`:''}
+            </div>
+          </div>`).join('')}
+        </div>
+      </details>
+      <div style="margin-top:10px;display:flex;justify-content:flex-end"><button class="btn btn-danger btn-xs" onclick="delParcelamento('${p.id}')">✕ Excluir</button></div>
     </div>`;
   }).join('');
 }
@@ -1976,20 +2191,47 @@ function pagarParcela(pId,idx){
   renderParcelamentos();toast('Parcela paga!','success');
 }
 function openModalParcelamento(){
-  document.getElementById('parc-id').value='';document.getElementById('parc-tipo').value=parcTab;
-  document.getElementById('parc-desc').value='';document.getElementById('parc-valor').value='';
-  document.getElementById('parc-n').value=2;document.getElementById('parc-inicio').value=today();
-  document.getElementById('parc-nome').value='';openModal('modal-parcelamento');
+  // populate datalist
+  const dl=document.getElementById('dl-pessoas-parc');
+  if(dl)dl.innerHTML=DB.get('clientes').map(c=>`<option value="${esc(c.nome)}">`).join('');
+  document.getElementById('parc-id').value='';
+  document.getElementById('parc-tipo').value=parcTab;
+  document.getElementById('parc-desc').value='';
+  document.getElementById('parc-valor').value='';
+  document.getElementById('parc-entrada').value='';
+  document.getElementById('parc-n').value=2;
+  document.getElementById('parc-inicio').value=today();
+  document.getElementById('parc-nome').value='';
+  document.getElementById('parc-calc-resumo').style.display='none';
+  document.getElementById('parc-preview-wrap').style.display='none';
+  openModal('modal-parcelamento');
 }
 function saveParcelamento(){
-  const desc=document.getElementById('parc-desc').value.trim();const valor=Number(document.getElementById('parc-valor').value);
-  const n=Number(document.getElementById('parc-n').value)||2;const inicio=document.getElementById('parc-inicio').value;
-  if(!desc||!valor||!inicio){toast('Preencha todos os campos','error');return;}
-  const parcelas=Array.from({length:n},(_,i)=>{const d=new Date(inicio+'T12:00:00');d.setMonth(d.getMonth()+i);return{vencimento:d.toISOString().slice(0,10),valor:valor/n,status:'pendente'};});
-  DB.save('parcelamentos',{id:document.getElementById('parc-id').value||uid(),tipo:document.getElementById('parc-tipo').value,descricao:desc,nomeCliente:document.getElementById('parc-nome').value,valorTotal:valor,parcelas});
+  const desc=document.getElementById('parc-desc').value.trim();
+  const total=Number(document.getElementById('parc-valor').value);
+  const entrada=Number(document.getElementById('parc-entrada').value)||0;
+  const n=Number(document.getElementById('parc-n').value)||1;
+  const inicio=document.getElementById('parc-inicio').value;
+  if(!desc||!total){toast('Preencha descrição e valor total','error');return;}
+  if(!inicio){toast('Informe a data da 1ª parcela','error');return;}
+  const saldo=Math.max(0,total-entrada);
+  const vlParc=n>0?saldo/n:0;
+  const tipo=document.getElementById('parc-tipo').value;
+  const nomeCliente=document.getElementById('parc-nome').value;
+  const id=document.getElementById('parc-id').value||uid();
+  // gerar parcelas sobre o saldo
+  const parcelas=Array.from({length:n},(_,i)=>{
+    const d=new Date(inicio+'T12:00:00');d.setMonth(d.getMonth()+i);
+    return{vencimento:d.toISOString().slice(0,10),valor:vlParc,status:'pendente'};
+  });
+  DB.save('parcelamentos',{id,tipo,descricao:desc,nomeCliente,valorTotal:total,entrada:entrada||undefined,parcelas});
+  // se houver entrada, lançar transação imediata
+  if(entrada>0){
+    DB.save('transacoes',{id:uid(),tipo:tipo==='receber'?'entrada':'saida',categoria:tipo==='receber'?'Locação de Equipamento':'Outros',descricao:`${desc} — Entrada`,valor:entrada,data:today(),status:tipo==='receber'?'recebido':'pago',pessoa:nomeCliente});
+  }
   closeModal('modal-parcelamento');renderParcelamentos();toast('Parcelamento salvo!','success');
 }
-function delParcelamento(id){if(!confirm('Excluir?'))return;DB.del('parcelamentos',id);renderParcelamentos();toast('Excluído.','info');}
+function delParcelamento(id){if(!confirm('Excluir este parcelamento?'))return;DB.del('parcelamentos',id);renderParcelamentos();toast('Excluído.','info');}
 
 // ── ORÇAMENTOS CLIENTES ───────────────────────────────────────────────────────
 const ORC_BADGE={pendente:'badge-orange',aprovado:'badge-green',recusado:'badge-red'};
@@ -2149,46 +2391,139 @@ function saveOrcamento(){
 function delOrcamento(id){DB.del('orcamentos',id);renderOrcamento();}
 
 // ── RELATÓRIOS ────────────────────────────────────────────────────────────────
+let relTab='resumo';
+function setRelTab(t){
+  relTab=t;
+  document.querySelectorAll('#view-relatorios .tabs .tab').forEach(el=>el.classList.toggle('active',el.textContent.toLowerCase().includes(
+    t==='resumo'?'resum':t==='categorias'?'categ':t==='pessoas'?'clien':'pend')));
+  renderRelatorios();
+}
+function setRelPeriodo(p){
+  const hoje=new Date();const fmt=d=>d.toISOString().slice(0,10);
+  let ini,fim;
+  if(p==='mes'){const m=hoje.getMonth(),y=hoje.getFullYear();ini=fmt(new Date(y,m,1));fim=fmt(new Date(y,m+1,0));}
+  else if(p==='trim'){const m=hoje.getMonth(),y=hoje.getFullYear();const qStart=Math.floor(m/3)*3;ini=fmt(new Date(y,qStart,1));fim=fmt(new Date(y,qStart+3,0));}
+  else if(p==='ano'){ini=`${hoje.getFullYear()}-01-01`;fim=`${hoje.getFullYear()}-12-31`;}
+  else{ini='';fim='';}
+  document.getElementById('rel-ini').value=ini||'';
+  document.getElementById('rel-fim').value=fim||'';
+  renderRelatorios();
+}
+function _getRelTrans(){
+  const ini=document.getElementById('rel-ini')?.value||'';
+  const fim=document.getElementById('rel-fim')?.value||'';
+  const tipo=document.getElementById('rel-tipo')?.value||'';
+  const status=document.getElementById('rel-status')?.value||'';
+  const pessoa=(document.getElementById('rel-pessoa')?.value||'').toLowerCase().trim();
+  const cat=document.getElementById('rel-cat')?.value||'';
+  let lista=DB.get('transacoes');
+  if(ini)lista=lista.filter(t=>t.data>=ini);
+  if(fim)lista=lista.filter(t=>t.data<=fim);
+  if(tipo)lista=lista.filter(t=>t.tipo===tipo);
+  if(status==='pago')lista=lista.filter(t=>isPago(t.status));
+  else if(status==='pendente')lista=lista.filter(t=>!isPago(t.status));
+  if(pessoa)lista=lista.filter(t=>(t.pessoa||'').toLowerCase().includes(pessoa));
+  if(cat)lista=lista.filter(t=>(t.categoria||'Outros')===cat);
+  return lista.sort((a,b)=>a.data>b.data?1:-1);
+}
+function _populateRelCats(){
+  const sel=document.getElementById('rel-cat');if(!sel)return;
+  const tipo=document.getElementById('rel-tipo')?.value||'';
+  let base=DB.get('transacoes');
+  if(tipo)base=base.filter(t=>t.tipo===tipo);
+  const cats=[...new Set(base.map(t=>t.categoria||'Outros'))].sort();
+  const cur=sel.value;
+  sel.innerHTML='<option value="">Todas as categorias</option>'+cats.map(c=>`<option${c===cur?' selected':''}>${esc(c)}</option>`).join('');
+}
 function renderRelatorios(){
-  const mes=document.getElementById('rel-mes')?.value||thisMonth();
-  const trans=DB.get('transacoes').filter(t=>t.data?.startsWith(mes));
-  const ents=trans.filter(t=>t.tipo==='entrada'&&isPago(t.status));
-  const sais=trans.filter(t=>t.tipo==='saida'&&isPago(t.status));
-  const totE=ents.reduce((s,t)=>s+Number(t.valor||0),0);
-  const totS=sais.reduce((s,t)=>s+Number(t.valor||0),0);
-  const catE={};ents.forEach(t=>{catE[t.categoria||'Outros']=(catE[t.categoria||'Outros']||0)+Number(t.valor||0);});
-  const catS={};sais.forEach(t=>{catS[t.categoria||'Outros']=(catS[t.categoria||'Outros']||0)+Number(t.valor||0);});
-  const locs=DB.get('locacoes');const equips=DB.get('equipamentos');const clis=DB.get('clientes');
-  const eqCnt={};locs.forEach(l=>l.equipamentos?.forEach(le=>{eqCnt[le.equipId]=(eqCnt[le.equipId]||0)+1;}));
-  const topEq=Object.entries(eqCnt).sort((a,b)=>b[1]-a[1]).slice(0,5).map(([id,n])=>{const e=equips.find(x=>x.id===id);return{nome:e?`${e.tipo} ${e.marca} ${e.modelo}`.trim():'?',n};});
-  const cliCnt={};locs.forEach(l=>{cliCnt[l.clienteId]=(cliCnt[l.clienteId]||0)+1;});
-  const topCli=Object.entries(cliCnt).sort((a,b)=>b[1]-a[1]).slice(0,5).map(([id,n])=>{const c=clis.find(x=>x.id===id);return{nome:c?.nome||'?',n};});
-  const mesLabel=new Date(mes+'-15').toLocaleString('pt-BR',{month:'long',year:'numeric'});
-  const mkCatRows=(entries,cor)=>entries.sort((a,b)=>b[1]-a[1]).map(([c,v])=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--border);font-size:13px"><span style="color:var(--text-mid)">${esc(c)}</span><strong style="color:${cor}">${fmtR(v)}</strong></div>`).join('');
-  document.getElementById('rel-content').innerHTML=`<div class="rel-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
-    <div class="card"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px"><span class="dash-panel-title" style="margin:0">📥 Entradas por Categoria</span><button class="btn btn-ghost btn-xs" onclick="imprimirCategoria('entrada','${mes}')">🖨 Imprimir</button></div>
-      ${mkCatRows(Object.entries(catE),'var(--green)')||'<p style="color:var(--text-dim);font-size:13px;padding:12px 0">Nenhuma entrada</p>'}
-      <div style="display:flex;justify-content:space-between;padding:8px 0;font-weight:700"><span>Total</span><span style="color:var(--green)">${fmtR(totE)}</span></div>
-    </div>
-    <div class="card"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px"><span class="dash-panel-title" style="margin:0">📤 Saídas por Categoria</span><button class="btn btn-ghost btn-xs" onclick="imprimirCategoria('saida','${mes}')">🖨 Imprimir</button></div>
-      ${mkCatRows(Object.entries(catS),'var(--red)')||'<p style="color:var(--text-dim);font-size:13px;padding:12px 0">Nenhuma saída</p>'}
-      <div style="display:flex;justify-content:space-between;padding:8px 0;font-weight:700"><span>Total</span><span style="color:var(--red)">${fmtR(totS)}</span></div>
-    </div>
-    <div class="card"><div class="dash-panel-title">💻 Equipamentos Mais Locados</div>
-      ${topEq.map((e,i)=>`<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border);font-size:13px"><span style="color:var(--text-mid)">${i+1}. ${esc(e.nome)}</span><strong>${e.n} loc.</strong></div>`).join('')||'<p style="color:var(--text-dim);font-size:13px;padding:12px 0">Nenhuma locação</p>'}
-    </div>
-    <div class="card"><div class="dash-panel-title">👥 Clientes com Mais Locações</div>
-      ${topCli.map((c,i)=>`<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border);font-size:13px"><span style="color:var(--text-mid)">${i+1}. ${esc(c.nome)}</span><strong>${c.n} loc.</strong></div>`).join('')||'<p style="color:var(--text-dim);font-size:13px;padding:12px 0">Nenhuma locação</p>'}
-    </div>
-    <div class="card" style="grid-column:1/-1"><div class="dash-panel-title">💹 Resumo do Mês — ${mesLabel}</div>
-      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px">
-        <div><div style="font-size:11px;color:var(--text-mid);margin-bottom:4px">RECEITA</div><div style="font-size:22px;font-weight:700;color:var(--green)">${fmtR(totE)}</div></div>
-        <div><div style="font-size:11px;color:var(--text-mid);margin-bottom:4px">DESPESA</div><div style="font-size:22px;font-weight:700;color:var(--red)">${fmtR(totS)}</div></div>
-        <div><div style="font-size:11px;color:var(--text-mid);margin-bottom:4px">LUCRO</div><div style="font-size:22px;font-weight:700;color:${totE-totS>=0?'var(--green)':'var(--red)'}">${fmtR(totE-totS)}</div></div>
-        <div><div style="font-size:11px;color:var(--text-mid);margin-bottom:4px">TRANSAÇÕES</div><div style="font-size:22px;font-weight:700">${trans.length}</div></div>
+  _populateRelCats();
+  const lista=_getRelTrans();
+  const ini=document.getElementById('rel-ini')?.value;
+  const fim=document.getElementById('rel-fim')?.value;
+  const ents=lista.filter(t=>t.tipo==='entrada');
+  const sais=lista.filter(t=>t.tipo==='saida');
+  const entsP=ents.filter(t=>isPago(t.status));
+  const saisP=sais.filter(t=>isPago(t.status));
+  const totE=entsP.reduce((s,t)=>s+Number(t.valor||0),0);
+  const totS=saisP.reduce((s,t)=>s+Number(t.valor||0),0);
+  const totPendE=ents.filter(t=>!isPago(t.status)).reduce((s,t)=>s+Number(t.valor||0),0);
+  const totPendS=sais.filter(t=>!isPago(t.status)).reduce((s,t)=>s+Number(t.valor||0),0);
+  const periodoLabel=ini||fim?(ini?fmtD(ini):'início')+' até '+(fim?fmtD(fim):'hoje'):'Todo o período';
+  const mkBar=(v,max,cor)=>{const w=max>0?Math.round(v/max*100):0;return`<div style="height:6px;background:var(--border);border-radius:3px;margin-top:4px;overflow:hidden"><div style="width:${w}%;height:100%;background:${cor};border-radius:3px"></div></div>`;};
+  const mkCatTable=(entries,cor,total)=>{
+    if(!entries.length)return`<p style="color:var(--text-dim);font-size:13px;padding:16px 0">Nenhum registro</p>`;
+    const sorted=entries.sort((a,b)=>b[1]-a[1]);
+    return sorted.map(([c,v])=>`<div style="padding:10px 0;border-bottom:1px solid var(--border)">
+      <div style="display:flex;justify-content:space-between;align-items:center"><span style="font-size:13px;color:var(--text)">${esc(c)}</span><strong style="color:${cor}">${fmtR(v)}</strong></div>
+      <div style="display:flex;align-items:center;gap:8px;margin-top:3px">${mkBar(v,total,cor)}<span style="font-size:11px;color:var(--text-dim);white-space:nowrap">${total>0?Math.round(v/total*100):0}%</span></div>
+    </div>`).join('')+`<div style="display:flex;justify-content:space-between;padding:10px 0;font-weight:700"><span>Total</span><span style="color:${cor}">${fmtR(total)}</span></div>`;
+  };
+  const el=document.getElementById('rel-content');
+  if(relTab==='resumo'){
+    const locs=DB.get('locacoes');const equips=DB.get('equipamentos');const clis=DB.get('clientes');
+    const eqCnt={};locs.forEach(l=>l.equipamentos?.forEach(le=>{eqCnt[le.equipId]=(eqCnt[le.equipId]||0)+1;}));
+    const topEq=Object.entries(eqCnt).sort((a,b)=>b[1]-a[1]).slice(0,5).map(([id,n])=>{const e=equips.find(x=>x.id===id);return{nome:e?`${e.tipo} ${e.marca} ${e.modelo}`.trim():'?',n};});
+    el.innerHTML=`
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px;margin-bottom:20px">
+        <div class="card green"><div class="card-label">Receitas (Pagas)</div><div class="card-value">${fmtR(totE)}</div><div class="card-sub">${periodoLabel}</div></div>
+        <div class="card red"><div class="card-label">Despesas (Pagas)</div><div class="card-value">${fmtR(totS)}</div><div class="card-sub">${periodoLabel}</div></div>
+        <div class="card ${totE-totS>=0?'blue':'red'}"><div class="card-label">Saldo Líquido</div><div class="card-value">${fmtR(totE-totS)}</div><div class="card-sub">${totE-totS>=0?'Positivo':'Negativo'}</div></div>
+        <div class="card orange"><div class="card-label">A Receber</div><div class="card-value">${fmtR(totPendE)}</div><div class="card-sub">Pendente</div></div>
+        <div class="card orange"><div class="card-label">A Pagar</div><div class="card-value">${fmtR(totPendS)}</div><div class="card-sub">Pendente</div></div>
+        <div class="card"><div class="card-label">Transações</div><div class="card-value" style="color:var(--text)">${lista.length}</div><div class="card-sub">no período</div></div>
       </div>
-    </div>
-  </div>`;
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+        <div class="card"><div class="dash-panel-title">📥 Top Categorias — Entradas</div>${mkCatTable(Object.entries(Object.fromEntries(entsP.map(t=>[t.categoria||'Outros',0]))).map(([k])=>[k,entsP.filter(t=>(t.categoria||'Outros')===k).reduce((s,t)=>s+Number(t.valor||0),0)]),'var(--emerald)',totE)}</div>
+        <div class="card"><div class="dash-panel-title">📤 Top Categorias — Saídas</div>${mkCatTable(Object.entries(Object.fromEntries(saisP.map(t=>[t.categoria||'Outros',0]))).map(([k])=>[k,saisP.filter(t=>(t.categoria||'Outros')===k).reduce((s,t)=>s+Number(t.valor||0),0)]),'var(--red)',totS)}</div>
+        <div class="card"><div class="dash-panel-title">💻 Equipamentos Mais Locados</div>${topEq.map((e,i)=>`<div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--border);font-size:13px"><span style="color:var(--text-mid)">${i+1}. ${esc(e.nome)}</span><strong>${e.n} loc.</strong></div>`).join('')||'<p style="color:var(--text-dim);font-size:13px;padding:12px 0">Nenhuma locação</p>'}</div>
+        <div class="card"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px"><div class="dash-panel-title" style="margin:0">📊 Fluxo por Status</div></div>
+          ${[['Receitas pagas','var(--emerald)',totE],['Receitas pendentes','var(--amber)',totPendE],['Despesas pagas','var(--red)',totS],['Despesas pendentes','var(--amber)',totPendS]].map(([l,c,v])=>
+            `<div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--border);font-size:13px"><span style="color:var(--text-mid)">${l}</span><strong style="color:${c}">${fmtR(v)}</strong></div>`).join('')}
+        </div>
+      </div>`;
+  }else if(relTab==='categorias'){
+    const catE={};entsP.forEach(t=>{const k=t.categoria||'Outros';catE[k]=(catE[k]||0)+Number(t.valor||0);});
+    const catS={};saisP.forEach(t=>{const k=t.categoria||'Outros';catS[k]=(catS[k]||0)+Number(t.valor||0);});
+    el.innerHTML=`<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+      <div class="card"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px"><span class="dash-panel-title" style="margin:0">📥 Entradas por Categoria</span></div>${mkCatTable(Object.entries(catE),'var(--emerald)',totE)}</div>
+      <div class="card"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px"><span class="dash-panel-title" style="margin:0">📤 Saídas por Categoria</span></div>${mkCatTable(Object.entries(catS),'var(--red)',totS)}</div>
+    </div>`;
+  }else if(relTab==='pessoas'){
+    // agrupar por cliente/fornecedor
+    const map={};lista.forEach(t=>{const k=t.pessoa||'(Sem pessoa)';if(!map[k])map[k]={ent:0,sai:0,pendE:0,pendS:0};if(t.tipo==='entrada'){if(isPago(t.status))map[k].ent+=Number(t.valor||0);else map[k].pendE+=Number(t.valor||0);}else{if(isPago(t.status))map[k].sai+=Number(t.valor||0);else map[k].pendS+=Number(t.valor||0);}});
+    const entries=Object.entries(map).sort((a,b)=>(b[1].ent+b[1].sai)-(a[1].ent+a[1].sai));
+    el.innerHTML=!entries.length?`<div class="empty"><div class="empty-icon">👥</div><h3>Nenhuma transação com pessoa no período</h3></div>`:
+      `<div class="table-wrap"><table><thead><tr><th>Cliente / Fornecedor</th><th class="r">Recebido</th><th class="r">A Receber</th><th class="r">Pago</th><th class="r">A Pagar</th><th class="r">Saldo</th></tr></thead><tbody>
+      ${entries.map(([nome,v])=>{const saldo=v.ent-v.sai;return`<tr>
+        <td><strong>${esc(nome)}</strong></td>
+        <td class="r" style="color:var(--emerald)">${v.ent>0?fmtR(v.ent):'—'}</td>
+        <td class="r" style="color:var(--amber)">${v.pendE>0?fmtR(v.pendE):'—'}</td>
+        <td class="r" style="color:var(--red)">${v.sai>0?fmtR(v.sai):'—'}</td>
+        <td class="r" style="color:var(--amber)">${v.pendS>0?fmtR(v.pendS):'—'}</td>
+        <td class="r"><strong style="color:${saldo>=0?'var(--emerald)':'var(--red)'}">${fmtR(saldo)}</strong></td>
+      </tr>`}).join('')}
+      </tbody></table></div>`;
+  }else{
+    // pendentes
+    const pendE=ents.filter(t=>!isPago(t.status)).sort((a,b)=>a.data>b.data?1:-1);
+    const pendS=sais.filter(t=>!isPago(t.status)).sort((a,b)=>a.data>b.data?1:-1);
+    const mkPendRows=(items,cor)=>items.length?items.map(t=>`<tr>
+      <td>${fmtD(t.data)}</td><td><strong>${esc(t.descricao)}</strong>${t.pessoa?`<div style="font-size:11px;color:var(--text-dim)">👤 ${esc(t.pessoa)}</div>`:''}</td>
+      <td>${esc(t.categoria||'—')}</td><td class="r" style="color:${cor};font-weight:700">${fmtR(t.valor)}</td>
+      <td><button class="btn btn-success btn-xs" onclick="marcarPago('${t.id}');renderRelatorios()">✓ Marcar Pago</button></td>
+    </tr>`).join(''):`<tr><td colspan="5" style="text-align:center;color:var(--text-dim);padding:20px">Nenhuma pendência</td></tr>`;
+    el.innerHTML=`
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px">
+        <div class="card orange"><div class="card-label">Total a Receber</div><div class="card-value">${fmtR(totPendE)}</div><div class="card-sub">${pendE.length} lançamentos</div></div>
+        <div class="card orange"><div class="card-label">Total a Pagar</div><div class="card-value">${fmtR(totPendS)}</div><div class="card-sub">${pendS.length} lançamentos</div></div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+        <div class="card"><div class="dash-panel-title" style="color:var(--emerald)">📥 A Receber</div>
+          <div class="table-wrap" style="box-shadow:none;border:none;border-radius:0"><table><thead><tr><th>Vencimento</th><th>Descrição</th><th>Categoria</th><th class="r">Valor</th><th></th></tr></thead><tbody>${mkPendRows(pendE,'var(--emerald)')}</tbody></table></div></div>
+        <div class="card"><div class="dash-panel-title" style="color:var(--red)">📤 A Pagar</div>
+          <div class="table-wrap" style="box-shadow:none;border:none;border-radius:0"><table><thead><tr><th>Vencimento</th><th>Descrição</th><th>Categoria</th><th class="r">Valor</th><th></th></tr></thead><tbody>${mkPendRows(pendS,'var(--red)')}</tbody></table></div></div>
+      </div>`;
+  }
 }
 
 function _printHead(titulo,subtitulo){
@@ -2230,9 +2565,12 @@ function _printHead(titulo,subtitulo){
 }
 
 function imprimirRelatorio(){
-  const mes=document.getElementById('rel-mes')?.value||thisMonth();
-  const mesLabel=new Date(mes+'-15').toLocaleString('pt-BR',{month:'long',year:'numeric'});
-  const trans=DB.get('transacoes').filter(t=>t.data?.startsWith(mes));
+  const ini=document.getElementById('rel-ini')?.value||'';
+  const fim=document.getElementById('rel-fim')?.value||'';
+  const mesLabel=ini||fim?(ini?fmtD(ini):'início')+' até '+(fim?fmtD(fim):'hoje'):'Todo o período';
+  let trans=DB.get('transacoes');
+  if(ini)trans=trans.filter(t=>t.data>=ini);
+  if(fim)trans=trans.filter(t=>t.data<=fim);
   const ents=trans.filter(t=>t.tipo==='entrada'&&isPago(t.status));
   const sais=trans.filter(t=>t.tipo==='saida'&&isPago(t.status));
   const totE=ents.reduce((s,t)=>s+Number(t.valor||0),0);
