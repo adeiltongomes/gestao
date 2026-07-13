@@ -346,7 +346,7 @@ tbody tr:hover{background:var(--surface-2)}
     <div class="nav-section">
       <div class="nav-label">Cadastros</div>
       <div class="nav-item" data-view="clientes">
-        <span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg></span>Clientes
+        <span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg></span>Clientes / Fornecedores
       </div>
       <div class="nav-item" data-view="funcionarios">
         <span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span>Funcionários
@@ -415,16 +415,22 @@ tbody tr:hover{background:var(--surface-2)}
       </div>
     </div>
 
-    <!-- CLIENTES -->
+    <!-- CLIENTES / FORNECEDORES -->
     <div id="view-clientes" class="view-section hidden">
       <div class="sec-hdr">
-        <div class="sec-title">Clientes</div>
-        <input class="form-control s-search" id="search-clientes" placeholder="Buscar cliente…" oninput="renderClientes()">
-        <button class="btn btn-primary" onclick="openModalCliente()">+ Novo Cliente</button>
+        <div class="sec-title">Clientes / Fornecedores</div>
+        <input class="form-control s-search" id="search-clientes" placeholder="Buscar por nome, CPF, telefone…" oninput="renderClientes()">
+        <select class="form-control" id="filter-cli-tipo" onchange="renderClientes()" style="width:160px">
+          <option value="">Todos os tipos</option>
+          <option value="cliente">Cliente</option>
+          <option value="fornecedor">Fornecedor</option>
+          <option value="ambos">Cliente e Fornecedor</option>
+        </select>
+        <button class="btn btn-primary" onclick="openModalCliente()">+ Novo Cadastro</button>
       </div>
       <div class="table-wrap">
         <table>
-          <thead><tr><th>Nome</th><th>CPF/CNPJ</th><th>Telefone</th><th>E-mail</th><th>Cidade</th><th>Locações</th><th></th></tr></thead>
+          <thead><tr><th>Nome</th><th>Tipo</th><th>CPF/CNPJ</th><th>Telefone</th><th>Chave PIX</th><th>Cidade</th><th>Locações</th><th></th></tr></thead>
           <tbody id="tb-clientes"></tbody>
         </table>
       </div>
@@ -616,17 +622,35 @@ tbody tr:hover{background:var(--surface-2)}
 
 <!-- Modal Cliente -->
 <div class="modal-overlay hidden" id="modal-cliente">
-  <div class="modal">
-    <div class="modal-hdr"><div class="modal-title" id="mcli-title">Novo Cliente</div><button class="modal-close" onclick="closeModal('modal-cliente')">×</button></div>
+  <div class="modal" style="max-width:680px">
+    <div class="modal-hdr"><div class="modal-title" id="mcli-title">Novo Cadastro</div><button class="modal-close" onclick="closeModal('modal-cliente')">×</button></div>
     <div class="modal-body">
       <input type="hidden" id="cli-id">
       <div class="form-row">
-        <div class="form-group"><label class="form-label">Nome *</label><input class="form-control" id="cli-nome" placeholder="Nome completo"></div>
-        <div class="form-group"><label class="form-label">CPF / CNPJ</label><input class="form-control" id="cli-doc" placeholder="000.000.000-00"></div>
+        <div class="form-group"><label class="form-label">Nome / Razão Social *</label><input class="form-control" id="cli-nome" placeholder="Nome completo ou razão social"></div>
+        <div class="form-group" style="max-width:180px"><label class="form-label">Tipo</label>
+          <select class="form-control" id="cli-tipo">
+            <option value="cliente">Cliente</option>
+            <option value="fornecedor">Fornecedor</option>
+            <option value="ambos">Cliente e Fornecedor</option>
+          </select>
+        </div>
       </div>
       <div class="form-row">
+        <div class="form-group"><label class="form-label">CPF / CNPJ</label><input class="form-control" id="cli-doc" placeholder="000.000.000-00 ou 00.000.000/0001-00"></div>
         <div class="form-group"><label class="form-label">Telefone</label><input class="form-control" id="cli-tel" placeholder="(00) 00000-0000"></div>
+      </div>
+      <div class="form-row">
         <div class="form-group"><label class="form-label">E-mail</label><input class="form-control" id="cli-email" type="email" placeholder="email@exemplo.com"></div>
+        <div class="form-group"><label class="form-label">Chave PIX</label><input class="form-control" id="cli-pix" placeholder="CPF, e-mail, telefone ou chave aleatória"></div>
+      </div>
+      <div style="border-top:1px solid var(--border);margin:10px 0 12px;padding-top:12px">
+        <div style="font-size:12px;font-weight:600;color:var(--text-mid);margin-bottom:10px;text-transform:uppercase;letter-spacing:.05em">Dados Bancários</div>
+        <div class="form-row">
+          <div class="form-group" style="flex:2"><label class="form-label">Banco</label><input class="form-control" id="cli-banco" placeholder="Ex: Nubank, Itaú, Bradesco…"></div>
+          <div class="form-group"><label class="form-label">Agência</label><input class="form-control" id="cli-agencia" placeholder="0000"></div>
+          <div class="form-group"><label class="form-label">Conta</label><input class="form-control" id="cli-conta" placeholder="00000-0"></div>
+        </div>
       </div>
       <div class="form-row">
         <div class="form-group"><label class="form-label">Endereço</label><input class="form-control" id="cli-end" placeholder="Rua, número"></div>
@@ -840,7 +864,9 @@ tbody tr:hover{background:var(--surface-2)}
       </div>
       <div class="form-group">
         <label class="form-label">Cliente / Fornecedor <span style="font-weight:400;color:var(--text-dim)">(de quem recebeu ou para quem pagou)</span></label>
-        <input class="form-control" id="trans-pessoa" placeholder="Ex: João Silva, Fornecedor ABC...">
+        <input class="form-control" id="trans-pessoa" placeholder="Digite ou selecione um cadastrado…" list="dl-pessoas" autocomplete="off" oninput="_showPessoaInfo(this.value)">
+        <datalist id="dl-pessoas"></datalist>
+        <div id="trans-pessoa-info" style="display:none;margin-top:6px;padding:8px 12px;background:var(--blue-bg);border:1px solid #bfdbfe;border-radius:8px;font-size:12px;color:var(--blue-text)"></div>
       </div>
       <div class="form-group" id="trans-status-group"><label class="form-label">Status</label>
         <select class="form-control" id="trans-status">
@@ -1141,31 +1167,69 @@ function renderDashboard(){
     :`<div class="empty" style="padding:20px 0"><div class="empty-icon">✅</div><div style="color:var(--text-dim);font-size:13px">Nenhum vencimento próximo</div></div>`;
 }
 
-// ── CLIENTES ──────────────────────────────────────────────────────────────────
+// ── CLIENTES / FORNECEDORES ───────────────────────────────────────────────────
+const CLI_TIPO_LBL={cliente:'Cliente',fornecedor:'Fornecedor',ambos:'Cli. e Forn.'};
+const CLI_TIPO_BADGE={cliente:'badge-blue',fornecedor:'badge-orange',ambos:'badge-green'};
 function renderClientes(){
   const q=(document.getElementById('search-clientes')?.value||'').toLowerCase();
+  const tf=document.getElementById('filter-cli-tipo')?.value||'';
   const locs=DB.get('locacoes');
-  const rows=DB.get('clientes').filter(c=>!q||c.nome?.toLowerCase().includes(q)||c.cpfCnpj?.includes(q)||c.telefone?.includes(q));
+  let rows=DB.get('clientes');
+  if(tf)rows=rows.filter(c=>(c.tipo||'cliente')===tf);
+  if(q)rows=rows.filter(c=>c.nome?.toLowerCase().includes(q)||c.cpfCnpj?.includes(q)||c.telefone?.includes(q)||c.pix?.toLowerCase().includes(q)||c.email?.toLowerCase().includes(q));
   document.getElementById('tb-clientes').innerHTML=rows.length?rows.map(c=>{
     const n=locs.filter(l=>l.clienteId===c.id).length;
-    return`<tr><td><strong>${esc(c.nome)}</strong></td><td>${esc(c.cpfCnpj||'—')}</td><td>${esc(c.telefone||'—')}</td><td>${esc(c.email||'—')}</td><td>${esc(c.cidade||'—')}</td>
+    const tipo=c.tipo||'cliente';
+    const dadosBanc=c.banco?`${esc(c.banco)}${c.agencia?' Ag:'+esc(c.agencia):''}${c.conta?' C:'+esc(c.conta):''}`:null;
+    return`<tr>
+      <td><strong>${esc(c.nome)}</strong>${dadosBanc?`<div style="font-size:11px;color:var(--text-dim);margin-top:2px">🏦 ${dadosBanc}</div>`:''}</td>
+      <td><span class="badge ${CLI_TIPO_BADGE[tipo]||'badge-gray'}">${CLI_TIPO_LBL[tipo]||tipo}</span></td>
+      <td>${esc(c.cpfCnpj||'—')}</td><td>${esc(c.telefone||'—')}</td>
+      <td>${c.pix?`<span title="${esc(c.pix)}" style="cursor:default">${esc(c.pix.length>20?c.pix.slice(0,20)+'…':c.pix)}</span>`:'—'}</td>
+      <td>${esc(c.cidade||'—')}</td>
       <td><span class="badge badge-blue">${n} locação${n!==1?'s':''}</span></td>
       <td><div class="td-actions"><button class="btn btn-ghost btn-xs" onclick="openModalCliente('${c.id}')">✏</button><button class="btn btn-danger btn-xs" onclick="delCliente('${c.id}')">✕</button></div></td></tr>`;
-  }).join(''):`<tr><td colspan="7"><div class="empty"><div class="empty-icon">👥</div><h3>Nenhum cliente cadastrado</h3></div></td></tr>`;
+  }).join(''):`<tr><td colspan="8"><div class="empty"><div class="empty-icon">👥</div><h3>Nenhum cadastro encontrado</h3></div></td></tr>`;
 }
 function openModalCliente(id){
   const c=id?DB.one('clientes',id):{};
-  document.getElementById('mcli-title').textContent=id?'Editar Cliente':'Novo Cliente';
-  ['id','nome','doc','tel','email','end','cidade','obs'].forEach(k=>document.getElementById('cli-'+k).value=c[{id:'id',nome:'nome',doc:'cpfCnpj',tel:'telefone',email:'email',end:'endereco',cidade:'cidade',obs:'observacoes'}[k]]||'');
+  document.getElementById('mcli-title').textContent=id?'Editar Cadastro':'Novo Cadastro';
+  document.getElementById('cli-id').value=c.id||'';
+  document.getElementById('cli-nome').value=c.nome||'';
+  document.getElementById('cli-tipo').value=c.tipo||'cliente';
+  document.getElementById('cli-doc').value=c.cpfCnpj||'';
+  document.getElementById('cli-tel').value=c.telefone||'';
+  document.getElementById('cli-email').value=c.email||'';
+  document.getElementById('cli-pix').value=c.pix||'';
+  document.getElementById('cli-banco').value=c.banco||'';
+  document.getElementById('cli-agencia').value=c.agencia||'';
+  document.getElementById('cli-conta').value=c.conta||'';
+  document.getElementById('cli-end').value=c.endereco||'';
+  document.getElementById('cli-cidade').value=c.cidade||'';
+  document.getElementById('cli-obs').value=c.observacoes||'';
   openModal('modal-cliente');
 }
 function saveCliente(){
   const nome=document.getElementById('cli-nome').value.trim();
   if(!nome){toast('Informe o nome','error');return;}
-  DB.save('clientes',{id:document.getElementById('cli-id').value||uid(),nome,cpfCnpj:document.getElementById('cli-doc').value,telefone:document.getElementById('cli-tel').value,email:document.getElementById('cli-email').value,endereco:document.getElementById('cli-end').value,cidade:document.getElementById('cli-cidade').value,observacoes:document.getElementById('cli-obs').value});
-  closeModal('modal-cliente');renderClientes();toast('Cliente salvo!','success');
+  DB.save('clientes',{
+    id:document.getElementById('cli-id').value||uid(),
+    nome,
+    tipo:document.getElementById('cli-tipo').value,
+    cpfCnpj:document.getElementById('cli-doc').value,
+    telefone:document.getElementById('cli-tel').value,
+    email:document.getElementById('cli-email').value,
+    pix:document.getElementById('cli-pix').value,
+    banco:document.getElementById('cli-banco').value,
+    agencia:document.getElementById('cli-agencia').value,
+    conta:document.getElementById('cli-conta').value,
+    endereco:document.getElementById('cli-end').value,
+    cidade:document.getElementById('cli-cidade').value,
+    observacoes:document.getElementById('cli-obs').value
+  });
+  closeModal('modal-cliente');renderClientes();toast('Cadastro salvo!','success');
 }
-function delCliente(id){if(!confirm('Excluir este cliente?'))return;DB.del('clientes',id);renderClientes();toast('Cliente excluído.','info');}
+function delCliente(id){if(!confirm('Excluir este cadastro?'))return;DB.del('clientes',id);renderClientes();toast('Excluído.','info');}
 
 // ── FUNCIONÁRIOS ──────────────────────────────────────────────────────────────
 function renderFuncionarios(){
@@ -1533,6 +1597,24 @@ function onFormaChange(){
   }
   toggleTransParc();
 }
+function _populatePessoaDatalist(){
+  const dl=document.getElementById('dl-pessoas');
+  if(!dl)return;
+  dl.innerHTML=DB.get('clientes').map(c=>`<option value="${esc(c.nome)}">${c.cpfCnpj?c.nome+' — '+c.cpfCnpj:c.nome}</option>`).join('');
+}
+function _showPessoaInfo(nome){
+  const info=document.getElementById('trans-pessoa-info');
+  if(!info)return;
+  const c=DB.get('clientes').find(x=>x.nome.toLowerCase()===nome.toLowerCase());
+  if(!c){info.style.display='none';return;}
+  const partes=[];
+  if(c.telefone)partes.push('📞 '+c.telefone);
+  if(c.pix)partes.push('PIX: '+c.pix);
+  if(c.banco)partes.push('🏦 '+c.banco+(c.agencia?' Ag:'+c.agencia:'')+(c.conta?' C:'+c.conta:''));
+  if(c.email)partes.push('✉ '+c.email);
+  info.style.display=partes.length?'block':'none';
+  info.innerHTML=partes.join(' &nbsp;·&nbsp; ');
+}
 function openModalTransacao(tipo,id){
   const t=id?DB.one('transacoes',id):{};const tp=t.tipo||tipo;
   document.getElementById('mtrans-title').textContent=id?(tp==='entrada'?'Editar Entrada':'Editar Saída'):(tipo==='entrada'?'Nova Entrada':'Nova Saída');
@@ -1543,6 +1625,8 @@ function openModalTransacao(tipo,id){
   document.getElementById('trans-data').value=t.data||today();
   document.getElementById('trans-status').value=t.status||(tp==='entrada'?'recebido':'pago');
   document.getElementById('trans-pessoa').value=t.pessoa||'';
+  _populatePessoaDatalist();
+  _showPessoaInfo(t.pessoa||'');
   document.getElementById('trans-obs').value=t.observacoes||'';
   document.getElementById('trans-nparc').value=1;
   document.getElementById('trans-parc-info').style.display='none';
