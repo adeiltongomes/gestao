@@ -204,6 +204,66 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;background:
 .action-btn.pay:hover{background:#d1fae5;border-color:#059669}
 .action-btn.del{color:#dc2626;border-color:#fecaca;background:#fff5f5}
 .action-btn.del:hover{background:#fee2e2;border-color:#dc2626}
+.action-btn.edit{color:#4f46e5;border-color:#c7d2fe;background:#eef2ff}
+.action-btn.edit:hover{background:#e0e7ff;border-color:#4f46e5}
+
+/* ── FINANCEIRO FILTER TOOLBAR ── */
+.fin-filters{
+  display:flex;align-items:center;gap:0;flex-wrap:nowrap;
+  margin-bottom:16px;background:var(--surface);
+  border-radius:var(--radius);border:1px solid var(--border);
+  box-shadow:var(--shadow-sm);overflow:hidden;
+}
+.fin-filter-icon{
+  padding:0 14px;color:var(--text-dim);flex-shrink:0;
+  border-right:1px solid var(--border);height:46px;
+  display:flex;align-items:center;background:var(--surface-2);
+}
+.fin-filters .form-control{
+  border:none;border-radius:0;background:transparent;
+  font-size:12.5px;padding:0 10px;height:46px;
+  box-shadow:none!important;
+}
+.fin-filters .form-control:hover{background:var(--surface-2)}
+.fin-filters .form-control:focus{background:#fafbff;border-bottom:2px solid var(--blue-light)}
+.fin-filters input[type=date].form-control{width:130px}
+.fin-filter-divider{width:1px;min-height:26px;background:var(--border);flex-shrink:0;align-self:center}
+.fin-filter-sep{padding:0 5px;color:var(--text-dim);font-size:12px;white-space:nowrap;flex-shrink:0}
+.fin-filter-actions{display:flex;align-items:center;gap:8px;padding:0 12px;flex-shrink:0;border-left:1px solid var(--border)}
+.fin-result-count{
+  font-size:11px;color:var(--text-dim);white-space:nowrap;font-weight:500;
+}
+
+/* ── FINANCEIRO TABLE ── */
+.fin-td-date{white-space:nowrap;width:90px;padding-left:18px!important;position:relative}
+.fin-td-date::before{content:'';position:absolute;left:0;top:8px;bottom:8px;width:3px;border-radius:0 3px 3px 0}
+tr.fin-e .fin-td-date::before{background:#10b981}
+tr.fin-s .fin-td-date::before{background:#f87171}
+.fin-date{font-size:12.5px;font-weight:700;color:var(--text);font-variant-numeric:tabular-nums;letter-spacing:-.01em}
+.fin-td-desc{min-width:200px}
+.fin-desc-title{font-weight:600;color:var(--text);font-size:13.5px;line-height:1.3}
+.fin-desc-sub{display:flex;align-items:center;gap:4px;flex-wrap:wrap;margin-top:5px}
+.fin-pessoa{font-size:11px;color:var(--text-mid);display:flex;align-items:center;gap:3px}
+.fin-tag{font-size:10px;font-weight:600;padding:2px 7px;border-radius:4px;white-space:nowrap;letter-spacing:.01em}
+.fin-tag-cat{background:var(--surface-3);color:var(--text-mid);border:1px solid var(--border)}
+.fin-tag-forma{background:#ede9fe;color:#5b21b6}
+.fin-tag-conta{background:#dbeafe;color:#1d4ed8}
+.fin-tag-dot{color:var(--border-2);font-size:8px;flex-shrink:0}
+.fin-td-valor{white-space:nowrap;text-align:right;width:140px}
+.fin-val-wrap{display:inline-flex;align-items:center;gap:7px}
+.fin-val-arrow{width:20px;height:20px;border-radius:5px;display:inline-flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;flex-shrink:0;line-height:1}
+.fin-val-arrow.e{background:#d1fae5;color:#059669}
+.fin-val-arrow.s{background:#fee2e2;color:#dc2626}
+.fin-val-num{font-size:14px;font-weight:700}
+.fin-val-num.e{color:#059669}
+.fin-val-num.s{color:#dc2626}
+.fin-td-status{white-space:nowrap;width:110px}
+.status-pill{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:6px;font-size:11px;font-weight:600;letter-spacing:.01em}
+.status-pill::before{content:'';width:5px;height:5px;border-radius:50%;flex-shrink:0}
+.status-pill.pago{background:#d1fae5;color:#065f46}
+.status-pill.pago::before{background:#059669}
+.status-pill.pendente{background:#fef3c7;color:#92400e}
+.status-pill.pendente::before{background:#d97706;animation:pulse 2s infinite}
 
 /* ── INPUTS ── */
 .form-group{margin-bottom:15px}
@@ -239,11 +299,13 @@ thead th{
 thead th:first-child{border-radius:var(--radius) 0 0 0}
 thead th:last-child{border-radius:0 var(--radius) 0 0}
 tbody td{
-  padding:13px 16px;border-top:1px solid #f3f4f6;
+  padding:11px 16px;border-top:1px solid #f3f4f6;
   vertical-align:middle;font-size:13px;line-height:1.4;
 }
 tbody tr:last-child td{border-bottom:none}
-tbody tr:hover{background:#fafafa}
+tbody tr:hover{background:#f8f9ff}
+tbody tr.fin-e:hover{background:#f0fdf4}
+tbody tr.fin-s:hover{background:#fff5f5}
 .td-actions{display:flex;gap:5px;justify-content:flex-end;align-items:center}
 .r{text-align:right}
 thead th.r{text-align:right}
@@ -639,29 +701,34 @@ thead th.r{text-align:right}
         <button class="tab" onclick="setFinTab('saida')">Saídas</button>
       </div>
       <div class="fin-filters">
-        <div style="display:flex;align-items:center;gap:6px;flex-shrink:0">
-          <input type="date" class="form-control" id="fin-data-ini" onchange="renderFinanceiro()" title="Data início" style="width:145px">
-          <span style="color:var(--text-dim);font-size:13px;white-space:nowrap">até</span>
-          <input type="date" class="form-control" id="fin-data-fim" onchange="renderFinanceiro()" title="Data fim" style="width:145px">
+        <div class="fin-filter-icon">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
         </div>
-        <input type="text" class="form-control s-search" id="fin-busca" placeholder="🔍 Buscar descrição ou pessoa..." oninput="renderFinanceiro()" style="flex:1;min-width:160px">
-        <select class="form-control" id="fin-cat" onchange="renderFinanceiro()" style="width:180px">
+        <input type="date" class="form-control" id="fin-data-ini" onchange="renderFinanceiro()" title="Data início">
+        <span class="fin-filter-sep">→</span>
+        <input type="date" class="form-control" id="fin-data-fim" onchange="renderFinanceiro()" title="Data fim">
+        <div class="fin-filter-divider"></div>
+        <input type="text" class="form-control" id="fin-busca" placeholder="🔍  Buscar descrição ou pessoa…" oninput="renderFinanceiro()" style="flex:1;min-width:140px">
+        <div class="fin-filter-divider"></div>
+        <select class="form-control" id="fin-cat" onchange="renderFinanceiro()" style="width:170px">
           <option value="">Todas as categorias</option>
         </select>
-        <select class="form-control" id="fin-status-f" onchange="renderFinanceiro()" style="width:145px">
+        <select class="form-control" id="fin-status-f" onchange="renderFinanceiro()" style="width:130px">
           <option value="">Todos os status</option>
           <option value="pago">Pago / Recebido</option>
           <option value="pendente">Pendente</option>
         </select>
-        <select class="form-control" id="fin-conta-f" onchange="renderFinanceiro()" style="width:175px">
+        <select class="form-control" id="fin-conta-f" onchange="renderFinanceiro()" style="width:155px">
           <option value="">Todas as contas</option>
         </select>
-        <span class="fin-result-count" id="fin-count"></span>
-        <button class="btn btn-ghost btn-sm" onclick="limparFiltrosFinanceiro()" title="Limpar filtros">✕ Limpar</button>
+        <div class="fin-filter-actions">
+          <span class="fin-result-count" id="fin-count"></span>
+          <button class="btn btn-ghost btn-sm" onclick="limparFiltrosFinanceiro()" style="white-space:nowrap">✕ Limpar</button>
+        </div>
       </div>
       <div class="table-wrap">
         <table>
-          <thead><tr><th>Data de Vencimento</th><th>Descrição</th><th>Categoria</th><th>Tipo</th><th>Valor</th><th>Status</th><th></th></tr></thead>
+          <thead><tr><th>Data</th><th>Descrição</th><th class="r">Valor</th><th>Status</th><th></th></tr></thead>
           <tbody id="tb-financeiro"></tbody>
         </table>
       </div>
@@ -1871,38 +1938,40 @@ function renderFinanceiro(){
     const isE=t.tipo==='entrada';
     const statusCls=pago(t)?'pago':'pendente';
     const statusLbl=pago(t)?(isE?'Recebido':'Pago'):'Pendente';
-    return`<tr>
-      <td style="white-space:nowrap;font-variant-numeric:tabular-nums">
-        <div style="font-size:13px;font-weight:600;color:var(--text)">${fmtD(t.data)}</div>
-        ${t.formaPagamento?`<div style="font-size:10.5px;color:var(--text-dim);margin-top:2px">${esc(t.formaPagamento)}</div>`:''}
-        ${t.contaId?(()=>{const _c=DB.one('contas_bancarias',t.contaId);return _c?`<div style="font-size:10px;color:var(--blue-text);margin-top:2px;display:flex;align-items:center;gap:3px">🏦 ${esc(_c.nome)}</div>`:'';})():''}
+    const contaNome=t.contaId?(()=>{const _c=DB.one('contas_bancarias',t.contaId);return _c?esc(_c.nome):'';})():'';
+    const hasMeta=!!(t.pessoa||t.categoria||t.formaPagamento||contaNome);
+    return`<tr class="fin-${isE?'e':'s'}">
+      <td class="fin-td-date">
+        <div class="fin-date">${fmtD(t.data)}</div>
       </td>
-      <td>
-        <div style="font-weight:600;color:var(--text)">${esc(t.descricao)}</div>
-        ${t.pessoa?`<div style="font-size:11px;color:var(--text-mid);margin-top:3px;display:flex;align-items:center;gap:3px"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>${esc(t.pessoa)}</div>`:''}
+      <td class="fin-td-desc">
+        <div class="fin-desc-title">${esc(t.descricao)}</div>
+        ${hasMeta?`<div class="fin-desc-sub">
+          ${t.pessoa?`<span class="fin-pessoa"><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>${esc(t.pessoa)}</span>`:''}
+          ${t.categoria?`${t.pessoa?'<span class="fin-tag-dot">•</span>':''}<span class="fin-tag fin-tag-cat">${esc(t.categoria)}</span>`:''}
+          ${t.formaPagamento?`<span class="fin-tag fin-tag-forma">${esc(t.formaPagamento)}</span>`:''}
+          ${contaNome?`<span class="fin-tag fin-tag-conta">🏦 ${contaNome}</span>`:''}
+        </div>`:''}
       </td>
-      <td>
-        <span style="font-size:11.5px;color:var(--text-mid);background:var(--surface-2);padding:3px 8px;border-radius:4px;border:1px solid var(--border);white-space:nowrap">${esc(t.categoria||'—')}</span>
+      <td class="fin-td-valor">
+        <div class="fin-val-wrap">
+          <span class="fin-val-arrow ${isE?'e':'s'}">${isE?'↑':'↓'}</span>
+          <span class="fin-val-num ${isE?'e':'s'}">${fmtR(t.valor)}</span>
+        </div>
       </td>
-      <td>
-        <span class="tipo-pill ${t.tipo}">${isE?'↑ Entrada':'↓ Saída'}</span>
-      </td>
-      <td class="r">
-        <span style="font-size:14px;font-weight:700;color:${isE?'#059669':'#dc2626'}">${fmtR(t.valor)}</span>
-      </td>
-      <td>
-        <span class="status-dot ${statusCls}">${statusLbl}</span>
+      <td class="fin-td-status">
+        <span class="status-pill ${statusCls}">${statusLbl}</span>
       </td>
       <td>
         <div class="td-actions">
-          ${!pago(t)?`<button class="action-btn pay" onclick="marcarPago('${t.id}')" title="${isE?'Marcar Recebido':'Marcar Pago'}">✓</button>`:''}
-          ${t.comprovante?`<button class="action-btn" onclick="verComprovante('${t.id}')" title="Ver comprovante">📎</button>`:''}
-          <button class="action-btn" onclick="openModalTransacao('${t.tipo}','${t.id}')" title="Editar" style="font-size:11px">✏</button>
-          <button class="action-btn del" onclick="delTransacao('${t.id}')" title="Excluir">✕</button>
+          ${!pago(t)?`<button class="action-btn pay" onclick="marcarPago('${t.id}')" title="${isE?'Marcar Recebido':'Marcar Pago'}"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg></button>`:''}
+          ${t.comprovante?`<button class="action-btn" onclick="verComprovante('${t.id}')" title="Ver comprovante"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/></svg></button>`:''}
+          <button class="action-btn edit" onclick="openModalTransacao('${t.tipo}','${t.id}')" title="Editar"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
+          <button class="action-btn del" onclick="delTransacao('${t.id}')" title="Excluir"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg></button>
         </div>
       </td>
     </tr>`;
-  }).join(''):`<tr><td colspan="7"><div class="empty"><div class="empty-icon">💰</div><h3>${hasFilter?'Nenhum resultado encontrado':'Nenhuma transação neste mês'}</h3></div></td></tr>`;
+  }).join(''):`<tr><td colspan="5"><div class="empty"><div class="empty-icon">💰</div><h3>${hasFilter?'Nenhum resultado encontrado':'Nenhuma transação neste mês'}</h3></div></td></tr>`;
 }
 function toggleTransParc(){
   const n=Number(document.getElementById('trans-nparc').value)||1;
