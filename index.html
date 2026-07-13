@@ -621,10 +621,16 @@ thead th.r{text-align:right}
     <div id="view-financeiro" class="view-section hidden">
       <div class="sec-hdr">
         <div class="sec-title">Financeiro</div>
-        <input type="month" class="form-control" id="fin-mes" style="width:160px" onchange="renderFinanceiro()">
+        <input type="month" class="form-control" id="fin-mes" style="width:150px" onchange="renderFinanceiro()">
         <button class="btn btn-success" onclick="openModalTransacao('entrada')">+ Entrada</button>
         <button class="btn btn-danger" onclick="openModalTransacao('saida')">+ Saída</button>
+        <button class="btn btn-ghost" style="border-color:#818cf8;color:#4f46e5" onclick="openModalConta()">🏦 + Conta</button>
         <button class="btn btn-ghost" onclick="abrirModalImpressao()">🖨 Imprimir</button>
+      </div>
+      <!-- Contas Bancárias -->
+      <div id="fin-contas-wrap" style="margin-bottom:18px;display:none">
+        <div style="font-size:10.5px;font-weight:700;color:var(--text-mid);letter-spacing:.08em;text-transform:uppercase;margin-bottom:10px">Contas Bancárias</div>
+        <div id="fin-contas-cards" style="display:flex;gap:12px;flex-wrap:wrap"></div>
       </div>
       <div class="cards-row" id="fin-cards"></div>
       <div class="tabs">
@@ -1176,6 +1182,77 @@ thead th.r{text-align:right}
   </div>
 </div>
 
+<!-- Modal Conta Bancária -->
+<div class="modal-overlay hidden" id="modal-conta">
+  <div class="modal" style="max-width:460px">
+    <div class="modal-hdr"><div class="modal-title" id="mconta-title">Nova Conta Bancária</div><button class="modal-close" onclick="closeModal('modal-conta')">×</button></div>
+    <div class="modal-body">
+      <input type="hidden" id="conta-id">
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Nome da Conta *</label><input class="form-control" id="conta-nome" placeholder="Ex: Conta Principal, Reserva…"></div>
+        <div class="form-group"><label class="form-label">Banco</label><input class="form-control" id="conta-banco" placeholder="Nubank, Itaú, Bradesco…" list="dl-bancos">
+          <datalist id="dl-bancos"><option>Nubank</option><option>Itaú</option><option>Bradesco</option><option>Banco do Brasil</option><option>Caixa Econômica</option><option>Santander</option><option>Inter</option><option>C6 Bank</option><option>Sicoob</option><option>PicPay</option><option>Mercado Pago</option></datalist>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Tipo</label>
+          <select class="form-control" id="conta-tipo">
+            <option value="corrente">Conta Corrente</option>
+            <option value="poupanca">Poupança</option>
+            <option value="investimento">Investimento</option>
+            <option value="caixa">Caixa (Dinheiro)</option>
+            <option value="digital">Carteira Digital</option>
+            <option value="outro">Outro</option>
+          </select>
+        </div>
+        <div class="form-group"><label class="form-label">Saldo Inicial (R$)</label><input class="form-control" id="conta-saldo" type="number" step="0.01" placeholder="0,00"></div>
+      </div>
+      <div class="form-group"><label class="form-label">Cor de Identificação</label>
+        <div style="display:flex;gap:8px;flex-wrap:wrap" id="conta-cores">
+          ${['#4f46e5','#059669','#dc2626','#d97706','#7c3aed','#0891b2','#db2777','#374151'].map(c=>`<div data-cor="${c}" style="width:30px;height:30px;border-radius:8px;background:${c};cursor:pointer;border:2px solid transparent;transition:.15s;box-sizing:border-box" onclick="selectCorConta('${c}')"></div>`).join('')}
+        </div>
+        <input type="hidden" id="conta-cor" value="#4f46e5">
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modal-conta')">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveConta()">Salvar Conta</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Confirmar Pagamento (selecionar conta) -->
+<div class="modal-overlay hidden" id="modal-confirmar-pag">
+  <div class="modal" style="max-width:420px">
+    <div class="modal-hdr">
+      <div class="modal-title">Confirmar Pagamento</div>
+      <button class="modal-close" onclick="closeModal('modal-confirmar-pag')">×</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="cpag-trans-id">
+      <!-- Info da transação -->
+      <div id="cpag-info" style="background:var(--surface-2);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:16px"></div>
+      <!-- Seleção de conta -->
+      <div class="form-group">
+        <label class="form-label">De qual conta está saindo / entrando?</label>
+        <select class="form-control" id="cpag-conta" onchange="atualizarPreviewSaldo()">
+          <option value="">— Não vincular a nenhuma conta —</option>
+        </select>
+      </div>
+      <!-- Preview do novo saldo -->
+      <div id="cpag-saldo-preview" style="display:none;background:var(--blue-bg);border:1px solid #c7d2fe;border-radius:8px;padding:12px;font-size:13px;color:var(--blue-text)"></div>
+      <div class="form-group" style="margin-top:14px;margin-bottom:0">
+        <label class="form-label">Data do Pagamento</label>
+        <input class="form-control" id="cpag-data" type="date">
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modal-confirmar-pag')">Cancelar</button>
+      <button class="btn btn-success" onclick="confirmarPagamento()">✓ Confirmar</button>
+    </div>
+  </div>
+</div>
+
 <!-- Modal Imprimir Financeiro -->
 <div class="modal-overlay hidden" id="modal-imprimir-fin">
   <div class="modal">
@@ -1657,6 +1734,7 @@ function limparFiltrosFinanceiro(){
   renderFinanceiro();
 }
 function renderFinanceiro(){
+  renderContasBancarias();
   const mes=document.getElementById('fin-mes')?.value||thisMonth();
   const allTrans=DB.get('transacoes');
   const transMes=allTrans.filter(t=>t.data?.startsWith(mes));
@@ -2183,11 +2261,154 @@ function _abrirComprovante(comp){
   }
   w.document.close();
 }
+// ── CONTAS BANCÁRIAS ──────────────────────────────────────────────────────────
+const CONTA_TIPO_LBL={corrente:'Corrente',poupanca:'Poupança',investimento:'Investimento',caixa:'Caixa',digital:'Carteira Digital',outro:'Outro'};
+function renderContasBancarias(){
+  const contas=DB.get('contas_bancarias')||[];
+  const wrap=document.getElementById('fin-contas-wrap');
+  const cards=document.getElementById('fin-contas-cards');
+  if(!wrap||!cards)return;
+  if(!contas.length){wrap.style.display='none';return;}
+  wrap.style.display='block';
+  const totalSaldo=contas.reduce((s,c)=>s+Number(c.saldo||0),0);
+  cards.innerHTML=contas.map(c=>`
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px 18px;min-width:180px;flex:1;max-width:240px;position:relative;overflow:hidden;box-shadow:var(--shadow-sm);cursor:default">
+      <div style="position:absolute;top:0;left:0;right:0;height:3px;background:${c.cor||'#4f46e5'};border-radius:12px 12px 0 0"></div>
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:8px">
+        <div>
+          <div style="font-size:11px;font-weight:700;color:var(--text-mid);letter-spacing:.05em;text-transform:uppercase">${esc(CONTA_TIPO_LBL[c.tipo]||c.tipo||'Conta')}</div>
+          <div style="font-weight:700;font-size:13.5px;color:var(--text);margin-top:2px">${esc(c.nome)}</div>
+          ${c.banco?`<div style="font-size:11px;color:var(--text-dim)">${esc(c.banco)}</div>`:''}
+        </div>
+        <div style="display:flex;gap:4px;margin-top:-2px">
+          <button class="action-btn" style="width:24px;height:24px;font-size:11px" onclick="openModalConta('${c.id}')" title="Editar">✏</button>
+          <button class="action-btn del" style="width:24px;height:24px;font-size:11px" onclick="delConta('${c.id}')" title="Excluir">✕</button>
+        </div>
+      </div>
+      <div style="font-size:20px;font-weight:800;color:${Number(c.saldo||0)>=0?'#059669':'#dc2626'};letter-spacing:-.03em">${fmtR(Number(c.saldo||0))}</div>
+      <div style="font-size:10.5px;color:var(--text-dim);margin-top:3px">saldo atual</div>
+    </div>`).join('')+
+    `<div style="background:linear-gradient(135deg,#4f46e5,#7c3aed);border-radius:12px;padding:16px 18px;min-width:180px;flex:1;max-width:240px;box-shadow:0 4px 12px rgba(79,70,229,.3)">
+      <div style="font-size:10.5px;font-weight:700;color:rgba(255,255,255,.6);letter-spacing:.06em;text-transform:uppercase;margin-bottom:6px">Saldo Total</div>
+      <div style="font-size:22px;font-weight:800;color:#fff;letter-spacing:-.03em">${fmtR(totalSaldo)}</div>
+      <div style="font-size:10.5px;color:rgba(255,255,255,.5);margin-top:3px">${contas.length} conta${contas.length>1?'s':''}</div>
+    </div>`;
+}
+function openModalConta(id){
+  const c=id?DB.one('contas_bancarias',id):{};
+  document.getElementById('mconta-title').textContent=id?'Editar Conta':'Nova Conta Bancária';
+  document.getElementById('conta-id').value=c.id||'';
+  document.getElementById('conta-nome').value=c.nome||'';
+  document.getElementById('conta-banco').value=c.banco||'';
+  document.getElementById('conta-tipo').value=c.tipo||'corrente';
+  document.getElementById('conta-saldo').value=c.saldo||'';
+  openModal('modal-conta');
+  // setTimeout garante que o modal já está visível antes de aplicar seleção visual
+  setTimeout(()=>selectCorConta(c.cor||'#4f46e5'),30);
+}
+function selectCorConta(cor){
+  document.getElementById('conta-cor').value=cor;
+  document.querySelectorAll('#conta-cores [data-cor]').forEach(el=>{
+    const selected=el.dataset.cor===cor;
+    el.style.border=selected?'3px solid white':'2px solid transparent';
+    el.style.outline=selected?`3px solid ${cor}`:'none';
+    el.style.transform=selected?'scale(1.15)':'scale(1)';
+  });
+}
+function saveConta(){
+  const nome=document.getElementById('conta-nome').value.trim();
+  if(!nome){toast('Informe o nome da conta','error');return;}
+  const cor=document.getElementById('conta-cor').value||'#4f46e5';
+  DB.save('contas_bancarias',{
+    id:document.getElementById('conta-id').value||uid(),
+    nome,banco:document.getElementById('conta-banco').value,
+    tipo:document.getElementById('conta-tipo').value,
+    saldo:Number(document.getElementById('conta-saldo').value)||0,
+    cor
+  });
+  closeModal('modal-conta');renderContasBancarias();toast('Conta salva!','success');
+}
+function delConta(id){
+  if(!confirm('Excluir esta conta? O histórico de transações não será afetado.'))return;
+  DB.del('contas_bancarias',id);renderContasBancarias();toast('Conta excluída.','info');
+}
+// ── CONFIRMAR PAGAMENTO COM CONTA ─────────────────────────────────────────────
 function marcarPago(id){
   const t=DB.one('transacoes',id);if(!t)return;
+  const contas=DB.get('contas_bancarias')||[];
+  if(!contas.length){
+    // sem contas: marcar direto
+    t.status=t.tipo==='entrada'?'recebido':'pago';
+    DB.save('transacoes',t);renderFinanceiro();
+    toast(t.tipo==='entrada'?'Marcado como Recebido!':'Marcado como Pago!','success');
+    return;
+  }
+  // com contas: abrir modal de confirmação
+  document.getElementById('cpag-trans-id').value=id;
+  const isE=t.tipo==='entrada';
+  document.getElementById('cpag-info').innerHTML=`
+    <div style="display:flex;justify-content:space-between;align-items:center">
+      <div>
+        <div style="font-weight:700;font-size:14px">${esc(t.descricao)}</div>
+        ${t.pessoa?`<div style="font-size:12px;color:var(--text-mid);margin-top:3px">👤 ${esc(t.pessoa)}</div>`:''}
+        <div style="margin-top:6px"><span class="tipo-pill ${t.tipo}">${isE?'↑ Entrada':'↓ Saída'}</span></div>
+      </div>
+      <div style="text-align:right">
+        <div style="font-size:20px;font-weight:800;color:${isE?'#059669':'#dc2626'}">${fmtR(t.valor)}</div>
+        <div style="font-size:11px;color:var(--text-dim);margin-top:2px">${fmtD(t.data)}</div>
+      </div>
+    </div>`;
+  // popular select de contas
+  const sel=document.getElementById('cpag-conta');
+  sel.innerHTML=`<option value="">— Não vincular a nenhuma conta —</option>`+
+    contas.map(c=>`<option value="${c.id}">${esc(c.nome)}${c.banco?' — '+esc(c.banco):''} (${fmtR(Number(c.saldo||0))})</option>`).join('');
+  // data padrão = hoje
+  document.getElementById('cpag-data').value=today();
+  document.getElementById('cpag-saldo-preview').style.display='none';
+  openModal('modal-confirmar-pag');
+}
+function atualizarPreviewSaldo(){
+  const tId=document.getElementById('cpag-trans-id').value;
+  const contaId=document.getElementById('cpag-conta').value;
+  const prev=document.getElementById('cpag-saldo-preview');
+  if(!contaId){prev.style.display='none';return;}
+  const t=DB.one('transacoes',tId);const c=DB.one('contas_bancarias',contaId);
+  if(!t||!c){prev.style.display='none';return;}
+  const delta=t.tipo==='entrada'?Number(t.valor||0):-Number(t.valor||0);
+  const novoSaldo=Number(c.saldo||0)+delta;
+  prev.style.display='block';
+  prev.innerHTML=`<div style="display:flex;justify-content:space-between;align-items:center;gap:16px">
+    <div><div style="font-size:10.5px;font-weight:700;letter-spacing:.05em;opacity:.7;margin-bottom:2px">CONTA SELECIONADA</div><div style="font-weight:700">${esc(c.nome)}</div></div>
+    <div style="display:flex;align-items:center;gap:10px;font-size:13px">
+      <div style="text-align:center"><div style="font-size:10px;opacity:.7">Atual</div><strong>${fmtR(Number(c.saldo||0))}</strong></div>
+      <div style="color:${t.tipo==='entrada'?'#059669':'#dc2626'};font-weight:700">${t.tipo==='entrada'?'+'+fmtR(t.valor):'-'+fmtR(t.valor)}</div>
+      <div style="text-align:center"><div style="font-size:10px;opacity:.7">Novo Saldo</div><strong style="color:${novoSaldo>=0?'#059669':'#dc2626'}">${fmtR(novoSaldo)}</strong></div>
+    </div>
+  </div>`;
+}
+function confirmarPagamento(){
+  const id=document.getElementById('cpag-trans-id').value;
+  const contaId=document.getElementById('cpag-conta').value;
+  const data=document.getElementById('cpag-data').value||today();
+  const t=DB.one('transacoes',id);if(!t)return;
+  // marcar transação como paga
   t.status=t.tipo==='entrada'?'recebido':'pago';
-  DB.save('transacoes',t);renderFinanceiro();
-  toast(t.tipo==='entrada'?'Marcado como Recebido!':'Marcado como Pago!','success');
+  t.dataPagamento=data;
+  if(contaId)t.contaId=contaId;
+  DB.save('transacoes',t);
+  // atualizar saldo da conta
+  if(contaId){
+    const c=DB.one('contas_bancarias',contaId);
+    if(c){
+      const delta=t.tipo==='entrada'?Number(t.valor||0):-Number(t.valor||0);
+      c.saldo=Number(c.saldo||0)+delta;
+      DB.save('contas_bancarias',c);
+      renderContasBancarias();
+    }
+  }
+  closeModal('modal-confirmar-pag');
+  renderFinanceiro();
+  toast(t.tipo==='entrada'?'Recebido! Conta atualizada.':'Pago! Conta atualizada.','success');
 }
 
 // ── PARCELAMENTOS ─────────────────────────────────────────────────────────────
