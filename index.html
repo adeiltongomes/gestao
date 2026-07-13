@@ -653,6 +653,9 @@ thead th.r{text-align:right}
           <option value="pago">Pago / Recebido</option>
           <option value="pendente">Pendente</option>
         </select>
+        <select class="form-control" id="fin-conta-f" onchange="renderFinanceiro()" style="width:175px">
+          <option value="">Todas as contas</option>
+        </select>
         <span class="fin-result-count" id="fin-count"></span>
         <button class="btn btn-ghost btn-sm" onclick="limparFiltrosFinanceiro()" title="Limpar filtros">✕ Limpar</button>
       </div>
@@ -1744,6 +1747,7 @@ function limparFiltrosFinanceiro(){
   const b=document.getElementById('fin-busca');if(b)b.value='';
   const c=document.getElementById('fin-cat');if(c)c.value='';
   const s=document.getElementById('fin-status-f');if(s)s.value='';
+  const cf=document.getElementById('fin-conta-f');if(cf)cf.value='';
   const di=document.getElementById('fin-data-ini');if(di)di.value='';
   const df=document.getElementById('fin-data-fim');if(df)df.value='';
   renderFinanceiro();
@@ -1757,10 +1761,18 @@ function renderFinanceiro(){
   const busca=(document.getElementById('fin-busca')?.value||'').toLowerCase().trim();
   const catF=document.getElementById('fin-cat')?.value||'';
   const statusF=document.getElementById('fin-status-f')?.value||'';
+  const contaF=document.getElementById('fin-conta-f')?.value||'';
   const dataIni=document.getElementById('fin-data-ini')?.value||'';
   const dataFim=document.getElementById('fin-data-fim')?.value||'';
   const hasDateRange=!!(dataIni||dataFim);
-  const hasFilter=!!(busca||catF||statusF||hasDateRange);
+  const hasFilter=!!(busca||catF||statusF||contaF||hasDateRange);
+  // popular select de contas bancárias
+  const contaSel=document.getElementById('fin-conta-f');
+  if(contaSel){
+    const contaAtual=contaSel.value;
+    const contas=DB.get('contas_bancarias')||[];
+    contaSel.innerHTML='<option value="">Todas as contas</option>'+contas.map(c=>`<option value="${c.id}"${c.id===contaAtual?' selected':''}>${esc(c.nome)}${c.banco?' — '+esc(c.banco):''}</option>`).join('');
+  }
   // definir escopo de busca
   let base;
   if(hasDateRange){
@@ -1789,6 +1801,7 @@ function renderFinanceiro(){
   if(catF)lista=lista.filter(t=>(t.categoria||'')===catF);
   if(statusF==='pago')lista=lista.filter(t=>isPago(t.status));
   else if(statusF==='pendente')lista=lista.filter(t=>!isPago(t.status));
+  if(contaF)lista=lista.filter(t=>t.contaId===contaF);
   // Expandir grupos de parcelamento: incluir irmãs respeitando filtro de datas
   const grupoIds=new Set(lista.map(t=>t.grupoId).filter(Boolean));
   if(grupoIds.size>0){
