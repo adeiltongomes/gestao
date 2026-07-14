@@ -235,11 +235,15 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;background:
 .fin-dhdr-row:hover{background:transparent!important}
 .fin-dhdr{
   display:flex;align-items:center;justify-content:space-between;
-  padding:24px 20px 8px;border-top:2px solid var(--border);
+  padding:22px 20px 8px;border-top:2px solid var(--border);
 }
 .fin-dhdr-row:first-child .fin-dhdr{border-top:none;padding-top:14px}
+.fin-dhdr-left{display:flex;align-items:center;gap:10px}
 .fin-dhdr-date{font-size:10.5px;font-weight:700;color:var(--text-dim);letter-spacing:.08em;text-transform:uppercase}
-.fin-dhdr-net{font-size:11.5px;font-weight:700;padding:3px 10px;border-radius:6px}
+.fin-dhdr-count{font-size:10.5px;color:var(--text-dim);background:var(--surface-3);padding:2px 8px;border-radius:10px;font-weight:500;border:1px solid var(--border)}
+.fin-dhdr-right{display:flex;align-items:center;gap:8px}
+.fin-dhdr-label{font-size:10px;font-weight:600;color:var(--text-dim);text-transform:uppercase;letter-spacing:.06em}
+.fin-dhdr-net{font-size:12px;font-weight:700;padding:4px 11px;border-radius:6px}
 .fin-dhdr-net.pos{background:#d1fae5;color:#065f46}
 .fin-dhdr-net.neg{background:#fee2e2;color:#991b1b}
 
@@ -1967,12 +1971,18 @@ function renderFinanceiro(){
   const _svgFile=`<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/></svg>`;
   document.getElementById('tb-financeiro').innerHTML=lista.length?sortedDates.map((date,di)=>{
     const txs=byDate[date];
-    const dayE=txs.filter(t=>t.tipo==='entrada'&&pago(t)).reduce((s,t)=>s+Number(t.valor||0),0);
-    const dayS=txs.filter(t=>t.tipo==='saida'&&pago(t)).reduce((s,t)=>s+Number(t.valor||0),0);
-    const dayNet=dayE-dayS;const hasNet=dayE>0||dayS>0;
+    const dayE=txs.filter(t=>t.tipo==='entrada').reduce((s,t)=>s+Number(t.valor||0),0);
+    const dayS=txs.filter(t=>t.tipo==='saida').reduce((s,t)=>s+Number(t.valor||0),0);
+    const dayNet=dayE-dayS;
     const hdrRow=`<tr class="fin-dhdr-row"><td colspan="4"><div class="fin-dhdr">
-      <span class="fin-dhdr-date">${fmtDLong(date)}</span>
-      ${hasNet?`<span class="fin-dhdr-net ${dayNet>=0?'pos':'neg'}">${dayNet>=0?'+':''}${fmtR(dayNet)}</span>`:''}
+      <div class="fin-dhdr-left">
+        <span class="fin-dhdr-date">${fmtDLong(date)}</span>
+        <span class="fin-dhdr-count">${txs.length} lançamento${txs.length!==1?'s':''}</span>
+      </div>
+      <div class="fin-dhdr-right">
+        <span class="fin-dhdr-label">Total do dia</span>
+        <span class="fin-dhdr-net ${dayNet>=0?'pos':'neg'}">${dayNet>=0?'+ ':'− '}${fmtR(Math.abs(dayNet))}</span>
+      </div>
     </div></td></tr>`;
     const txRows=txs.map(t=>{
       const isE=t.tipo==='entrada';
