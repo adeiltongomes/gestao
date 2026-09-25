@@ -1486,10 +1486,10 @@ const SB_H={'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'app
 const DB={
   _c:{},
   async init(){
-    const r=await fetch(SB_URL+'/rest/v1/app_settings?key=like.gest_%&select=key,value',{headers:SB_H});
-    if(!r.ok)throw new Error('HTTP '+r.status);
+    const r=await fetch(SB_URL+'/rest/v1/app_settings?key=like.gest_%25&select=key,value',{headers:SB_H});
+    if(!r.ok){const j=await r.json().catch(()=>({}));throw new Error(j.message||'HTTP '+r.status);}
     const rows=await r.json();
-    DB._c={};rows.forEach(row=>{DB._c[row.key.slice(5)]=row.value;});
+    DB._c={};rows.forEach(row=>{if(row.key.startsWith('gest_'))DB._c[row.key.slice(5)]=row.value;});
     return true;
   },
   _push(k,v){fetch(SB_URL+'/rest/v1/app_settings',{method:'POST',headers:{...SB_H,'Prefer':'resolution=merge-duplicates,return=minimal'},body:JSON.stringify({key:'gest_'+k,value:v})}).catch(e=>console.error('[DB sync]',e));},
