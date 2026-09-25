@@ -1210,9 +1210,9 @@ thead th.r{text-align:right}
         <div class="form-group"><label class="form-label">Data Fim *</label><input class="form-control" id="orccli-fim" type="date"></div>
       </div>
       <div class="form-group">
-        <label class="form-label">Equipamentos</label>
-        <div id="orccli-equip-list" style="display:flex;flex-direction:column;gap:6px;max-height:160px;overflow-y:auto;padding:8px;background:var(--surface-2);border-radius:8px;border:1.5px solid var(--border)"></div>
-        <button class="btn btn-ghost btn-sm" style="margin-top:6px" onclick="addOrcEquip()">+ Adicionar Equipamento</button>
+        <label class="form-label">Itens (Equipamentos e Produtos do Estoque)</label>
+        <div id="orccli-equip-list" style="display:flex;flex-direction:column;gap:6px;max-height:180px;overflow-y:auto;padding:8px;background:var(--surface-2);border-radius:8px;border:1.5px solid var(--border)"></div>
+        <button class="btn btn-ghost btn-sm" style="margin-top:6px" onclick="addOrcEquip()">+ Adicionar Item</button>
       </div>
       <div class="form-row">
         <div class="form-group"><label class="form-label">Valor Total (R$) *</label><input class="form-control" id="orccli-valor" type="number" step="0.01" placeholder="0,00"></div>
@@ -2866,7 +2866,18 @@ function openModalOrcamentoCli(id){
 function addOrcEquip(equipId,desc){
   const lid=uid();orcEquipLines.push(lid);
   const equips=DB.get('equipamentos');
-  const opts=equips.map(e=>`<option value="${e.id}"${equipId===e.id?' selected':''}>${esc(e.tipo+' '+e.marca+' '+e.modelo)}</option>`).join('');
+  const estq=DB.get('estoque');
+  let opts='';
+  if(equips.length){
+    opts+=`<optgroup label="── Equipamentos ──">`;
+    opts+=equips.map(e=>`<option value="${e.id}"${equipId===e.id?' selected':''}>${esc((e.tipo||'')+' '+(e.marca||'')+' '+(e.modelo||''))}</option>`).join('');
+    opts+=`</optgroup>`;
+  }
+  if(estq.length){
+    opts+=`<optgroup label="── Produtos do Estoque ──">`;
+    opts+=estq.map(e=>`<option value="est_${e.id}"${equipId==='est_'+e.id?' selected':''}>${esc(e.nome||'')}${e.categoria?' ('+esc(e.categoria)+')':''}</option>`).join('');
+    opts+=`</optgroup>`;
+  }
   const row=document.createElement('div');
   row.id='oe-'+lid;
   row.style.cssText='display:flex;gap:6px;align-items:center';
