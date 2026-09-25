@@ -484,6 +484,15 @@ thead th.r{text-align:right}
 </head>
 <body>
 
+<!-- LOADING -->
+<div id="loading-ov" style="display:none;position:fixed;inset:0;background:rgba(15,23,42,.95);align-items:center;justify-content:center;z-index:9998;flex-direction:column;gap:14px">
+  <div style="width:44px;height:44px;border:3px solid rgba(99,102,241,.3);border-top-color:#6366f1;border-radius:50%;animation:spin 0.8s linear infinite"></div>
+  <div style="color:#94a3b8;font-size:13px;font-weight:500">Carregando dados...</div>
+</div>
+
+
+<style>@keyframes spin{to{transform:rotate(360deg)}}</style>
+
 <!-- LOGIN -->
 <div id="login-ov" style="position:fixed;inset:0;background:#0f172a;display:flex;align-items:center;justify-content:center;z-index:9999;padding:20px">
   <div style="background:#1e293b;border:1px solid rgba(255,255,255,.08);border-radius:16px;padding:40px 36px;width:100%;max-width:380px;box-shadow:0 24px 64px rgba(0,0,0,.5)">
@@ -1470,10 +1479,22 @@ function toast(msg,type='info'){
 function openModal(id){document.getElementById(id).classList.remove('hidden')}
 function closeModal(id){document.getElementById(id).classList.add('hidden')}
 
-// ── DATA LAYER ─────────────────────────────────────────────────────────────────
+// ── DATA LAYER (Supabase) ─────────────────────────────────────────────────────
+const SB_URL='https://tkeebtxlabqsjwjdedcy.supabase.co';
+const SB_KEY='sb_publishable_i93qx_WJMsc2Rafh6JqJ1w_Ng2AuXLj';
+const SB_H={'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'};
 const DB={
-  get:k=>{try{return JSON.parse(localStorage.getItem('gest_'+k)||'[]')}catch{return[]}},
-  set:(k,v)=>localStorage.setItem('gest_'+k,JSON.stringify(v)),
+  _c:{},
+  async init(){
+    const r=await fetch(SB_URL+'/rest/v1/app_settings?key=like.gest_%&select=key,value',{headers:SB_H});
+    if(!r.ok)throw new Error('HTTP '+r.status);
+    const rows=await r.json();
+    DB._c={};rows.forEach(row=>{DB._c[row.key.slice(5)]=row.value;});
+    return true;
+  },
+  _push(k,v){fetch(SB_URL+'/rest/v1/app_settings',{method:'POST',headers:{...SB_H,'Prefer':'resolution=merge-duplicates,return=minimal'},body:JSON.stringify({key:'gest_'+k,value:v})}).catch(e=>console.error('[DB sync]',e));},
+  get:k=>{try{return DB._c[k]||[]}catch{return[]}},
+  set(k,v){DB._c[k]=v;DB._push(k,v);},
   one:(k,id)=>DB.get(k).find(x=>x.id===id),
   save(k,item){const l=DB.get(k);const i=l.findIndex(x=>x.id===item.id);if(i>=0)l[i]=item;else l.unshift(item);DB.set(k,l)},
   del:(k,id)=>DB.set(k,DB.get(k).filter(x=>x.id!==id)),
@@ -3168,7 +3189,16 @@ function logout(){
   sessionStorage.removeItem('gc_user');
   location.reload();
 }
-function initApp(){
+async function initApp(){
+  const lov=document.getElementById('loading-ov');
+  if(lov)lov.style.display='flex';
+  let ok=false;
+  try{ok=await DB.init();}catch(e){
+    if(lov)lov.innerHTML='<div style="color:#f87171;text-align:center;padding:40px"><div style="font-size:32px;margin-bottom:12px">⚠</div><div style="font-size:14px;font-weight:600;margin-bottom:8px">Erro ao conectar</div><div style="font-size:12px;color:#94a3b8">Verifique sua conexão e recarregue a página</div><br><button onclick="location.reload()" style="padding:9px 20px;background:#3b82f6;color:#fff;border:none;border-radius:8px;font-size:13px;cursor:pointer;font-family:inherit">Recarregar</button></div>';
+    return;
+  }
+  if(!ok)return;
+  if(lov)lov.style.display='none';
   document.getElementById('topbar-date').textContent=new Date().toLocaleDateString('pt-BR',{weekday:'short',day:'numeric',month:'short',year:'numeric'});
   document.getElementById('fin-mes').value=thisMonth();
   document.getElementById('orc-mes').value=thisMonth();
