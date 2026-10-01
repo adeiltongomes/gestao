@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
@@ -3490,18 +3490,18 @@ function _docStyleBase(){
   body{font-family:'IBM Plex Sans',Arial,sans-serif;font-size:12.5px;color:var(--ink);background:#e9e5db;padding:36px 0}
   .sheet{max-width:760px;margin:0 auto;background:var(--paper);padding:40px 46px 48px;box-shadow:0 1px 3px rgba(28,26,23,.08);position:relative}
   .sheet::before{content:'';position:absolute;top:0;left:0;right:0;height:5px;background:linear-gradient(90deg,var(--brand),#7a74e0 60%,var(--brand))}
-  .doc-hd{display:flex;justify-content:space-between;align-items:flex-end;gap:20px;padding-bottom:18px}
-  .doc-logo{display:flex;align-items:center;gap:13px}
-  .doc-badge{width:48px;height:48px;border-radius:50%;background:var(--brand);color:#fff;display:flex;align-items:center;justify-content:center;font-family:'Fraunces',serif;font-style:italic;font-weight:600;font-size:19px;flex-shrink:0;object-fit:cover}
-  img.doc-badge{background:#fff;border:1px solid var(--rule)}
-  .doc-emp-nome{font-family:'Fraunces',serif;font-weight:600;font-style:italic;font-size:21px;color:var(--ink);letter-spacing:-.01em}
-  .doc-emp-info{font-size:10px;color:var(--ink-soft);line-height:1.6;margin-top:3px;letter-spacing:.01em}
-  .doc-titulo-box{text-align:right;flex-shrink:0}
-  .doc-tag{display:inline-block;font-size:9px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--brand);border:1px solid var(--brand);border-radius:20px;padding:3px 11px;margin-bottom:7px}
-  .doc-titulo{font-family:'Fraunces',serif;font-weight:600;font-size:27px;color:var(--ink);letter-spacing:-.01em;line-height:1}
-  .doc-sub{font-size:10.5px;color:var(--ink-soft);margin-top:5px;letter-spacing:.01em}
-  .doc-rule{height:1px;background:var(--rule);margin-bottom:2px}
-  .doc-rule.thin{height:1px;background:var(--rule);margin:0 0 22px}
+  .doc-hd-box{border:1px solid #c7c2b8;border-radius:5px;overflow:hidden;margin-bottom:26px}
+  .doc-hd{display:flex;justify-content:space-between;align-items:flex-start;gap:20px;padding:18px 22px}
+  .doc-logo{display:flex;align-items:flex-start;gap:14px}
+  .doc-badge{width:72px;height:72px;border-radius:10px;background:var(--brand);color:#fff;display:flex;align-items:center;justify-content:center;font-family:'IBM Plex Sans',sans-serif;font-weight:700;font-size:22px;flex-shrink:0;object-fit:contain}
+  img.doc-badge{background:#fff;border:1px solid var(--rule);border-radius:6px}
+  .doc-emp-nome{font-family:'IBM Plex Sans',sans-serif;font-weight:700;font-size:18px;color:var(--ink);letter-spacing:-.01em}
+  .doc-emp-info{font-size:11.5px;color:var(--ink);line-height:1.55;margin-top:4px}
+  .doc-titulo-box{text-align:right;flex-shrink:0;font-size:11.5px;color:var(--ink);line-height:1.6}
+  .doc-titulo-box b{font-weight:700}
+  .doc-hd-bar{display:flex;justify-content:space-between;align-items:center;background:#ebe8e1;padding:10px 22px;border-top:1px solid #c7c2b8}
+  .doc-hd-titulo{font-family:'IBM Plex Sans',sans-serif;font-weight:700;font-size:16.5px;color:var(--ink);letter-spacing:.01em}
+  .doc-hd-data{font-weight:700;font-size:12.5px;color:var(--ink)}
   .doc-grid{display:grid;grid-template-columns:1fr 1fr;margin-bottom:6px}
   .doc-grid.cols3{grid-template-columns:1fr 1fr 1fr}
   .doc-cell{padding:9px 16px 9px 0;border-bottom:1px solid var(--rule)}
@@ -3528,23 +3528,29 @@ function _docLogoHtml(emp){
   if(emp.logoDataUrl)return`<img class="doc-badge" src="${emp.logoDataUrl}" alt="logo">`;
   return `<div class="doc-badge">${esc((emp.nome||'AT').trim().slice(0,2).toUpperCase())}</div>`;
 }
-function _docHeader(emp,tituloDoc,numero,dataEmissao,subInfo,useRazao){
+function _docHeader(emp,tituloDoc,numero,dataEmissao,cuidadosNome,useRazao){
   const nomePrincipal=useRazao?emp.razaoSocial:emp.nome;
-  return `<div class="doc-hd">
+  const cidadeUf=[emp.cidade,emp.estado].filter(Boolean).join('/');
+  return `<div class="doc-hd-box">
+  <div class="doc-hd">
     <div class="doc-logo">
       ${_docLogoHtml(emp)}
       <div>
         <div class="doc-emp-nome">${esc(nomePrincipal)}</div>
-        <div class="doc-emp-info">${useRazao?'':esc(emp.razaoSocial)+' — '}CNPJ ${esc(emp.cnpj)}${emp.ie?' · IE '+esc(emp.ie):''}<br>${esc(emp.endereco)}${emp.cidade?' · '+esc(emp.cidade)+'/'+esc(emp.estado):''}<br>${esc(emp.telefone)} ${emp.celular?'· '+esc(emp.celular):''} · ${esc(emp.email)}</div>
+        <div class="doc-emp-info">CNPJ: ${esc(emp.cnpj)}${emp.ie?' &nbsp;I.E.: '+esc(emp.ie):''}<br>${esc(emp.endereco)}<br>${cidadeUf?esc(cidadeUf):''}${emp.cep?' - CEP: '+esc(emp.cep):''}</div>
       </div>
     </div>
     <div class="doc-titulo-box">
-      <div class="doc-tag">${esc(tituloDoc)}</div>
-      <div class="doc-titulo">Nº ${esc(String(numero))}</div>
-      <div class="doc-sub">${dataEmissao?fmtD(dataEmissao):''}${subInfo?' · '+esc(subInfo):''}</div>
+      <b>${esc(emp.telefone||'')}${emp.celular?' - '+esc(emp.celular):''}</b><br>
+      <b>${esc(emp.email||'')}</b><br>
+      Vendedor: <b>${esc(emp.vendedor||'—')}</b>${cuidadosNome?`<br>Aos cuidados de: <b>${esc(cuidadosNome)}</b>`:''}
     </div>
   </div>
-  <div class="doc-rule"></div><div class="doc-rule thin"></div>`;
+  <div class="doc-hd-bar">
+    <div class="doc-hd-titulo">${esc(tituloDoc)} Nº ${esc(String(numero))}</div>
+    <div class="doc-hd-data">${dataEmissao?fmtD(dataEmissao):''}</div>
+  </div>
+  </div>`;
 }
 function _clienteBox(cli){
   if(!cli)return'<div style="color:#b3261e;font-size:12px;margin-bottom:10px">Cliente não encontrado.</div>';
@@ -3620,7 +3626,7 @@ function imprimirOrcamentoCli(id){
   const emp=getEmpresa();
   const w=_docOpen();
   w.document.write(`<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><title>Orçamento ${o.numero||''}</title>${_docFonts()}<style>${_docStyleBase()}</style></head><body><div class="sheet">
-  ${_docHeader(emp,'ORÇAMENTO',o.numero||'—',o.criado?o.criado.slice(0,10):today(),o.cuidados?'A/C: '+o.cuidados:'')}
+  ${_docHeader(emp,'ORÇAMENTO',o.numero||'—',o.criado?o.criado.slice(0,10):today(),o.cuidados)}
   <div class="doc-grid cols3">
     <div class="doc-cell"><b>Validade da Proposta</b><span class="val">${o.validade||1} dia(s)</span></div>
     <div class="doc-cell"><b>Previsão de Entrega</b><span class="val">${fmtD(o.entrega)}</span></div>
@@ -4339,7 +4345,7 @@ async function renderPublicOrcamentoPage(id){
     </div>`;
   }
   el.innerHTML=`<div class="sheet" style="margin:30px auto">
-    ${_docHeader(emp,'ORÇAMENTO',o.numero||'—',o.criado?o.criado.slice(0,10):today(),o.cuidados?'A/C: '+o.cuidados:'')}
+    ${_docHeader(emp,'ORÇAMENTO',o.numero||'—',o.criado?o.criado.slice(0,10):today(),o.cuidados)}
     <div class="doc-grid cols3">
       <div class="doc-cell"><b>Validade da Proposta</b><span class="val">${o.validade||1} dia(s)</span></div>
       <div class="doc-cell"><b>Previsão de Entrega</b><span class="val">${fmtD(o.entrega)}</span></div>
