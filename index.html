@@ -6,6 +6,8 @@
 <title>AccertTech — Gestão de Locações TI</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
 <style>
 /* ═══════════════════════════ DESIGN SYSTEM ═══════════════════════════ */
 :root{
@@ -1748,10 +1750,30 @@ function toast(msg,type='info'){
 function openModal(id){document.getElementById(id).classList.remove('hidden')}
 function closeModal(id){document.getElementById(id).classList.add('hidden')}
 
-// ── DATA LAYER (local — próprio do gestao, sem depender de nenhum outro projeto) ─
+// ── DATA LAYER (Firebase — projeto próprio e dedicado do gestao: accerttech-gestao) ─
+const FIREBASE_CONFIG={
+  projectId:"accerttech-gestao",
+  appId:"1:661915613207:web:bd0c420b3ef18c489bc452",
+  storageBucket:"accerttech-gestao.firebasestorage.app",
+  apiKey:"AIzaSyDFffdnnI0iq4G0ql8NwYWP0MyGHIeNs2w",
+  authDomain:"accerttech-gestao.firebaseapp.com",
+  messagingSenderId:"661915613207",
+};
+firebase.initializeApp(FIREBASE_CONFIG);
+const _fsdb=firebase.firestore();
 const DB={
-  get:k=>{try{return JSON.parse(localStorage.getItem('gest_'+k)||'[]')}catch{return[]}},
-  set:(k,v)=>localStorage.setItem('gest_'+k,JSON.stringify(v)),
+  _c:{},
+  async init(){
+    const snap=await _fsdb.collection('gestao').get();
+    DB._c={};
+    snap.forEach(doc=>{DB._c[doc.id]=doc.data().value;});
+    return true;
+  },
+  _push(k,v){
+    _fsdb.collection('gestao').doc(k).set({value:v}).catch(e=>{console.error('[DB sync]',k,e);toast('Falha ao salvar na nuvem: '+e.message,'error');});
+  },
+  get:k=>{try{return DB._c[k]||[]}catch{return[]}},
+  set(k,v){DB._c[k]=v;DB._push(k,v);},
   one:(k,id)=>DB.get(k).find(x=>x.id===id),
   save(k,item){const l=DB.get(k);const i=l.findIndex(x=>x.id===item.id);if(i>=0)l[i]=item;else l.unshift(item);DB.set(k,l)},
   del:(k,id)=>DB.set(k,DB.get(k).filter(x=>x.id!==id)),
@@ -4172,23 +4194,31 @@ function doLogin(){
   sessionStorage.setItem('gc_user',JSON.stringify(found));
   document.getElementById('login-ov').style.display='none';
   document.getElementById('app').classList.remove('hidden');
-  migrarDadosAntigosUmaVez().then(initApp);
+  initApp();
 }
 function logout(){
   sessionStorage.removeItem('gc_ok');
   sessionStorage.removeItem('gc_user');
   location.reload();
 }
-function initApp(){
+async function initApp(){
+  const lov=document.getElementById('loading-ov');
+  if(lov)lov.style.display='flex';
+  try{
+    await DB.init();
+  }catch(e){
+    if(lov)lov.innerHTML='<div style="color:#f87171;text-align:center;padding:40px"><div style="font-size:32px;margin-bottom:12px">⚠</div><div style="font-size:14px;font-weight:600;margin-bottom:8px">Erro ao conectar</div><div style="font-size:12px;color:#94a3b8">Verifique sua conexão e recarregue a página</div><br><button onclick="location.reload()" style="padding:9px 20px;background:#3b82f6;color:#fff;border:none;border-radius:8px;font-size:13px;cursor:pointer;font-family:inherit">Recarregar</button></div>';
+    return;
+  }
+  if(lov)lov.style.display='none';
+  await migrarDadosAntigosUmaVez();
   document.getElementById('topbar-date').textContent=new Date().toLocaleDateString('pt-BR',{weekday:'short',day:'numeric',month:'short',year:'numeric'});
   document.getElementById('fin-mes').value=thisMonth();
   document.getElementById('orc-mes').value=thisMonth();
   renderDashboard();
 }
-// Migração única: traz de volta os dados que existiam no banco compartilhado antigo (execução única, depois se desliga sozinha)
+// Migração única: traz de volta os dados que existiam no banco compartilhado antigo (só roda enquanto o banco novo estiver vazio)
 async function migrarDadosAntigosUmaVez(){
-  if(localStorage.getItem('gest_migracao_local_v1'))return;
-  localStorage.setItem('gest_migracao_local_v1','1');
   if(DB.get('clientes').length||DB.get('estoque').length)return;
   try{
     const SB_URL='https://tkeebtxlabqsjwjdedcy.supabase.co';
@@ -4196,7 +4226,9 @@ async function migrarDadosAntigosUmaVez(){
     const r=await fetch(SB_URL+'/rest/v1/app_settings?key=like.gest_%25&select=key,value',{headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY}});
     if(!r.ok)return;
     const rows=await r.json();
-    rows.forEach(row=>{if(row.key.startsWith('gest_')){const k=row.key.slice(5);if(!DB.get(k).length)DB.set(k,row.value);}});
+    let migrou=false;
+    rows.forEach(row=>{if(row.key.startsWith('gest_')){const k=row.key.slice(5);if(!DB.get(k).length){DB.set(k,row.value);migrou=true;}}});
+    if(migrou)toast('Dados recuperados do cadastro anterior!','success');
   }catch(e){/* sem conexão com o banco antigo — segue sem migrar, não é crítico */}
 }
 
@@ -4213,10 +4245,15 @@ function _injectDocStylesOnce(){
 function _pubMsg(html){
   document.getElementById('public-view').innerHTML=`<div style="min-height:100vh;display:flex;align-items:center;justify-content:center;font-family:'IBM Plex Sans',sans-serif;color:#6b6459;padding:20px;text-align:center">${html}</div>`;
 }
-function renderPublicOrcamentoPage(id){
+async function renderPublicOrcamentoPage(id){
   const el=document.getElementById('public-view');
   el.classList.remove('hidden');
   _injectDocStylesOnce();
+  _pubMsg('Carregando orçamento…');
+  try{ await DB.init(); }catch(e){
+    _pubMsg('<span style="color:#b3261e">Não foi possível carregar. Verifique sua conexão e recarregue a página.</span>');
+    return;
+  }
   const o=DB.one('orcamentoscli',id);
   if(!o){ _pubMsg('<span style="color:#b3261e">Orçamento não encontrado ou link inválido.</span>'); return; }
   const cli=DB.one('clientes',o.clienteId);
@@ -4280,7 +4317,7 @@ if(_publicOrcId){
 }else if(sessionStorage.getItem('gc_ok')){
   document.getElementById('login-ov').style.display='none';
   document.getElementById('app').classList.remove('hidden');
-  migrarDadosAntigosUmaVez().then(initApp);
+  initApp();
 }
 </script>
 </body>
