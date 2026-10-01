@@ -1791,10 +1791,13 @@ function goView(v){
   document.querySelectorAll('[data-view]').forEach(el=>el.classList.toggle('active',el.dataset.view===v));
   document.getElementById('page-title').textContent=VIEW_TITLES[v]||v;
   closeSidebar();
-  ({dashboard:renderDashboard,empresa:renderEmpresaView,clientes:renderClientes,funcionarios:renderFuncionarios,
+  const _renderFn=({dashboard:renderDashboard,empresa:renderEmpresaView,clientes:renderClientes,funcionarios:renderFuncionarios,
     equipamentos:renderEquipamentos,estoque:renderEstoque,orcamentoscli:renderOrcamentosCli,
     locacoes:renderLocacoes,contratos:renderContratos,faturas:renderFaturas,financeiro:renderFinanceiro,parcelamentos:renderParcelamentos,
-    orcamento:renderOrcamento,relatorios:()=>{setRelPeriodo('mes');}}[v]||function(){})();
+    orcamento:renderOrcamento,relatorios:()=>{setRelPeriodo('mes');}}[v]||function(){});
+  _renderFn();
+  // Recarrega do banco em segundo plano (pega aprovações/assinaturas feitas pelo cliente fora deste navegador) e re-renderiza se algo mudou
+  DB.init().then(_renderFn).catch(()=>{});
 }
 
 function toggleSidebar(){
