@@ -522,6 +522,9 @@ thead th.r{text-align:right}
   </div>
 </div>
 
+<!-- PUBLIC ORÇAMENTO APPROVAL PAGE (?orc=ID) -->
+<div id="public-view" class="hidden" style="background:#e9e5db;min-height:100vh"></div>
+
 <div id="app" class="hidden">
 
 <div id="sidebar-overlay" onclick="closeSidebar()"></div>
@@ -542,6 +545,9 @@ thead th.r{text-align:right}
       <div class="nav-label">Geral</div>
       <div class="nav-item active" data-view="dashboard">
         <span class="nav-icon"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg></span>Dashboard
+      </div>
+      <div class="nav-item" data-view="empresa">
+        <span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M3 21h18"/><path d="M5 21V7l8-4v18"/><path d="M19 21V11l-6-4"/><line x1="9" y1="9" x2="9" y2="9.01"/><line x1="9" y1="12" x2="9" y2="12.01"/><line x1="9" y1="15" x2="9" y2="15.01"/></svg></span>Minha Empresa
       </div>
     </div>
     <div class="nav-section">
@@ -604,7 +610,7 @@ thead th.r{text-align:right}
     <div id="page-title">Dashboard</div>
     <div id="topbar-right">
       <span id="topbar-date"></span>
-      <button onclick="openModalEmpresa()" title="Dados da Empresa" style="background:none;border:1px solid var(--border);border-radius:8px;padding:6px 12px;font-size:12px;font-weight:600;color:var(--text-mid);cursor:pointer;display:flex;align-items:center;gap:5px;transition:all .15s" onmouseover="this.style.borderColor='var(--blue)';this.style.color='var(--blue)'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--text-mid)'">⚙ Empresa</button>
+      <button onclick="goView('empresa')" title="Dados da Empresa" style="background:none;border:1px solid var(--border);border-radius:8px;padding:6px 12px;font-size:12px;font-weight:600;color:var(--text-mid);cursor:pointer;display:flex;align-items:center;gap:5px;transition:all .15s" onmouseover="this.style.borderColor='var(--blue)';this.style.color='var(--blue)'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--text-mid)'">⚙ Empresa</button>
       <button onclick="logout()" title="Sair" style="background:none;border:1px solid var(--border);border-radius:8px;padding:6px 12px;font-size:12px;font-weight:600;color:var(--text-mid);cursor:pointer;display:flex;align-items:center;gap:5px;transition:all .15s" onmouseover="this.style.background='var(--red-bg)';this.style.color='var(--red)';this.style.borderColor='var(--red)'" onmouseout="this.style.background='none';this.style.color='var(--text-mid)';this.style.borderColor='var(--border)'">⎋ Sair</button>
     </div>
   </div>
@@ -623,6 +629,58 @@ thead th.r{text-align:right}
           <div class="dash-panel-title">⚠️ Vencimentos em 7 dias</div>
           <div id="dash-vencimentos"></div>
         </div>
+      </div>
+    </div>
+
+    <!-- EMPRESA -->
+    <div id="view-empresa" class="view-section hidden">
+      <div class="sec-hdr">
+        <div class="sec-title">Dados da Empresa</div>
+      </div>
+      <div style="max-width:760px">
+        <div class="form-group">
+          <label class="form-label">Logotipo</label>
+          <div style="display:flex;align-items:center;gap:16px">
+            <div id="emp-logo-preview" style="width:72px;height:72px;border-radius:50%;background:linear-gradient(135deg,#4f46e5,#6366f1);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:22px;flex-shrink:0;overflow:hidden">AT</div>
+            <div>
+              <input type="file" id="emp-logo-file" accept="image/*" onchange="onLogoFileChange(event)" style="font-size:12.5px">
+              <div style="font-size:11px;color:var(--text-dim);margin-top:6px">Aparece no cabeçalho dos documentos impressos (Orçamento, Contrato, Fatura).</div>
+              <button type="button" class="btn btn-ghost btn-sm" style="margin-top:6px" onclick="removerLogo()">Remover logo</button>
+            </div>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label class="form-label">Nome Fantasia</label><input class="form-control" id="emp-nome"></div>
+          <div class="form-group"><label class="form-label">Razão Social</label><input class="form-control" id="emp-razao"></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label class="form-label">CNPJ</label><input class="form-control" id="emp-cnpj"></div>
+          <div class="form-group"><label class="form-label">Inscrição Estadual</label><input class="form-control" id="emp-ie"></div>
+        </div>
+        <div class="form-group"><label class="form-label">Endereço</label><input class="form-control" id="emp-endereco"></div>
+        <div class="form-row-3">
+          <div class="form-group"><label class="form-label">Cidade</label><input class="form-control" id="emp-cidade"></div>
+          <div class="form-group"><label class="form-label">UF</label><input class="form-control" id="emp-estado" maxlength="2"></div>
+          <div class="form-group"><label class="form-label">CEP</label><input class="form-control" id="emp-cep"></div>
+        </div>
+        <div class="form-row-3">
+          <div class="form-group"><label class="form-label">Telefone</label><input class="form-control" id="emp-telefone"></div>
+          <div class="form-group"><label class="form-label">Celular</label><input class="form-control" id="emp-celular"></div>
+          <div class="form-group"><label class="form-label">Vendedor Padrão</label><input class="form-control" id="emp-vendedor"></div>
+        </div>
+        <div class="form-group"><label class="form-label">E-mail</label><input class="form-control" id="emp-email"></div>
+        <div class="form-row">
+          <div class="form-group"><label class="form-label">Dados Bancários</label><input class="form-control" id="emp-banco" placeholder="Banco - Agência - Conta"></div>
+          <div class="form-group"><label class="form-label">Chave Pix</label><input class="form-control" id="emp-pix"></div>
+        </div>
+        <div class="form-group"><label class="form-label">Favorecido (titular da conta)</label><input class="form-control" id="emp-favorecido"></div>
+        <div class="form-group"><label class="form-label">Texto Fiscal (impresso nas faturas)</label><textarea class="form-control" id="emp-fiscal" rows="4"></textarea></div>
+        <div class="form-row-3">
+          <div class="form-group"><label class="form-label">Próximo Nº Orçamento</label><input class="form-control" id="emp-prox-orc" type="number"></div>
+          <div class="form-group"><label class="form-label">Próximo Nº Contrato</label><input class="form-control" id="emp-prox-ctr" type="number"></div>
+          <div class="form-group"><label class="form-label">Próximo Nº Fatura</label><input class="form-control" id="emp-prox-fat" type="number"></div>
+        </div>
+        <button class="btn btn-primary" onclick="saveEmpresaForm()">Salvar Dados da Empresa</button>
       </div>
     </div>
 
@@ -940,7 +998,7 @@ thead th.r{text-align:right}
 <!-- Modal Cliente -->
 <div class="modal-overlay hidden" id="modal-cliente">
   <div class="modal" style="max-width:680px">
-    <div class="modal-hdr"><div class="modal-title" id="mcli-title">Novo Cadastro</div><button class="modal-close" onclick="closeModal('modal-cliente')">×</button></div>
+    <div class="modal-hdr"><div class="modal-title" id="mcli-title">Novo Cadastro</div><button class="modal-close" onclick="_quickClienteTarget=null;closeModal('modal-cliente')">×</button></div>
     <div class="modal-body">
       <input type="hidden" id="cli-id">
       <div class="form-row">
@@ -988,7 +1046,7 @@ thead th.r{text-align:right}
       <div class="form-group"><label class="form-label">Observações</label><textarea class="form-control" id="cli-obs" rows="2"></textarea></div>
     </div>
     <div class="modal-footer">
-      <button class="btn btn-ghost" onclick="closeModal('modal-cliente')">Cancelar</button>
+      <button class="btn btn-ghost" onclick="_quickClienteTarget=null;closeModal('modal-cliente')">Cancelar</button>
       <button class="btn btn-primary" onclick="saveCliente()">Salvar</button>
     </div>
   </div>
@@ -1024,7 +1082,7 @@ thead th.r{text-align:right}
 <!-- Modal Equipamento -->
 <div class="modal-overlay hidden" id="modal-equipamento">
   <div class="modal">
-    <div class="modal-hdr"><div class="modal-title" id="mequip-title">Novo Equipamento</div><button class="modal-close" onclick="closeModal('modal-equipamento')">×</button></div>
+    <div class="modal-hdr"><div class="modal-title" id="mequip-title">Novo Equipamento</div><button class="modal-close" onclick="_quickItemTarget=null;closeModal('modal-equipamento')">×</button></div>
     <div class="modal-body">
       <input type="hidden" id="equip-id">
       <div class="form-row">
@@ -1060,7 +1118,7 @@ thead th.r{text-align:right}
       <div class="form-group"><label class="form-label">Observações</label><textarea class="form-control" id="equip-obs" rows="2"></textarea></div>
     </div>
     <div class="modal-footer">
-      <button class="btn btn-ghost" onclick="closeModal('modal-equipamento')">Cancelar</button>
+      <button class="btn btn-ghost" onclick="_quickItemTarget=null;closeModal('modal-equipamento')">Cancelar</button>
       <button class="btn btn-primary" onclick="saveEquipamento()">Salvar</button>
     </div>
   </div>
@@ -1069,7 +1127,7 @@ thead th.r{text-align:right}
 <!-- Modal Estoque -->
 <div class="modal-overlay hidden" id="modal-estoque">
   <div class="modal">
-    <div class="modal-hdr"><div class="modal-title" id="mest-title">Novo Item de Estoque</div><button class="modal-close" onclick="closeModal('modal-estoque')">×</button></div>
+    <div class="modal-hdr"><div class="modal-title" id="mest-title">Novo Item de Estoque</div><button class="modal-close" onclick="_quickItemTarget=null;closeModal('modal-estoque')">×</button></div>
     <div class="modal-body">
       <input type="hidden" id="est-id">
       <div class="form-row">
@@ -1089,7 +1147,7 @@ thead th.r{text-align:right}
       <div class="form-group"><label class="form-label">Observações</label><textarea class="form-control" id="est-obs" rows="2"></textarea></div>
     </div>
     <div class="modal-footer">
-      <button class="btn btn-ghost" onclick="closeModal('modal-estoque')">Cancelar</button>
+      <button class="btn btn-ghost" onclick="_quickItemTarget=null;closeModal('modal-estoque')">Cancelar</button>
       <button class="btn btn-primary" onclick="saveEstoque()">Salvar</button>
     </div>
   </div>
@@ -1246,7 +1304,12 @@ thead th.r{text-align:right}
       <input type="hidden" id="orccli-id">
       <input type="hidden" id="orccli-numero">
       <div class="form-row">
-        <div class="form-group"><label class="form-label">Cliente *</label><select class="form-control" id="orccli-cliente"></select></div>
+        <div class="form-group"><label class="form-label">Cliente *</label>
+          <div style="display:flex;gap:6px">
+            <select class="form-control" id="orccli-cliente" style="flex:1"></select>
+            <button type="button" class="btn btn-ghost btn-sm" title="Cadastrar novo cliente" onclick="quickNovoCliente('orccli-cliente')">+</button>
+          </div>
+        </div>
         <div class="form-group"><label class="form-label">Nº Orçamento</label><input class="form-control" id="orccli-numero-view" disabled></div>
       </div>
       <div class="form-row">
@@ -1274,6 +1337,8 @@ thead th.r{text-align:right}
           <select class="form-control" id="orccli-quickpick" style="flex:1" onchange="orcQuickAdd()">
             <option value="">+ Adicionar a partir de Equipamento/Estoque…</option>
           </select>
+          <button type="button" class="btn btn-ghost btn-sm" title="Cadastrar novo equipamento" onclick="quickNovoEquipamento('orccli-itens-list')">+ Equip.</button>
+          <button type="button" class="btn btn-ghost btn-sm" title="Cadastrar novo item de estoque" onclick="quickNovoEstoque('orccli-itens-list')">+ Estoque</button>
         </div>
         <div id="orccli-itens-list" style="display:flex;flex-direction:column;gap:6px;max-height:200px;overflow-y:auto;padding:8px;background:var(--surface-2);border-radius:8px;border:1.5px solid var(--border)"></div>
         <button type="button" class="btn btn-ghost btn-sm" style="margin-top:6px" onclick="addItemRow('orccli-itens-list')">+ Adicionar Item em Branco</button>
@@ -1316,50 +1381,6 @@ thead th.r{text-align:right}
   </div>
 </div>
 
-<!-- Modal Empresa -->
-<div class="modal-overlay hidden" id="modal-empresa">
-  <div class="modal modal-lg">
-    <div class="modal-hdr"><div class="modal-title">Dados da Empresa</div><button class="modal-close" onclick="closeModal('modal-empresa')">×</button></div>
-    <div class="modal-body">
-      <div class="form-row">
-        <div class="form-group"><label class="form-label">Nome Fantasia</label><input class="form-control" id="emp-nome"></div>
-        <div class="form-group"><label class="form-label">Razão Social</label><input class="form-control" id="emp-razao"></div>
-      </div>
-      <div class="form-row">
-        <div class="form-group"><label class="form-label">CNPJ</label><input class="form-control" id="emp-cnpj"></div>
-        <div class="form-group"><label class="form-label">Inscrição Estadual</label><input class="form-control" id="emp-ie"></div>
-      </div>
-      <div class="form-group"><label class="form-label">Endereço</label><input class="form-control" id="emp-endereco"></div>
-      <div class="form-row-3">
-        <div class="form-group"><label class="form-label">Cidade</label><input class="form-control" id="emp-cidade"></div>
-        <div class="form-group"><label class="form-label">UF</label><input class="form-control" id="emp-estado" maxlength="2"></div>
-        <div class="form-group"><label class="form-label">CEP</label><input class="form-control" id="emp-cep"></div>
-      </div>
-      <div class="form-row-3">
-        <div class="form-group"><label class="form-label">Telefone</label><input class="form-control" id="emp-telefone"></div>
-        <div class="form-group"><label class="form-label">Celular</label><input class="form-control" id="emp-celular"></div>
-        <div class="form-group"><label class="form-label">Vendedor Padrão</label><input class="form-control" id="emp-vendedor"></div>
-      </div>
-      <div class="form-group"><label class="form-label">E-mail</label><input class="form-control" id="emp-email"></div>
-      <div class="form-row">
-        <div class="form-group"><label class="form-label">Dados Bancários</label><input class="form-control" id="emp-banco" placeholder="Banco - Agência - Conta"></div>
-        <div class="form-group"><label class="form-label">Chave Pix</label><input class="form-control" id="emp-pix"></div>
-      </div>
-      <div class="form-group"><label class="form-label">Favorecido (titular da conta)</label><input class="form-control" id="emp-favorecido"></div>
-      <div class="form-group"><label class="form-label">Texto Fiscal (impresso nas faturas)</label><textarea class="form-control" id="emp-fiscal" rows="4"></textarea></div>
-      <div class="form-row-3">
-        <div class="form-group"><label class="form-label">Próximo Nº Orçamento</label><input class="form-control" id="emp-prox-orc" type="number"></div>
-        <div class="form-group"><label class="form-label">Próximo Nº Contrato</label><input class="form-control" id="emp-prox-ctr" type="number"></div>
-        <div class="form-group"><label class="form-label">Próximo Nº Fatura</label><input class="form-control" id="emp-prox-fat" type="number"></div>
-      </div>
-    </div>
-    <div class="modal-footer">
-      <button class="btn btn-ghost" onclick="closeModal('modal-empresa')">Cancelar</button>
-      <button class="btn btn-primary" onclick="saveEmpresaForm()">Salvar</button>
-    </div>
-  </div>
-</div>
-
 <!-- Modal Contrato -->
 <div class="modal-overlay hidden" id="modal-contrato">
   <div class="modal modal-lg">
@@ -1369,7 +1390,12 @@ thead th.r{text-align:right}
       <input type="hidden" id="ctr-numero">
       <input type="hidden" id="ctr-orcamentoid">
       <div class="form-row">
-        <div class="form-group"><label class="form-label">Cliente *</label><select class="form-control" id="ctr-cliente"></select></div>
+        <div class="form-group"><label class="form-label">Cliente *</label>
+          <div style="display:flex;gap:6px">
+            <select class="form-control" id="ctr-cliente" style="flex:1"></select>
+            <button type="button" class="btn btn-ghost btn-sm" title="Cadastrar novo cliente" onclick="quickNovoCliente('ctr-cliente')">+</button>
+          </div>
+        </div>
         <div class="form-group"><label class="form-label">Nº Contrato</label><input class="form-control" id="ctr-numero-view" disabled></div>
       </div>
       <div class="form-row">
@@ -1396,6 +1422,8 @@ thead th.r{text-align:right}
           <select class="form-control" id="ctr-quickpick" style="flex:1" onchange="ctrQuickAdd()">
             <option value="">+ Adicionar a partir de Equipamento/Estoque…</option>
           </select>
+          <button type="button" class="btn btn-ghost btn-sm" title="Cadastrar novo equipamento" onclick="quickNovoEquipamento('ctr-itens-list')">+ Equip.</button>
+          <button type="button" class="btn btn-ghost btn-sm" title="Cadastrar novo item de estoque" onclick="quickNovoEstoque('ctr-itens-list')">+ Estoque</button>
         </div>
         <div id="ctr-itens-list" style="display:flex;flex-direction:column;gap:6px;max-height:200px;overflow-y:auto;padding:8px;background:var(--surface-2);border-radius:8px;border:1.5px solid var(--border)"></div>
         <button type="button" class="btn btn-ghost btn-sm" style="margin-top:6px" onclick="addItemRow('ctr-itens-list')">+ Adicionar Item em Branco</button>
@@ -1454,6 +1482,23 @@ thead th.r{text-align:right}
     <div class="modal-footer">
       <button class="btn btn-ghost" onclick="closeModal('modal-fatura')">Cancelar</button>
       <button class="btn btn-primary" onclick="saveFatura()">Salvar Fatura</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Link de Aprovação -->
+<div class="modal-overlay hidden" id="modal-link">
+  <div class="modal">
+    <div class="modal-hdr"><div class="modal-title" id="link-modal-title">Link do Orçamento</div><button class="modal-close" onclick="closeModal('modal-link')">×</button></div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label class="form-label">Envie este link para o cliente aprovar/assinar online</label>
+        <input class="form-control" id="link-url" readonly onclick="this.select()">
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modal-link')">Fechar</button>
+      <button class="btn btn-primary" onclick="copiarLinkModal()">📋 Copiar Link</button>
     </div>
   </div>
 </div>
@@ -1725,7 +1770,7 @@ const DB={
 };
 
 // ── NAVIGATION ────────────────────────────────────────────────────────────────
-const VIEW_TITLES={dashboard:'Dashboard',clientes:'Clientes / Fornecedores',funcionarios:'Funcionários',
+const VIEW_TITLES={dashboard:'Dashboard',empresa:'Minha Empresa',clientes:'Clientes / Fornecedores',funcionarios:'Funcionários',
   equipamentos:'Equipamentos',estoque:'Estoque',orcamentoscli:'Orçamentos',
   locacoes:'Locações',contratos:'Contratos',faturas:'Faturas',financeiro:'Financeiro',parcelamentos:'Parcelamentos',
   orcamento:'Metas',relatorios:'Relatórios'};
@@ -1736,7 +1781,7 @@ function goView(v){
   document.querySelectorAll('[data-view]').forEach(el=>el.classList.toggle('active',el.dataset.view===v));
   document.getElementById('page-title').textContent=VIEW_TITLES[v]||v;
   closeSidebar();
-  ({dashboard:renderDashboard,clientes:renderClientes,funcionarios:renderFuncionarios,
+  ({dashboard:renderDashboard,empresa:renderEmpresaView,clientes:renderClientes,funcionarios:renderFuncionarios,
     equipamentos:renderEquipamentos,estoque:renderEstoque,orcamentoscli:renderOrcamentosCli,
     locacoes:renderLocacoes,contratos:renderContratos,faturas:renderFaturas,financeiro:renderFinanceiro,parcelamentos:renderParcelamentos,
     orcamento:renderOrcamento,relatorios:()=>{setRelPeriodo('mes');}}[v]||function(){})();
@@ -1889,6 +1934,12 @@ function saveCliente(){
     observacoes:document.getElementById('cli-obs').value
   });
   closeModal('modal-cliente');renderClientes();toast('Cadastro salvo!','success');
+  if(_quickClienteTarget){
+    const sel=document.getElementById(_quickClienteTarget);
+    const novo=DB.get('clientes')[0];
+    if(sel&&novo)sel.innerHTML=DB.get('clientes').map(c=>`<option value="${c.id}"${c.id===novo.id?' selected':''}>${esc(c.nome)}</option>`).join('');
+    _quickClienteTarget=null;
+  }
 }
 function delCliente(id){if(!confirm('Excluir este cadastro?'))return;DB.del('clientes',id);renderClientes();toast('Excluído.','info');}
 
@@ -1951,6 +2002,11 @@ function saveEquipamento(){
   if(!document.getElementById('equip-tipo').value){toast('Selecione o tipo','error');return;}
   DB.save('equipamentos',{id:document.getElementById('equip-id').value||uid(),tipo:document.getElementById('equip-tipo').value,marca:document.getElementById('equip-marca').value,modelo:document.getElementById('equip-modelo').value,numSerie:document.getElementById('equip-serie').value,valorCompra:document.getElementById('equip-compra').value,valorDia:document.getElementById('equip-dia').value,status:document.getElementById('equip-status').value,desc:document.getElementById('equip-desc').value,observacoes:document.getElementById('equip-obs').value});
   closeModal('modal-equipamento');renderEquipamentos();toast('Equipamento salvo!','success');
+  if(_quickItemTarget){
+    const e=DB.get('equipamentos')[0];
+    if(e)addItemRow(_quickItemTarget,((e.tipo||'')+' '+(e.marca||'')+' '+(e.modelo||'')).trim(),1,Number(e.valorDia)||0);
+    _quickItemTarget=null;
+  }
 }
 function delEquipamento(id){if(!confirm('Excluir?'))return;DB.del('equipamentos',id);renderEquipamentos();toast('Excluído.','info');}
 
@@ -1981,6 +2037,11 @@ function saveEstoque(){
   if(!nome){toast('Informe o nome do item','error');return;}
   DB.save('estoque',{id:document.getElementById('est-id').value||uid(),nome,categoria:document.getElementById('est-cat').value,quantidade:document.getElementById('est-qtd').value,qtdMinima:document.getElementById('est-min').value,valorUnit:document.getElementById('est-valor').value,observacoes:document.getElementById('est-obs').value});
   closeModal('modal-estoque');renderEstoque();toast('Item salvo!','success');
+  if(_quickItemTarget){
+    const e=DB.get('estoque')[0];
+    if(e)addItemRow(_quickItemTarget,e.nome||'',1,Number(e.valorUnit)||0);
+    _quickItemTarget=null;
+  }
 }
 function delEstoque(id){if(!confirm('Excluir?'))return;DB.del('estoque',id);renderEstoque();toast('Excluído.','info');}
 
@@ -3051,6 +3112,7 @@ function renderOrcamentosCli(){
       <td><div class="td-actions">
         ${o.status==='pendente'?`<button class="btn btn-success btn-xs" onclick="aprovarOrc('${o.id}')" title="Aprovar">✓</button><button class="btn btn-danger btn-xs" onclick="recusarOrc('${o.id}')" title="Recusar">✕</button>`:''}
         ${o.status==='aprovado'?`<button class="btn btn-primary btn-sm" onclick="gerarContratoDeOrcamento('${o.id}')" title="Gerar Contrato">→ Contrato</button><button class="btn btn-ghost btn-sm" onclick="converterLocacao('${o.id}')" title="Converter em Locação (equipamentos)">→ Locação</button>`:''}
+        <button class="btn btn-ghost btn-xs" onclick="linkAprovacaoOrcamento('${o.id}')" title="Link para o cliente aprovar/assinar online">🔗</button>
         <button class="btn btn-ghost btn-xs" onclick="imprimirOrcamentoCli('${o.id}')" title="Imprimir">🖨</button>
         <button class="btn btn-ghost btn-xs" onclick="openModalOrcamentoCli('${o.id}')">✏</button>
         <button class="btn btn-danger btn-xs" onclick="delOrcamentoCli('${o.id}')">✕</button>
@@ -3205,6 +3267,23 @@ function converterLocacao(id){
 }
 
 // ── CONSTRUTORES GENÉRICOS: ITENS E PARCELAS (Orçamento / Contrato) ────────────
+let _quickClienteTarget=null;
+let _quickItemTarget=null;
+function quickNovoCliente(targetSelectId){
+  _quickClienteTarget=targetSelectId;
+  openModalCliente();
+  document.body.appendChild(document.getElementById('modal-cliente'));
+}
+function quickNovoEquipamento(targetContainerId){
+  _quickItemTarget=targetContainerId;
+  openModalEquipamento();
+  document.body.appendChild(document.getElementById('modal-equipamento'));
+}
+function quickNovoEstoque(targetContainerId){
+  _quickItemTarget=targetContainerId;
+  openModalEstoque();
+  document.body.appendChild(document.getElementById('modal-estoque'));
+}
 let itemLines=[];
 let parcLines=[];
 function addItemRow(containerId,nome,qtd,valorUnit){
@@ -3307,7 +3386,25 @@ function nextNumero(campo){
   saveEmpresaObj(emp);
   return n;
 }
-function openModalEmpresa(){
+let _empLogoDataUrl=null;
+function _renderLogoPreview(){
+  const el=document.getElementById('emp-logo-preview');if(!el)return;
+  if(_empLogoDataUrl){el.innerHTML=`<img src="${_empLogoDataUrl}" style="width:100%;height:100%;object-fit:cover">`;}
+  else{const nome=document.getElementById('emp-nome')?.value||'AT';el.textContent=nome.trim().slice(0,2).toUpperCase();}
+}
+function onLogoFileChange(event){
+  const file=event.target.files?.[0];if(!file)return;
+  if(file.size>1.5*1024*1024){toast('Imagem muito grande (máx. 1,5MB)','error');event.target.value='';return;}
+  const reader=new FileReader();
+  reader.onload=()=>{_empLogoDataUrl=reader.result;_renderLogoPreview();};
+  reader.readAsDataURL(file);
+}
+function removerLogo(){
+  _empLogoDataUrl=null;
+  const inp=document.getElementById('emp-logo-file');if(inp)inp.value='';
+  _renderLogoPreview();
+}
+function renderEmpresaView(){
   const e=getEmpresa();
   document.getElementById('emp-nome').value=e.nome||'';
   document.getElementById('emp-razao').value=e.razaoSocial||'';
@@ -3328,7 +3425,8 @@ function openModalEmpresa(){
   document.getElementById('emp-prox-orc').value=e.proxOrcamento||1;
   document.getElementById('emp-prox-ctr').value=e.proxContrato||1;
   document.getElementById('emp-prox-fat').value=e.proxFatura||1;
-  openModal('modal-empresa');
+  _empLogoDataUrl=e.logoDataUrl||null;
+  _renderLogoPreview();
 }
 function saveEmpresaForm(){
   const obj={
@@ -3348,121 +3446,160 @@ function saveEmpresaForm(){
     pix:document.getElementById('emp-pix').value,
     favorecido:document.getElementById('emp-favorecido').value,
     textoFiscal:document.getElementById('emp-fiscal').value,
+    logoDataUrl:_empLogoDataUrl,
     proxOrcamento:Number(document.getElementById('emp-prox-orc').value)||1,
     proxContrato:Number(document.getElementById('emp-prox-ctr').value)||1,
     proxFatura:Number(document.getElementById('emp-prox-fat').value)||1,
   };
   saveEmpresaObj(obj);
-  closeModal('modal-empresa');
   toast('Dados da empresa salvos!','success');
 }
 
 // ── IMPRESSÃO DE DOCUMENTOS (Orçamento / Contrato / Fatura) ────────────────────
-function _docOpen(){return window.open('','_blank','width=900,height=800');}
+function _docOpen(){return window.open('','_blank','width=960,height=840');}
+function _docFonts(){
+  return `<link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;1,9..144,500&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">`;
+}
 function _docStyleBase(){
   return `*{box-sizing:border-box;margin:0;padding:0}
-  body{font-family:Arial,Helvetica,sans-serif;font-size:12.5px;color:#0f172a;background:#fff;padding:22px}
-  .doc-hd{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:3px solid #1e40af;padding-bottom:12px;margin-bottom:16px}
-  .doc-logo{display:flex;align-items:center;gap:10px}
-  .doc-badge{width:46px;height:46px;border-radius:10px;background:linear-gradient(135deg,#3b82f6,#1e40af);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:16px;flex-shrink:0}
-  .doc-emp-nome{font-size:16px;font-weight:800;color:#1e293b}
-  .doc-emp-info{font-size:11px;color:#64748b;line-height:1.5}
-  .doc-titulo-box{text-align:right}
-  .doc-titulo{font-size:18px;font-weight:800;color:#1e40af}
-  .doc-sub{font-size:11px;color:#64748b;margin-top:2px}
-  .doc-grid{display:grid;grid-template-columns:1fr 1fr;gap:0;border:1px solid #cbd5e1;border-radius:6px;overflow:hidden;margin-bottom:14px}
+  :root{--ink:#1c1a17;--ink-soft:#6b6459;--rule:#dcd5c8;--paper:#fffdf9;--brand:#2e2a86;--brand-soft:#eeecfb}
+  body{font-family:'IBM Plex Sans',Arial,sans-serif;font-size:12.5px;color:var(--ink);background:#e9e5db;padding:36px 0}
+  .sheet{max-width:760px;margin:0 auto;background:var(--paper);padding:40px 46px 48px;box-shadow:0 1px 3px rgba(28,26,23,.08);position:relative}
+  .sheet::before{content:'';position:absolute;top:0;left:0;right:0;height:5px;background:linear-gradient(90deg,var(--brand),#7a74e0 60%,var(--brand))}
+  .doc-hd{display:flex;justify-content:space-between;align-items:flex-end;gap:20px;padding-bottom:18px}
+  .doc-logo{display:flex;align-items:center;gap:13px}
+  .doc-badge{width:48px;height:48px;border-radius:50%;background:var(--brand);color:#fff;display:flex;align-items:center;justify-content:center;font-family:'Fraunces',serif;font-style:italic;font-weight:600;font-size:19px;flex-shrink:0;object-fit:cover}
+  img.doc-badge{background:#fff;border:1px solid var(--rule)}
+  .doc-emp-nome{font-family:'Fraunces',serif;font-weight:600;font-style:italic;font-size:21px;color:var(--ink);letter-spacing:-.01em}
+  .doc-emp-info{font-size:10px;color:var(--ink-soft);line-height:1.6;margin-top:3px;letter-spacing:.01em}
+  .doc-titulo-box{text-align:right;flex-shrink:0}
+  .doc-tag{display:inline-block;font-size:9px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--brand);border:1px solid var(--brand);border-radius:20px;padding:3px 11px;margin-bottom:7px}
+  .doc-titulo{font-family:'Fraunces',serif;font-weight:600;font-size:27px;color:var(--ink);letter-spacing:-.01em;line-height:1}
+  .doc-sub{font-size:10.5px;color:var(--ink-soft);margin-top:5px;letter-spacing:.01em}
+  .doc-rule{height:1px;background:var(--rule);margin-bottom:2px}
+  .doc-rule.thin{height:1px;background:var(--rule);margin:0 0 22px}
+  .doc-grid{display:grid;grid-template-columns:1fr 1fr;margin-bottom:6px}
   .doc-grid.cols3{grid-template-columns:1fr 1fr 1fr}
-  .doc-cell{padding:7px 10px;border-right:1px solid #e2e8f0;border-bottom:1px solid #e2e8f0}
-  .doc-cell:last-child{border-right:none}
-  .doc-cell b{display:block;font-size:9.5px;text-transform:uppercase;letter-spacing:.4px;color:#64748b;margin-bottom:2px;font-weight:700}
-  .doc-sec-title{background:#1e3a8a;color:#fff;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;padding:6px 10px;border-radius:5px 5px 0 0;margin-top:14px}
-  table.doc-table{width:100%;border-collapse:collapse;border:1px solid #cbd5e1;border-top:none;margin-bottom:4px}
-  table.doc-table th{background:#eff6ff;color:#1e3a8a;font-size:10.5px;text-transform:uppercase;padding:7px 10px;text-align:left;border-bottom:1px solid #cbd5e1}
-  table.doc-table td{padding:7px 10px;border-bottom:1px solid #e2e8f0;font-size:12px}
-  table.doc-table td.r,table.doc-table th.r{text-align:right}
-  table.doc-table tfoot td{font-weight:800;border-top:2px solid #1e3a8a}
-  .doc-fiscal{font-size:10px;color:#64748b;line-height:1.5;border:1px solid #e2e8f0;border-radius:6px;padding:10px;margin-top:14px;white-space:pre-line}
-  .doc-assinatura{margin-top:50px;text-align:center;font-size:11px;color:#475569}
-  .doc-assinatura .linha{border-top:1px solid #0f172a;width:360px;margin:0 auto 6px}
-  .no-print{text-align:center;margin:20px 0}
-  .btn-p{padding:10px 28px;background:#1e40af;color:#fff;border:none;border-radius:7px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit}
-  @media print{.no-print{display:none}body{padding:0}}`;
+  .doc-cell{padding:9px 16px 9px 0;border-bottom:1px solid var(--rule)}
+  .doc-cell b{display:block;font-size:8.5px;text-transform:uppercase;letter-spacing:.1em;color:var(--ink-soft);margin-bottom:3px;font-weight:600}
+  .doc-cell span.val{font-size:12.5px;font-weight:500}
+  .doc-sec-title{font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.14em;color:var(--brand);margin:28px 0 10px;padding-bottom:7px;border-bottom:1.5px solid var(--ink);display:flex;align-items:center;gap:8px}
+  table.doc-table{width:100%;border-collapse:collapse;margin-bottom:4px}
+  table.doc-table th{font-size:9px;text-transform:uppercase;letter-spacing:.09em;color:var(--ink-soft);font-weight:600;padding:0 10px 8px 0;text-align:left;border-bottom:1.5px solid var(--ink)}
+  table.doc-table td{padding:10px 10px 10px 0;border-bottom:1px solid var(--rule);font-size:12.5px;vertical-align:top}
+  table.doc-table tr:last-child td{border-bottom:1px solid var(--ink)}
+  table.doc-table td.r,table.doc-table th.r{text-align:right;font-variant-numeric:tabular-nums}
+  table.doc-table tfoot td{font-weight:700;border-bottom:none;padding-top:13px;font-size:13.5px}
+  table.doc-table tfoot td:first-child{font-family:'Fraunces',serif;font-style:italic;font-weight:500;letter-spacing:.02em}
+  .doc-fiscal{font-size:9.5px;color:var(--ink-soft);line-height:1.65;border-left:2.5px solid var(--brand);padding:3px 0 3px 14px;margin-top:22px;white-space:pre-line}
+  .doc-assinatura{margin-top:64px;display:flex;justify-content:center}
+  .doc-assinatura .box{text-align:center;font-size:10px;color:var(--ink-soft);letter-spacing:.04em}
+  .doc-assinatura .linha{border-top:1px solid var(--ink);width:300px;margin:0 auto 8px}
+  .doc-ft{margin-top:34px;padding-top:14px;border-top:1px solid var(--rule);text-align:center;font-size:9px;color:var(--ink-soft);letter-spacing:.08em;text-transform:uppercase}
+  .no-print{text-align:center;margin:22px auto 0;max-width:760px}
+  .btn-p{padding:11px 30px;background:var(--brand);color:#fff;border:none;border-radius:3px;font-size:12.5px;font-weight:600;letter-spacing:.03em;cursor:pointer;font-family:'IBM Plex Sans',sans-serif}
+  @media print{body{background:#fff;padding:0}.sheet{box-shadow:none;max-width:100%;padding:8mm 10mm}.sheet::before{display:none}.no-print{display:none}}`;
 }
-function _docHeader(emp,tituloDoc,numero,dataEmissao,subInfo){
+function _docLogoHtml(emp){
+  if(emp.logoDataUrl)return`<img class="doc-badge" src="${emp.logoDataUrl}" alt="logo">`;
+  return `<div class="doc-badge">${esc((emp.nome||'AT').trim().slice(0,2).toUpperCase())}</div>`;
+}
+function _docHeader(emp,tituloDoc,numero,dataEmissao,subInfo,useRazao){
+  const nomePrincipal=useRazao?emp.razaoSocial:emp.nome;
   return `<div class="doc-hd">
     <div class="doc-logo">
-      <div class="doc-badge">AT</div>
+      ${_docLogoHtml(emp)}
       <div>
-        <div class="doc-emp-nome">${esc(emp.nome)}</div>
-        <div class="doc-emp-info">${esc(emp.razaoSocial)} — CNPJ: ${esc(emp.cnpj)}<br>${esc(emp.endereco)} - ${esc(emp.cidade)}/${esc(emp.estado)}<br>${esc(emp.telefone)} - ${esc(emp.celular)} — ${esc(emp.email)}</div>
+        <div class="doc-emp-nome">${esc(nomePrincipal)}</div>
+        <div class="doc-emp-info">${useRazao?'':esc(emp.razaoSocial)+' — '}CNPJ ${esc(emp.cnpj)}${emp.ie?' · IE '+esc(emp.ie):''}<br>${esc(emp.endereco)}${emp.cidade?' · '+esc(emp.cidade)+'/'+esc(emp.estado):''}<br>${esc(emp.telefone)} ${emp.celular?'· '+esc(emp.celular):''} · ${esc(emp.email)}</div>
       </div>
     </div>
     <div class="doc-titulo-box">
-      <div class="doc-titulo">${esc(tituloDoc)} Nº ${esc(String(numero))}</div>
-      <div class="doc-sub">${dataEmissao?'Data: '+fmtD(dataEmissao):''}</div>
-      ${subInfo?`<div class="doc-sub">${esc(subInfo)}</div>`:''}
+      <div class="doc-tag">${esc(tituloDoc)}</div>
+      <div class="doc-titulo">Nº ${esc(String(numero))}</div>
+      <div class="doc-sub">${dataEmissao?fmtD(dataEmissao):''}${subInfo?' · '+esc(subInfo):''}</div>
     </div>
-  </div>`;
+  </div>
+  <div class="doc-rule"></div><div class="doc-rule thin"></div>`;
 }
 function _clienteBox(cli){
-  if(!cli)return'<div style="color:#dc2626;font-size:12px;margin-bottom:10px">Cliente não encontrado.</div>';
+  if(!cli)return'<div style="color:#b3261e;font-size:12px;margin-bottom:10px">Cliente não encontrado.</div>';
   const endParts=[cli.endereco,cli.numero,cli.complemento,cli.bairro].filter(Boolean).join(', ');
   const cidadeUf=[cli.cidade,cli.uf].filter(Boolean).join('/');
   return `<div class="doc-sec-title">Dados do Cliente</div>
   <div class="doc-grid">
-    <div class="doc-cell"><b>Nome / Razão Social</b>${esc(cli.nome||'—')}</div>
-    <div class="doc-cell"><b>CNPJ/CPF</b>${esc(cli.cpfCnpj||'—')}</div>
-    <div class="doc-cell" style="grid-column:1/3"><b>Endereço</b>${esc(endParts||'—')}</div>
-    <div class="doc-cell"><b>Cidade</b>${esc(cidadeUf||'—')}</div>
-    <div class="doc-cell"><b>Telefone / E-mail</b>${esc(cli.telefone||'—')}${cli.email?' — '+esc(cli.email):''}</div>
+    <div class="doc-cell"><b>Nome / Razão Social</b><span class="val">${esc(cli.nome||'—')}</span></div>
+    <div class="doc-cell"><b>CNPJ/CPF</b><span class="val">${esc(cli.cpfCnpj||'—')}</span></div>
+    <div class="doc-cell" style="grid-column:1/3"><b>Endereço</b><span class="val">${esc(endParts||'—')}</span></div>
+    <div class="doc-cell"><b>Cidade</b><span class="val">${esc(cidadeUf||'—')}</span></div>
+    <div class="doc-cell"><b>Telefone / E-mail</b><span class="val">${esc(cli.telefone||'—')}${cli.email?' · '+esc(cli.email):''}</span></div>
   </div>`;
 }
 function _itensTable(itens,total){
   return `<table class="doc-table">
     <thead><tr><th>Item</th><th>Qtd.</th><th class="r">Vr. Unit.</th><th class="r">Vr. Total</th></tr></thead>
-    <tbody>${(itens||[]).map(i=>`<tr><td>${esc(i.nome)}</td><td>${i.qtd}</td><td class="r">${fmtR(i.valorUnit)}</td><td class="r">${fmtR(i.qtd*i.valorUnit)}</td></tr>`).join('')||'<tr><td colspan="4" style="text-align:center;color:#94a3b8">Nenhum item</td></tr>'}</tbody>
-    <tfoot><tr><td colspan="3">TOTAL</td><td class="r">${fmtR(total)}</td></tr></tfoot>
+    <tbody>${(itens||[]).map(i=>`<tr><td>${esc(i.nome)}</td><td>${i.qtd}</td><td class="r">${fmtR(i.valorUnit)}</td><td class="r">${fmtR(i.qtd*i.valorUnit)}</td></tr>`).join('')||'<tr><td colspan="4" style="text-align:center;color:#a39d8f">Nenhum item</td></tr>'}</tbody>
+    <tfoot><tr><td colspan="3">Total</td><td class="r">${fmtR(total)}</td></tr></tfoot>
   </table>`;
 }
 function _parcelasTable(parcelas){
   if(!parcelas?.length)return'';
-  return `<div class="doc-sec-title">Dados do Pagamento</div>
+  return `<div class="doc-sec-title">Condições de Pagamento</div>
   <table class="doc-table">
     <thead><tr><th>Vencimento</th><th class="r">Valor</th><th>Forma</th><th>Observação</th></tr></thead>
-    <tbody>${parcelas.map(p=>`<tr><td>${fmtD(p.vencimento)}</td><td class="r">${fmtR(p.valor)}</td><td>${esc(p.forma)}</td><td style="font-size:10.5px;color:#475569">${esc(p.obs||'')}</td></tr>`).join('')}</tbody>
+    <tbody>${parcelas.map(p=>`<tr><td>${fmtD(p.vencimento)}</td><td class="r">${fmtR(p.valor)}</td><td>${esc(p.forma)}</td><td style="font-size:10.5px;color:var(--ink-soft)">${esc(p.obs||'')}</td></tr>`).join('')}</tbody>
   </table>`;
 }
-function _assinaturaBox(){
-  return `<div class="doc-assinatura"><div class="linha"></div>Assinatura do Cliente</div>`;
+function _assinaturaBox(nome){
+  return `<div class="doc-assinatura"><div class="box"><div class="linha"></div>${esc(nome||'Assinatura do Cliente')}</div></div>`;
+}
+function _docFooterNote(emp){
+  return `<div class="doc-ft">${esc(emp.nome)} · Documento gerado em ${new Date().toLocaleDateString('pt-BR')}</div>`;
 }
 function _printFooterBtn(){
-  return `<div class="no-print" style="margin-top:20px"><button class="btn-p" onclick="window.print()">🖨 Imprimir / Salvar PDF</button></div>`;
+  return `<div class="no-print" style="margin-top:22px"><button class="btn-p" onclick="window.print()">🖨 Imprimir / Salvar PDF</button></div>`;
 }
 function imprimirOrcamentoCli(id){
   const o=DB.one('orcamentoscli',id);if(!o){toast('Orçamento não encontrado','error');return;}
   const cli=DB.one('clientes',o.clienteId);
   const emp=getEmpresa();
   const w=_docOpen();
-  w.document.write(`<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><title>Orçamento ${o.numero||''}</title><style>${_docStyleBase()}</style></head><body>
-  ${_docHeader(emp,'ORÇAMENTO',o.numero||'—',o.criado?o.criado.slice(0,10):today(),o.cuidados?'Aos cuidados de: '+o.cuidados:'')}
+  w.document.write(`<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><title>Orçamento ${o.numero||''}</title>${_docFonts()}<style>${_docStyleBase()}</style></head><body><div class="sheet">
+  ${_docHeader(emp,'ORÇAMENTO',o.numero||'—',o.criado?o.criado.slice(0,10):today(),o.cuidados?'A/C: '+o.cuidados:'')}
   <div class="doc-grid cols3">
-    <div class="doc-cell"><b>Validade da Proposta</b>${o.validade||1} dia(s)</div>
-    <div class="doc-cell"><b>Previsão de Entrega</b>${fmtD(o.entrega)}</div>
-    <div class="doc-cell"><b>Job</b>${esc(o.job||'—')}</div>
-    <div class="doc-cell"><b>Início</b>${fmtD(o.inicio)}</div>
-    <div class="doc-cell"><b>Término</b>${fmtD(o.fim)}</div>
-    <div class="doc-cell"><b>Praça</b>${esc(o.praca||'—')}</div>
-    <div class="doc-cell" style="grid-column:1/4"><b>Local de Entrega</b>${esc(o.local||'—')}</div>
+    <div class="doc-cell"><b>Validade da Proposta</b><span class="val">${o.validade||1} dia(s)</span></div>
+    <div class="doc-cell"><b>Previsão de Entrega</b><span class="val">${fmtD(o.entrega)}</span></div>
+    <div class="doc-cell"><b>Job</b><span class="val">${esc(o.job||'—')}</span></div>
+    <div class="doc-cell"><b>Início</b><span class="val">${fmtD(o.inicio)}</span></div>
+    <div class="doc-cell"><b>Término</b><span class="val">${fmtD(o.fim)}</span></div>
+    <div class="doc-cell"><b>Praça</b><span class="val">${esc(o.praca||'—')}</span></div>
+    <div class="doc-cell" style="grid-column:1/4"><b>Local de Entrega</b><span class="val">${esc(o.local||'—')}</span></div>
   </div>
   ${_clienteBox(cli)}
   <div class="doc-sec-title">Serviços</div>
   ${_itensTable(o.itens,o.valorTotal)}
   ${_parcelasTable(o.parcelas)}
-  ${o.transportadora?`<div class="doc-sec-title">Transportadora</div><div style="padding:8px 2px;font-size:12px">${esc(o.transportadora)}</div>`:''}
-  ${_assinaturaBox()}
+  ${o.transportadora?`<div class="doc-sec-title">Transportadora</div><div style="padding:4px 0;font-size:12.5px">${esc(o.transportadora)}</div>`:''}
+  ${o.aprovacao?`<div class="doc-fiscal">Aprovado online por ${esc(o.aprovacao.nome)} em ${new Date(o.aprovacao.data).toLocaleString('pt-BR')}.</div>`:_assinaturaBox()}
+  ${_docFooterNote(emp)}
   ${_printFooterBtn()}
-  </body></html>`);
+  </div></body></html>`);
   w.document.close();
+}
+function linkAprovacaoOrcamento(id){
+  const o=DB.one('orcamentoscli',id);if(!o)return;
+  const url=location.origin+location.pathname+'?orc='+o.id;
+  document.getElementById('link-modal-title').textContent='Link do Orçamento Nº '+(o.numero||'');
+  document.getElementById('link-url').value=url;
+  openModal('modal-link');
+}
+function copiarLinkModal(){
+  const inp=document.getElementById('link-url');
+  inp.select();inp.setSelectionRange(0,99999);
+  try{document.execCommand('copy');}catch(e){}
+  if(navigator.clipboard?.writeText)navigator.clipboard.writeText(inp.value).catch(()=>{});
+  toast('Link copiado para a área de transferência!','success');
 }
 
 // ── CONTRATOS ───────────────────────────────────────────────────────────────────
@@ -3606,25 +3743,26 @@ function imprimirContrato(id){
   const o=c.orcamentoId?DB.one('orcamentoscli',c.orcamentoId):null;
   const emp=getEmpresa();
   const w=_docOpen();
-  w.document.write(`<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><title>Contrato ${c.numero||''}</title><style>${_docStyleBase()}</style></head><body>
+  w.document.write(`<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><title>Contrato ${c.numero||''}</title>${_docFonts()}<style>${_docStyleBase()}</style></head><body><div class="sheet">
   ${_docHeader(emp,'CONTRATO',c.numero||'—',today())}
   <div class="doc-grid cols3">
-    <div class="doc-cell"><b>Data de Início</b>${fmtD(c.inicio)}</div>
-    <div class="doc-cell"><b>Data de Término</b>${fmtD(c.fim)}</div>
-    <div class="doc-cell"><b>Dias de Locação</b>${c.dias||'—'}</div>
-    <div class="doc-cell"><b>Orçamento Nº</b>${o?.numero||'—'}</div>
-    <div class="doc-cell"><b>Entrega do Material</b>${fmtD(c.entrega)}</div>
-    <div class="doc-cell"><b>Job</b>${esc(c.job||'—')}</div>
-    <div class="doc-cell"><b>Praça</b>${esc(c.praca||'—')}</div>
-    <div class="doc-cell" style="grid-column:2/4"><b>Local de Entrega</b>${esc(c.local||'—')}</div>
+    <div class="doc-cell"><b>Data de Início</b><span class="val">${fmtD(c.inicio)}</span></div>
+    <div class="doc-cell"><b>Data de Término</b><span class="val">${fmtD(c.fim)}</span></div>
+    <div class="doc-cell"><b>Dias de Locação</b><span class="val">${c.dias||'—'}</span></div>
+    <div class="doc-cell"><b>Orçamento Nº</b><span class="val">${o?.numero||'—'}</span></div>
+    <div class="doc-cell"><b>Entrega do Material</b><span class="val">${fmtD(c.entrega)}</span></div>
+    <div class="doc-cell"><b>Job</b><span class="val">${esc(c.job||'—')}</span></div>
+    <div class="doc-cell"><b>Praça</b><span class="val">${esc(c.praca||'—')}</span></div>
+    <div class="doc-cell" style="grid-column:2/4"><b>Local de Entrega</b><span class="val">${esc(c.local||'—')}</span></div>
   </div>
   ${_clienteBox(cli)}
   <div class="doc-sec-title">Serviços</div>
   ${_itensTable(c.itens,c.valorTotal)}
   ${_parcelasTable(c.parcelas)}
   ${_assinaturaBox()}
+  ${_docFooterNote(emp)}
   ${_printFooterBtn()}
-  </body></html>`);
+  </div></body></html>`);
   w.document.close();
 }
 
@@ -3733,35 +3871,26 @@ function imprimirFatura(id){
   const o=c?.orcamentoId?DB.one('orcamentoscli',c.orcamentoId):null;
   const emp=getEmpresa();
   const w=_docOpen();
-  w.document.write(`<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><title>Fatura ${f.numero||''}</title><style>${_docStyleBase()}</style></head><body>
-  <div class="doc-hd">
-    <div>
-      <div class="doc-emp-nome">${esc(emp.razaoSocial)}</div>
-      <div class="doc-emp-info">End: ${esc(emp.endereco)} - ${esc(emp.cidade)}/${esc(emp.estado)}<br>Celular: ${esc(emp.celular)} — E-mail: ${esc(emp.email)}<br>CNPJ: ${esc(emp.cnpj)} I.E.: ${esc(emp.ie)}</div>
-    </div>
-    <div class="doc-titulo-box">
-      <div class="doc-titulo">FATURA DE LOCAÇÃO Nº ${esc(String(f.numero))}</div>
-      <div class="doc-sub">Data de Emissão: ${fmtD(f.criado?f.criado.slice(0,10):today())}</div>
-    </div>
-  </div>
+  w.document.write(`<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><title>Fatura ${f.numero||''}</title>${_docFonts()}<style>${_docStyleBase()}</style></head><body><div class="sheet">
+  ${_docHeader(emp,'FATURA DE LOCAÇÃO',f.numero,f.criado?f.criado.slice(0,10):today(),null,true)}
   ${_clienteBox(cli)}
-  <div class="doc-sec-title">Dados dos Produtos/Serviços Cedidos em Locação</div>
+  <div class="doc-sec-title">Produtos / Serviços Cedidos em Locação</div>
   <table class="doc-table">
     <thead><tr><th>Nome</th><th>Qtd.</th><th class="r">Vr. Total</th></tr></thead>
     <tbody><tr><td>${esc(f.descricao)}</td><td>1,00</td><td class="r">${fmtR(f.valor)}</td></tr></tbody>
+    <tfoot><tr><td>Total</td><td></td><td class="r">${fmtR(f.valor)}</td></tr></tfoot>
   </table>
-  <div class="doc-grid" style="margin-top:0;border-top:none">
-    <div class="doc-cell"><b>Data de Vencimento</b>${fmtD(f.vencimento)}</div>
-    <div class="doc-cell"><b>Total</b>${fmtR(f.valor)}</div>
+  <div class="doc-grid">
+    <div class="doc-cell"><b>Data de Vencimento</b><span class="val">${fmtD(f.vencimento)}</span></div>
+    <div class="doc-cell"><b>Forma de Pagamento</b><span class="val">${esc(f.parcela||'')} ${esc(f.forma||'')}</span></div>
+    ${(o||c)?`<div class="doc-cell" style="grid-column:1/3"><b>Referências</b><span class="val">${o?`Orçamento Nº ${o.numero} `:''}${c?`· Contrato Nº ${c.numero}`:''}${c?.local?' · '+esc(c.local):''}</span></div>`:''}
   </div>
-  ${(o||c)?`<div class="doc-sec-title">Observações da Nota</div><div style="padding:8px 2px;font-size:11.5px">${o?`Orçamento Nº ${o.numero} `:''}${c?`Contrato Nº ${c.numero}`:''}${c?.local?' — '+esc(c.local):''}</div>`:''}
-  <div class="doc-sec-title">Forma de Pagamento</div>
-  <div style="padding:8px 2px;font-size:12px;font-style:italic">${esc(f.parcela||'')} ${esc(f.forma||'')}${f.obsPag?': '+esc(f.obsPag):''}</div>
-  <div class="doc-fiscal"><strong>Dados Bancários:</strong> ${esc(emp.banco)}
+  <div class="doc-fiscal"><strong>Dados bancários:</strong> ${esc(emp.banco)}${f.obsPag?'<br><strong>Pagamento:</strong> '+esc(f.obsPag):''}
 
 ${esc(emp.textoFiscal)}</div>
+  ${_docFooterNote(emp)}
   ${_printFooterBtn()}
-  </body></html>`);
+  </div></body></html>`);
   w.document.close();
 }
 
@@ -4078,8 +4207,89 @@ async function initApp(){
   renderDashboard();
 }
 
+// ── PÁGINA PÚBLICA DE APROVAÇÃO (link enviado ao cliente: ?orc=ID) ─────────────
+function _injectDocStylesOnce(){
+  if(document.getElementById('_doc-print-styles'))return;
+  const link=document.createElement('link');link.rel='stylesheet';
+  link.href='https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;1,9..144,500&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap';
+  document.head.appendChild(link);
+  const style=document.createElement('style');style.id='_doc-print-styles';
+  style.textContent=_docStyleBase();
+  document.head.appendChild(style);
+}
+function _pubMsg(html){
+  document.getElementById('public-view').innerHTML=`<div style="min-height:100vh;display:flex;align-items:center;justify-content:center;font-family:'IBM Plex Sans',sans-serif;color:#6b6459;padding:20px;text-align:center">${html}</div>`;
+}
+async function renderPublicOrcamentoPage(id){
+  const el=document.getElementById('public-view');
+  el.classList.remove('hidden');
+  _injectDocStylesOnce();
+  _pubMsg('Carregando orçamento…');
+  try{ await DB.init(); }catch(e){
+    _pubMsg('<span style="color:#b3261e">Não foi possível carregar. Verifique sua conexão e recarregue a página.</span>');
+    return;
+  }
+  const o=DB.one('orcamentoscli',id);
+  if(!o){ _pubMsg('<span style="color:#b3261e">Orçamento não encontrado ou link inválido.</span>'); return; }
+  const cli=DB.one('clientes',o.clienteId);
+  const emp=getEmpresa();
+  let acaoHtml;
+  if(o.status==='aprovado'){
+    acaoHtml=`<div class="doc-fiscal" style="margin-top:28px;border-color:#1a7a4c"><strong style="color:#1a7a4c">✓ Orçamento aprovado${o.aprovacao?' por '+esc(o.aprovacao.nome)+' em '+new Date(o.aprovacao.data).toLocaleString('pt-BR'):''}.</strong></div>`;
+  }else if(o.status==='recusado'){
+    acaoHtml=`<div class="doc-fiscal" style="margin-top:28px;border-color:#b3261e"><strong style="color:#b3261e">✕ Orçamento recusado.</strong></div>`;
+  }else{
+    acaoHtml=`<div style="margin-top:34px;padding-top:24px;border-top:1px solid var(--rule)">
+      <div style="font-size:9px;text-transform:uppercase;letter-spacing:.12em;color:var(--ink-soft);margin-bottom:10px;font-weight:600">Aprovação do Cliente</div>
+      <input class="form-control" id="pub-nome-aprov" placeholder="Seu nome completo" style="margin-bottom:12px;max-width:340px;font-family:'IBM Plex Sans',sans-serif">
+      <div style="display:flex;gap:10px;flex-wrap:wrap">
+        <button class="btn-p" onclick="aprovarPublico('${o.id}')">✓ Aprovar e Assinar</button>
+        <button class="btn-p" style="background:#fff;color:#b3261e;border:1px solid #b3261e" onclick="recusarPublico('${o.id}')">✕ Recusar</button>
+      </div>
+    </div>`;
+  }
+  el.innerHTML=`<div class="sheet" style="margin:30px auto">
+    ${_docHeader(emp,'ORÇAMENTO',o.numero||'—',o.criado?o.criado.slice(0,10):today(),o.cuidados?'A/C: '+o.cuidados:'')}
+    <div class="doc-grid cols3">
+      <div class="doc-cell"><b>Validade da Proposta</b><span class="val">${o.validade||1} dia(s)</span></div>
+      <div class="doc-cell"><b>Previsão de Entrega</b><span class="val">${fmtD(o.entrega)}</span></div>
+      <div class="doc-cell"><b>Job</b><span class="val">${esc(o.job||'—')}</span></div>
+      <div class="doc-cell"><b>Início</b><span class="val">${fmtD(o.inicio)}</span></div>
+      <div class="doc-cell"><b>Término</b><span class="val">${fmtD(o.fim)}</span></div>
+      <div class="doc-cell"><b>Praça</b><span class="val">${esc(o.praca||'—')}</span></div>
+      <div class="doc-cell" style="grid-column:1/4"><b>Local de Entrega</b><span class="val">${esc(o.local||'—')}</span></div>
+    </div>
+    ${_clienteBox(cli)}
+    <div class="doc-sec-title">Serviços</div>
+    ${_itensTable(o.itens,o.valorTotal)}
+    ${_parcelasTable(o.parcelas)}
+    ${acaoHtml}
+    ${_docFooterNote(emp)}
+  </div>`;
+}
+function aprovarPublico(id){
+  const nome=document.getElementById('pub-nome-aprov')?.value.trim();
+  if(!nome){alert('Informe seu nome para assinar.');return;}
+  const o=DB.one('orcamentoscli',id);if(!o)return;
+  o.status='aprovado';
+  o.aprovacao={nome,data:new Date().toISOString()};
+  DB.save('orcamentoscli',o);
+  renderPublicOrcamentoPage(id);
+}
+function recusarPublico(id){
+  if(!confirm('Tem certeza que deseja recusar este orçamento?'))return;
+  const o=DB.one('orcamentoscli',id);if(!o)return;
+  o.status='recusado';
+  DB.save('orcamentoscli',o);
+  renderPublicOrcamentoPage(id);
+}
+
 // ── INIT ──────────────────────────────────────────────────────────────────────
-if(sessionStorage.getItem('gc_ok')){
+const _publicOrcId=new URLSearchParams(location.search).get('orc');
+if(_publicOrcId){
+  document.getElementById('login-ov').style.display='none';
+  renderPublicOrcamentoPage(_publicOrcId);
+}else if(sessionStorage.getItem('gc_ok')){
   document.getElementById('login-ov').style.display='none';
   document.getElementById('app').classList.remove('hidden');
   initApp();
