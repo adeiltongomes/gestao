@@ -1246,9 +1246,14 @@ thead th.r{text-align:right}
             <input class="form-control" id="trans-vencimento" type="date" oninput="toggleTransParc()">
           </div>
           <div class="form-group">
-            <label class="form-label">Preview das parcelas</label>
-            <div id="trans-parc-preview" style="font-size:12px;color:var(--text-mid);padding:8px 12px;background:var(--bg3);border-radius:6px;line-height:1.9;min-height:38px;border:1px solid var(--border)">—</div>
+            <label class="form-label">&nbsp;</label>
+            <button type="button" class="btn btn-ghost btn-sm" style="width:100%" onclick="gerarParcelasAuto('trans-parc-list',Number(document.getElementById('trans-nparc').value)||1,document.getElementById('trans-vencimento').value,Number(document.getElementById('trans-valor').value)||0)">↻ Gerar Parcelas</button>
           </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Datas e valores das parcelas <span style="font-weight:400;color:var(--text-dim);text-transform:none">(edite livremente cada data/valor)</span></label>
+          <div id="trans-parc-list" style="display:flex;flex-direction:column;gap:6px;max-height:180px;overflow-y:auto;padding:8px;background:var(--surface-2);border-radius:8px;border:1.5px solid var(--border)"></div>
+          <button type="button" class="btn btn-ghost btn-sm" style="margin-top:6px" onclick="addParcRow('trans-parc-list')">+ Adicionar Parcela</button>
         </div>
       </div>
       <div class="form-group">
@@ -1750,6 +1755,17 @@ function toast(msg,type='info'){
 function openModal(id){document.getElementById(id).classList.remove('hidden')}
 function closeModal(id){document.getElementById(id).classList.add('hidden')}
 
+// Firestore não aceita campos com valor `undefined` (localStorage/Supabase aceitavam) — limpa recursivamente antes de gravar
+function _semUndefined(v){
+  if(v===undefined)return null;
+  if(Array.isArray(v))return v.map(_semUndefined);
+  if(v&&typeof v==='object'&&!(v instanceof Date)){
+    const out={};
+    Object.keys(v).forEach(k=>{out[k]=_semUndefined(v[k]);});
+    return out;
+  }
+  return v;
+}
 // ── DATA LAYER (Firebase — projeto próprio e dedicado do gestao: accerttech-gestao) ─
 const FIREBASE_CONFIG={
   projectId:"accerttech-gestao",
@@ -1770,7 +1786,7 @@ const DB={
     return true;
   },
   _push(k,v){
-    _fsdb.collection('gestao').doc(k).set({value:v}).catch(e=>{console.error('[DB sync]',k,e);toast('Falha ao salvar na nuvem: '+e.message,'error');});
+    _fsdb.collection('gestao').doc(k).set({value:_semUndefined(v)}).catch(e=>{console.error('[DB sync]',k,e);toast('Falha ao salvar na nuvem: '+e.message,'error');});
   },
   get:k=>{try{return DB._c[k]||[]}catch{return[]}},
   set(k,v){DB._c[k]=v;DB._push(k,v);},
@@ -2369,6 +2385,7 @@ function renderFinanceiro(){
         </td>
         <td style="white-space:nowrap"><div class="td-actions">
           ${!pago(t)?`<button class="action-btn pay" onclick="marcarPago('${t.id}')" title="${isE?'Marcar Recebido':'Marcar Pago'}">${_svgCheck}</button>`:''}
+          ${t.contratoId?`<button class="action-btn" onclick="imprimirFaturaDeTransacao('${t.id}')" title="Imprimir Fatura">🖨</button>`:''}
           ${t.comprovante?`<button class="action-btn" onclick="verComprovante('${t.id}')" title="Ver comprovante">${_svgFile}</button>`:''}
           <button class="action-btn edit" onclick="openModalTransacao('${t.tipo}','${t.id}')" title="Editar">${_svgEdit}</button>
           <button class="action-btn del" onclick="delTransacao('${t.id}')" title="Excluir">${_svgDel}</button>
@@ -2388,22 +2405,12 @@ function toggleTransParc(){
   // mostrar grupo de vencimento quando parcelado ou cartão de crédito
   const vencGroup=document.getElementById('trans-vencimento-group');
   if(vencGroup)vencGroup.style.display=(parc||isCartao)?'block':'none';
-  // preview das parcelas
+  // gera uma sugestão inicial de parcelas (editável) só na primeira vez que o valor/vencimento ficam disponíveis
   if(parc){
     const val=Number(document.getElementById('trans-valor')?.value)||0;
     const venc=document.getElementById('trans-vencimento')?.value;
-    const preview=document.getElementById('trans-parc-preview');
-    if(preview){
-      if(val&&venc){
-        const rows=Array.from({length:Math.min(n,6)},(_,i)=>{
-          const d=new Date(venc+'T12:00:00');d.setMonth(d.getMonth()+i);
-          return `${i+1}ª: ${fmtD(d.toISOString().slice(0,10))} — <strong>${fmtR(val/n)}</strong>`;
-        });
-        if(n>6)rows.push(`...e mais ${n-6} parcelas`);
-        preview.innerHTML=rows.join('<br>');
-      }else{
-        preview.textContent=!venc?'Informe o vencimento da 1ª parcela':!val?'Informe o valor':'';
-      }
+    if(val&&venc&&parcLines.length===0){
+      gerarParcelasAuto('trans-parc-list',n,venc,val);
     }
   }
   if(isCartao){
@@ -2469,10 +2476,15 @@ function openModalTransacao(tipo,id){
   if(formaEl){formaEl.value=t.formaPagamento||'';}
   const lbl=document.getElementById('trans-nparc-label');if(lbl)lbl.textContent='Em quantas vezes?';
   const nparc=document.getElementById('trans-nparc');if(nparc)nparc.style.outline='';
-  // vencimento
-  const vencEl=document.getElementById('trans-vencimento');if(vencEl)vencEl.value=t.vencimento||'';
+  // vencimento / parcelas (só faz sentido ao CRIAR um lançamento novo — editar um já existente edita só a Data dele mesmo, acima)
+  const vencEl=document.getElementById('trans-vencimento');if(vencEl)vencEl.value='';
   const vencGroup=document.getElementById('trans-vencimento-group');if(vencGroup)vencGroup.style.display='none';
-  const prevEl=document.getElementById('trans-parc-preview');if(prevEl)prevEl.textContent='—';
+  document.getElementById('trans-nparc-group').style.display=id?'none':'block';
+  parcLines=[];
+  const parcListEl=document.getElementById('trans-parc-list');if(parcListEl)parcListEl.innerHTML='';
+  if(id&&t.grupoId){
+    toast('Esta entrada faz parte de um parcelamento — ajuste a Data acima só desta parcela.','info');
+  }
   // conta bancária
   const contaSelEl=document.getElementById('trans-conta');
   if(contaSelEl){
@@ -2506,31 +2518,29 @@ function saveTransacao(){
   const obs=document.getElementById('trans-obs').value;
   const forma=document.getElementById('trans-forma')?.value||'';
   const dataBase=document.getElementById('trans-data').value||today();
-  const vencBase=document.getElementById('trans-vencimento')?.value||dataBase;
   const grupoId=uid();
 
   if(n>1){
-    if(!document.getElementById('trans-vencimento')?.value){
-      toast('Informe o vencimento da 1ª parcela','error');return;
+    const parcelas=collectParcelas();
+    if(!parcelas.length){
+      toast('Defina as datas das parcelas (clique em "Gerar Parcelas" ou adicione manualmente)','error');return;
     }
-    const vlParcela=Number(valor)/n;
-    Array.from({length:n},(_,i)=>{
-      const d=new Date(vencBase+'T12:00:00');d.setMonth(d.getMonth()+i);
+    parcelas.forEach((p,i)=>{
       DB.save('transacoes',{
         id:uid(),tipo,categoria:cat,
-        descricao:`${desc} (${i+1}/${n})`,
-        valor:vlParcela,
-        data:d.toISOString().slice(0,10),
+        descricao:`${desc} (${i+1}/${parcelas.length})`,
+        valor:p.valor,
+        data:p.vencimento,
         dataCompra:dataBase,
         status:'pendente',
         pessoa:pessoa||undefined,
-        observacoes:obs,
-        formaPagamento:forma||undefined,
+        observacoes:p.obs||obs,
+        formaPagamento:p.forma||forma||undefined,
         grupoId,
       });
     });
     closeModal('modal-transacao');renderFinanceiro();
-    toast(`${n} parcelas criadas! (${fmtR(vlParcela)}/mês) Vencimentos a partir de ${fmtD(vencBase)}.`,'success');
+    toast(`${parcelas.length} parcela(s) criada(s) com as datas definidas!`,'success');
     return;
   }
 
@@ -3907,6 +3917,24 @@ function gerarFaturasDoContrato(id){
   });
   renderFaturas();
   toast(criadas?`${criadas} fatura(s) gerada(s)!`:'Todas as parcelas já possuem fatura.','success');
+}
+function imprimirFaturaDeTransacao(transId){
+  const t=DB.one('transacoes',transId);
+  if(!t||!t.contratoId){toast('Esta entrada não está vinculada a um contrato.','error');return;}
+  const c=DB.one('contratos',t.contratoId);if(!c){toast('Contrato não encontrado.','error');return;}
+  let f=DB.get('faturas').find(x=>x.contratoId===t.contratoId&&x.vencimento===t.data&&Number(x.valor)===Number(t.valor));
+  if(!f){
+    const numero=nextNumero('proxFatura');
+    f={id:uid(),numero,contratoId:c.id,clienteId:c.clienteId,
+      descricao:(c.itens||[]).map(it=>it.nome).join(', ')||t.descricao,
+      valor:t.valor,vencimento:t.data,
+      parcela:t.descricao.match(/\((\d+)\/(\d+)\)/)?`Parcela ${t.descricao.match(/\((\d+)\/(\d+)\)/)[1].padStart(2,'0')}`:'',
+      forma:t.formaPagamento||'PIX',obsPag:'',
+      criado:new Date().toISOString()};
+    DB.save('faturas',f);
+    renderFaturas();
+  }
+  imprimirFatura(f.id);
 }
 function imprimirFatura(id){
   const f=DB.one('faturas',id);if(!f){toast('Fatura não encontrada','error');return;}
