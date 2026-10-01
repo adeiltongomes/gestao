@@ -1748,22 +1748,10 @@ function toast(msg,type='info'){
 function openModal(id){document.getElementById(id).classList.remove('hidden')}
 function closeModal(id){document.getElementById(id).classList.add('hidden')}
 
-// ── DATA LAYER (Supabase) ─────────────────────────────────────────────────────
-const SB_URL='https://tkeebtxlabqsjwjdedcy.supabase.co';
-const SB_KEY='sb_publishable_i93qx_WJMsc2Rafh6JqJ1w_Ng2AuXLj';
-const SB_H={'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'};
+// ── DATA LAYER (local — próprio do gestao, sem depender de nenhum outro projeto) ─
 const DB={
-  _c:{},
-  async init(){
-    const r=await fetch(SB_URL+'/rest/v1/app_settings?key=like.gest_%25&select=key,value',{headers:SB_H});
-    if(!r.ok){const j=await r.json().catch(()=>({}));throw new Error(j.message||'HTTP '+r.status);}
-    const rows=await r.json();
-    DB._c={};rows.forEach(row=>{if(row.key.startsWith('gest_'))DB._c[row.key.slice(5)]=row.value;});
-    return true;
-  },
-  _push(k,v){fetch(SB_URL+'/rest/v1/app_settings',{method:'POST',headers:{...SB_H,'Prefer':'resolution=merge-duplicates,return=minimal'},body:JSON.stringify({key:'gest_'+k,value:v})}).catch(e=>console.error('[DB sync]',e));},
-  get:k=>{try{return DB._c[k]||[]}catch{return[]}},
-  set(k,v){DB._c[k]=v;DB._push(k,v);},
+  get:k=>{try{return JSON.parse(localStorage.getItem('gest_'+k)||'[]')}catch{return[]}},
+  set:(k,v)=>localStorage.setItem('gest_'+k,JSON.stringify(v)),
   one:(k,id)=>DB.get(k).find(x=>x.id===id),
   save(k,item){const l=DB.get(k);const i=l.findIndex(x=>x.id===item.id);if(i>=0)l[i]=item;else l.unshift(item);DB.set(k,l)},
   del:(k,id)=>DB.set(k,DB.get(k).filter(x=>x.id!==id)),
@@ -4184,27 +4172,32 @@ function doLogin(){
   sessionStorage.setItem('gc_user',JSON.stringify(found));
   document.getElementById('login-ov').style.display='none';
   document.getElementById('app').classList.remove('hidden');
-  initApp();
+  migrarDadosAntigosUmaVez().then(initApp);
 }
 function logout(){
   sessionStorage.removeItem('gc_ok');
   sessionStorage.removeItem('gc_user');
   location.reload();
 }
-async function initApp(){
-  const lov=document.getElementById('loading-ov');
-  if(lov)lov.style.display='flex';
-  let ok=false;
-  try{ok=await DB.init();}catch(e){
-    if(lov)lov.innerHTML='<div style="color:#f87171;text-align:center;padding:40px"><div style="font-size:32px;margin-bottom:12px">⚠</div><div style="font-size:14px;font-weight:600;margin-bottom:8px">Erro ao conectar</div><div style="font-size:12px;color:#94a3b8">Verifique sua conexão e recarregue a página</div><br><button onclick="location.reload()" style="padding:9px 20px;background:#3b82f6;color:#fff;border:none;border-radius:8px;font-size:13px;cursor:pointer;font-family:inherit">Recarregar</button></div>';
-    return;
-  }
-  if(!ok)return;
-  if(lov)lov.style.display='none';
+function initApp(){
   document.getElementById('topbar-date').textContent=new Date().toLocaleDateString('pt-BR',{weekday:'short',day:'numeric',month:'short',year:'numeric'});
   document.getElementById('fin-mes').value=thisMonth();
   document.getElementById('orc-mes').value=thisMonth();
   renderDashboard();
+}
+// Migração única: traz de volta os dados que existiam no banco compartilhado antigo (execução única, depois se desliga sozinha)
+async function migrarDadosAntigosUmaVez(){
+  if(localStorage.getItem('gest_migracao_local_v1'))return;
+  localStorage.setItem('gest_migracao_local_v1','1');
+  if(DB.get('clientes').length||DB.get('estoque').length)return;
+  try{
+    const SB_URL='https://tkeebtxlabqsjwjdedcy.supabase.co';
+    const SB_KEY='sb_publishable_i93qx_WJMsc2Rafh6JqJ1w_Ng2AuXLj';
+    const r=await fetch(SB_URL+'/rest/v1/app_settings?key=like.gest_%25&select=key,value',{headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY}});
+    if(!r.ok)return;
+    const rows=await r.json();
+    rows.forEach(row=>{if(row.key.startsWith('gest_')){const k=row.key.slice(5);if(!DB.get(k).length)DB.set(k,row.value);}});
+  }catch(e){/* sem conexão com o banco antigo — segue sem migrar, não é crítico */}
 }
 
 // ── PÁGINA PÚBLICA DE APROVAÇÃO (link enviado ao cliente: ?orc=ID) ─────────────
@@ -4220,15 +4213,10 @@ function _injectDocStylesOnce(){
 function _pubMsg(html){
   document.getElementById('public-view').innerHTML=`<div style="min-height:100vh;display:flex;align-items:center;justify-content:center;font-family:'IBM Plex Sans',sans-serif;color:#6b6459;padding:20px;text-align:center">${html}</div>`;
 }
-async function renderPublicOrcamentoPage(id){
+function renderPublicOrcamentoPage(id){
   const el=document.getElementById('public-view');
   el.classList.remove('hidden');
   _injectDocStylesOnce();
-  _pubMsg('Carregando orçamento…');
-  try{ await DB.init(); }catch(e){
-    _pubMsg('<span style="color:#b3261e">Não foi possível carregar. Verifique sua conexão e recarregue a página.</span>');
-    return;
-  }
   const o=DB.one('orcamentoscli',id);
   if(!o){ _pubMsg('<span style="color:#b3261e">Orçamento não encontrado ou link inválido.</span>'); return; }
   const cli=DB.one('clientes',o.clienteId);
@@ -4292,7 +4280,7 @@ if(_publicOrcId){
 }else if(sessionStorage.getItem('gc_ok')){
   document.getElementById('login-ov').style.display='none';
   document.getElementById('app').classList.remove('hidden');
-  initApp();
+  migrarDadosAntigosUmaVez().then(initApp);
 }
 </script>
 </body>
