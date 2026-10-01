@@ -328,7 +328,7 @@ tbody tr:last-child td{border-bottom:none}
 tbody tr:hover{background:#f8f9ff}
 tbody tr.fin-e:hover{background:#f0fdf4}
 tbody tr.fin-s:hover{background:#fff5f5}
-.td-actions{display:flex;gap:5px;justify-content:flex-end;align-items:center}
+.td-actions{display:flex;gap:5px;justify-content:flex-end;align-items:center;flex-wrap:wrap}
 .r{text-align:right}
 thead th.r{text-align:right}
 
@@ -567,6 +567,12 @@ thead th.r{text-align:right}
       <div class="nav-item" data-view="orcamentoscli">
         <span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg></span>Orçamentos
       </div>
+      <div class="nav-item" data-view="contratos">
+        <span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="9" y1="15" x2="15" y2="15"/><line x1="9" y1="11" x2="12" y2="11"/></svg></span>Contratos
+      </div>
+      <div class="nav-item" data-view="faturas">
+        <span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M4 2h13l3 3v17l-3-2-3 2-3-2-3 2-3-2-3 2V2z"/><line x1="8" y1="7" x2="16" y2="7"/><line x1="8" y1="11" x2="16" y2="11"/><line x1="8" y1="15" x2="12" y2="15"/></svg></span>Faturas
+      </div>
       <div class="nav-item" data-view="locacoes">
         <span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg></span>Locações
       </div>
@@ -598,6 +604,7 @@ thead th.r{text-align:right}
     <div id="page-title">Dashboard</div>
     <div id="topbar-right">
       <span id="topbar-date"></span>
+      <button onclick="openModalEmpresa()" title="Dados da Empresa" style="background:none;border:1px solid var(--border);border-radius:8px;padding:6px 12px;font-size:12px;font-weight:600;color:var(--text-mid);cursor:pointer;display:flex;align-items:center;gap:5px;transition:all .15s" onmouseover="this.style.borderColor='var(--blue)';this.style.color='var(--blue)'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--text-mid)'">⚙ Empresa</button>
       <button onclick="logout()" title="Sair" style="background:none;border:1px solid var(--border);border-radius:8px;padding:6px 12px;font-size:12px;font-weight:600;color:var(--text-mid);cursor:pointer;display:flex;align-items:center;gap:5px;transition:all .15s" onmouseover="this.style.background='var(--red-bg)';this.style.color='var(--red)';this.style.borderColor='var(--red)'" onmouseout="this.style.background='none';this.style.color='var(--text-mid)';this.style.borderColor='var(--border)'">⎋ Sair</button>
     </div>
   </div>
@@ -707,6 +714,42 @@ thead th.r{text-align:right}
       </div>
     </div>
 
+    <!-- CONTRATOS -->
+    <div id="view-contratos" class="view-section hidden">
+      <div class="sec-hdr">
+        <div class="sec-title">Contratos</div>
+        <input class="form-control s-search" id="search-contratos" placeholder="Buscar cliente…" oninput="renderContratos()">
+        <select class="form-control" id="filter-ctr-status" onchange="renderContratos()" style="width:140px">
+          <option value="">Todos</option>
+          <option value="ativo">Ativo</option>
+          <option value="encerrado">Encerrado</option>
+          <option value="cancelado">Cancelado</option>
+        </select>
+        <button class="btn btn-primary" onclick="openModalContrato()">+ Novo Contrato</button>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Nº</th><th>Cliente</th><th>Job</th><th>Período</th><th>Valor</th><th>Status</th><th></th></tr></thead>
+          <tbody id="tb-contratos"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- FATURAS -->
+    <div id="view-faturas" class="view-section hidden">
+      <div class="sec-hdr">
+        <div class="sec-title">Faturas</div>
+        <input class="form-control s-search" id="search-faturas" placeholder="Buscar cliente…" oninput="renderFaturas()">
+        <button class="btn btn-primary" onclick="openModalFatura()">+ Nova Fatura</button>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Nº</th><th>Cliente</th><th>Descrição</th><th>Vencimento</th><th>Valor</th><th></th></tr></thead>
+          <tbody id="tb-faturas"></tbody>
+        </table>
+      </div>
+    </div>
+
     <!-- FINANCEIRO -->
     <div id="view-financeiro" class="view-section hidden">
       <div class="sec-hdr">
@@ -797,7 +840,7 @@ thead th.r{text-align:right}
       </div>
       <div class="table-wrap">
         <table>
-          <thead><tr><th>Cliente</th><th>Descrição</th><th>Período</th><th>Valor Total</th><th>Pagamento</th><th>Status</th><th></th></tr></thead>
+          <thead><tr><th>Nº</th><th>Cliente</th><th>Descrição</th><th>Período</th><th>Valor Total</th><th>Pagamento</th><th>Status</th><th></th></tr></thead>
           <tbody id="tb-orcamentos"></tbody>
         </table>
       </div>
@@ -1201,32 +1244,62 @@ thead th.r{text-align:right}
     <div class="modal-hdr"><div class="modal-title" id="morccli-title">Novo Orçamento</div><button class="modal-close" onclick="closeModal('modal-orcamentocli')">×</button></div>
     <div class="modal-body">
       <input type="hidden" id="orccli-id">
+      <input type="hidden" id="orccli-numero">
       <div class="form-row">
         <div class="form-group"><label class="form-label">Cliente *</label><select class="form-control" id="orccli-cliente"></select></div>
-        <div class="form-group"><label class="form-label">Descrição / Título</label><input class="form-control" id="orccli-desc" placeholder="Ex: Locação de equipamentos — Evento X"></div>
+        <div class="form-group"><label class="form-label">Nº Orçamento</label><input class="form-control" id="orccli-numero-view" disabled></div>
       </div>
       <div class="form-row">
+        <div class="form-group"><label class="form-label">Descrição / Título</label><input class="form-control" id="orccli-desc" placeholder="Ex: Locação de equipamentos — Evento X"></div>
+        <div class="form-group"><label class="form-label">Job</label><input class="form-control" id="orccli-job" placeholder="Nome do job/evento"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Aos cuidados de</label><input class="form-control" id="orccli-cuidados" placeholder="Contato do cliente"></div>
+        <div class="form-group"><label class="form-label">Praça</label><input class="form-control" id="orccli-praca" placeholder="Ex: São Paulo / nome do local"></div>
+      </div>
+      <div class="form-group"><label class="form-label">Local de Entrega / Endereço do Evento</label><input class="form-control" id="orccli-local" placeholder="Endereço completo do evento"></div>
+      <div class="form-row-3">
         <div class="form-group"><label class="form-label">Data Início *</label><input class="form-control" id="orccli-inicio" type="date"></div>
         <div class="form-group"><label class="form-label">Data Fim *</label><input class="form-control" id="orccli-fim" type="date"></div>
+        <div class="form-group"><label class="form-label">Previsão de Entrega</label><input class="form-control" id="orccli-entrega" type="date"></div>
+      </div>
+      <div class="form-row-3">
+        <div class="form-group"><label class="form-label">Montagem</label><input class="form-control" id="orccli-montagem" placeholder="Ex: 23/09 / 24/09"></div>
+        <div class="form-group"><label class="form-label">Desmontagem</label><input class="form-control" id="orccli-desmontagem" placeholder="Ex: 29/09 / 30/09"></div>
+        <div class="form-group"><label class="form-label">Validade da Proposta (dias)</label><input class="form-control" id="orccli-validade" type="number" min="1" value="1"></div>
       </div>
       <div class="form-group">
-        <label class="form-label">Itens (Equipamentos e Produtos do Estoque)</label>
-        <div id="orccli-equip-list" style="display:flex;flex-direction:column;gap:6px;max-height:180px;overflow-y:auto;padding:8px;background:var(--surface-2);border-radius:8px;border:1.5px solid var(--border)"></div>
-        <button class="btn btn-ghost btn-sm" style="margin-top:6px" onclick="addOrcEquip()">+ Adicionar Item</button>
+        <label class="form-label">Itens / Serviços</label>
+        <div style="display:flex;gap:6px;margin-bottom:6px">
+          <select class="form-control" id="orccli-quickpick" style="flex:1" onchange="orcQuickAdd()">
+            <option value="">+ Adicionar a partir de Equipamento/Estoque…</option>
+          </select>
+        </div>
+        <div id="orccli-itens-list" style="display:flex;flex-direction:column;gap:6px;max-height:200px;overflow-y:auto;padding:8px;background:var(--surface-2);border-radius:8px;border:1.5px solid var(--border)"></div>
+        <button type="button" class="btn btn-ghost btn-sm" style="margin-top:6px" onclick="addItemRow('orccli-itens-list')">+ Adicionar Item em Branco</button>
+        <div style="text-align:right;margin-top:8px;font-weight:800;font-size:15px">Total: <span id="orccli-total-view">R$ 0,00</span></div>
       </div>
       <div class="form-row">
-        <div class="form-group"><label class="form-label">Valor Total (R$) *</label><input class="form-control" id="orccli-valor" type="number" step="0.01" placeholder="0,00"></div>
         <div class="form-group"><label class="form-label">Forma de Pagamento</label>
           <select class="form-control" id="orccli-pagamento" onchange="toggleOrcParc()">
             <option value="avista">À Vista</option>
             <option value="parcelado">Parcelado</option>
           </select>
         </div>
+        <div class="form-group">
+          <label class="form-label">Parcelas</label>
+          <div style="display:flex;gap:6px">
+            <input class="form-control" id="orccli-parcelas" type="number" min="1" max="60" value="1" style="width:80px">
+            <button type="button" class="btn btn-ghost btn-sm" style="flex:1" onclick="gerarParcelasAuto('orccli-parc-list',Number(document.getElementById('orccli-parcelas').value)||1,document.getElementById('orccli-fim').value,calcItens())">↻ Gerar Parcelas</button>
+          </div>
+        </div>
       </div>
-      <div class="form-group hidden" id="orccli-parc-group">
-        <label class="form-label">Número de Parcelas</label>
-        <input class="form-control" id="orccli-parcelas" type="number" min="2" max="60" value="2">
+      <div class="form-group">
+        <label class="form-label">Dados do Pagamento</label>
+        <div id="orccli-parc-list" style="display:flex;flex-direction:column;gap:6px;max-height:180px;overflow-y:auto;padding:8px;background:var(--surface-2);border-radius:8px;border:1.5px solid var(--border)"></div>
+        <button type="button" class="btn btn-ghost btn-sm" style="margin-top:6px" onclick="addParcRow('orccli-parc-list')">+ Adicionar Parcela</button>
       </div>
+      <div class="form-group"><label class="form-label">Transportadora</label><input class="form-control" id="orccli-transportadora" value="Accert tech"></div>
       <div class="form-group"><label class="form-label">Status</label>
         <select class="form-control" id="orccli-status">
           <option value="pendente">Pendente (aguardando aprovação)</option>
@@ -1239,6 +1312,148 @@ thead th.r{text-align:right}
     <div class="modal-footer">
       <button class="btn btn-ghost" onclick="closeModal('modal-orcamentocli')">Cancelar</button>
       <button class="btn btn-primary" onclick="saveOrcamentoCli()">Salvar Orçamento</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Empresa -->
+<div class="modal-overlay hidden" id="modal-empresa">
+  <div class="modal modal-lg">
+    <div class="modal-hdr"><div class="modal-title">Dados da Empresa</div><button class="modal-close" onclick="closeModal('modal-empresa')">×</button></div>
+    <div class="modal-body">
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Nome Fantasia</label><input class="form-control" id="emp-nome"></div>
+        <div class="form-group"><label class="form-label">Razão Social</label><input class="form-control" id="emp-razao"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">CNPJ</label><input class="form-control" id="emp-cnpj"></div>
+        <div class="form-group"><label class="form-label">Inscrição Estadual</label><input class="form-control" id="emp-ie"></div>
+      </div>
+      <div class="form-group"><label class="form-label">Endereço</label><input class="form-control" id="emp-endereco"></div>
+      <div class="form-row-3">
+        <div class="form-group"><label class="form-label">Cidade</label><input class="form-control" id="emp-cidade"></div>
+        <div class="form-group"><label class="form-label">UF</label><input class="form-control" id="emp-estado" maxlength="2"></div>
+        <div class="form-group"><label class="form-label">CEP</label><input class="form-control" id="emp-cep"></div>
+      </div>
+      <div class="form-row-3">
+        <div class="form-group"><label class="form-label">Telefone</label><input class="form-control" id="emp-telefone"></div>
+        <div class="form-group"><label class="form-label">Celular</label><input class="form-control" id="emp-celular"></div>
+        <div class="form-group"><label class="form-label">Vendedor Padrão</label><input class="form-control" id="emp-vendedor"></div>
+      </div>
+      <div class="form-group"><label class="form-label">E-mail</label><input class="form-control" id="emp-email"></div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Dados Bancários</label><input class="form-control" id="emp-banco" placeholder="Banco - Agência - Conta"></div>
+        <div class="form-group"><label class="form-label">Chave Pix</label><input class="form-control" id="emp-pix"></div>
+      </div>
+      <div class="form-group"><label class="form-label">Favorecido (titular da conta)</label><input class="form-control" id="emp-favorecido"></div>
+      <div class="form-group"><label class="form-label">Texto Fiscal (impresso nas faturas)</label><textarea class="form-control" id="emp-fiscal" rows="4"></textarea></div>
+      <div class="form-row-3">
+        <div class="form-group"><label class="form-label">Próximo Nº Orçamento</label><input class="form-control" id="emp-prox-orc" type="number"></div>
+        <div class="form-group"><label class="form-label">Próximo Nº Contrato</label><input class="form-control" id="emp-prox-ctr" type="number"></div>
+        <div class="form-group"><label class="form-label">Próximo Nº Fatura</label><input class="form-control" id="emp-prox-fat" type="number"></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modal-empresa')">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveEmpresaForm()">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Contrato -->
+<div class="modal-overlay hidden" id="modal-contrato">
+  <div class="modal modal-lg">
+    <div class="modal-hdr"><div class="modal-title" id="mctr-title">Novo Contrato</div><button class="modal-close" onclick="closeModal('modal-contrato')">×</button></div>
+    <div class="modal-body">
+      <input type="hidden" id="ctr-id">
+      <input type="hidden" id="ctr-numero">
+      <input type="hidden" id="ctr-orcamentoid">
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Cliente *</label><select class="form-control" id="ctr-cliente"></select></div>
+        <div class="form-group"><label class="form-label">Nº Contrato</label><input class="form-control" id="ctr-numero-view" disabled></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Job</label><input class="form-control" id="ctr-job"></div>
+        <div class="form-group"><label class="form-label">Praça</label><input class="form-control" id="ctr-praca"></div>
+      </div>
+      <div class="form-group"><label class="form-label">Local de Entrega / Endereço do Evento</label><input class="form-control" id="ctr-local"></div>
+      <div class="form-row-3">
+        <div class="form-group"><label class="form-label">Início da Locação *</label><input class="form-control" id="ctr-inicio" type="date" onchange="calcDiasLocacao()"></div>
+        <div class="form-group"><label class="form-label">Término da Locação *</label><input class="form-control" id="ctr-fim" type="date" onchange="calcDiasLocacao()"></div>
+        <div class="form-group"><label class="form-label">Dias de Locação</label><input class="form-control" id="ctr-dias" type="number" min="1"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Entrega do Material</label><input class="form-control" id="ctr-entrega" type="date"></div>
+        <div class="form-group"><label class="form-label">Status</label>
+          <select class="form-control" id="ctr-status">
+            <option value="ativo">Ativo</option><option value="encerrado">Encerrado</option><option value="cancelado">Cancelado</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Itens / Serviços</label>
+        <div style="display:flex;gap:6px;margin-bottom:6px">
+          <select class="form-control" id="ctr-quickpick" style="flex:1" onchange="ctrQuickAdd()">
+            <option value="">+ Adicionar a partir de Equipamento/Estoque…</option>
+          </select>
+        </div>
+        <div id="ctr-itens-list" style="display:flex;flex-direction:column;gap:6px;max-height:200px;overflow-y:auto;padding:8px;background:var(--surface-2);border-radius:8px;border:1.5px solid var(--border)"></div>
+        <button type="button" class="btn btn-ghost btn-sm" style="margin-top:6px" onclick="addItemRow('ctr-itens-list')">+ Adicionar Item em Branco</button>
+        <div style="text-align:right;margin-top:8px;font-weight:800;font-size:15px">Total: <span id="ctr-total-view">R$ 0,00</span></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Parcelas</label>
+          <div style="display:flex;gap:6px">
+            <input class="form-control" id="ctr-parcelas" type="number" min="1" max="60" value="1" style="width:80px">
+            <button type="button" class="btn btn-ghost btn-sm" style="flex:1" onclick="gerarParcelasAuto('ctr-parc-list',Number(document.getElementById('ctr-parcelas').value)||1,document.getElementById('ctr-fim').value,calcItens())">↻ Gerar Parcelas</button>
+          </div>
+        </div>
+        <div class="form-group"><label class="form-label">Lançar no Financeiro</label>
+          <select class="form-control" id="ctr-lancar">
+            <option value="sim">Sim, criar lançamentos a receber</option>
+            <option value="nao">Não</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Dados do Pagamento</label>
+        <div id="ctr-parc-list" style="display:flex;flex-direction:column;gap:6px;max-height:180px;overflow-y:auto;padding:8px;background:var(--surface-2);border-radius:8px;border:1.5px solid var(--border)"></div>
+        <button type="button" class="btn btn-ghost btn-sm" style="margin-top:6px" onclick="addParcRow('ctr-parc-list')">+ Adicionar Parcela</button>
+      </div>
+      <div class="form-group"><label class="form-label">Observações</label><textarea class="form-control" id="ctr-obs" rows="2"></textarea></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modal-contrato')">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveContrato()">Salvar Contrato</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Fatura -->
+<div class="modal-overlay hidden" id="modal-fatura">
+  <div class="modal">
+    <div class="modal-hdr"><div class="modal-title" id="mfat-title">Nova Fatura</div><button class="modal-close" onclick="closeModal('modal-fatura')">×</button></div>
+    <div class="modal-body">
+      <input type="hidden" id="fat-id">
+      <input type="hidden" id="fat-numero">
+      <div class="form-group"><label class="form-label">Contrato (opcional)</label>
+        <select class="form-control" id="fat-contrato" onchange="preencherFaturaDeContrato()"><option value="">— Selecionar para preencher automaticamente —</option></select>
+      </div>
+      <div class="form-group"><label class="form-label">Cliente *</label><select class="form-control" id="fat-cliente"></select></div>
+      <div class="form-group"><label class="form-label">Descrição do Item *</label><input class="form-control" id="fat-desc" placeholder="Ex: Locação de equipamentos..."></div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Valor (R$) *</label><input class="form-control" id="fat-valor" type="number" step="0.01"></div>
+        <div class="form-group"><label class="form-label">Vencimento *</label><input class="form-control" id="fat-vencimento" type="date"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Parcela (rótulo)</label><input class="form-control" id="fat-parcela" placeholder="Ex: Parcela 01"></div>
+        <div class="form-group"><label class="form-label">Forma de Pagamento</label><input class="form-control" id="fat-forma" value="PIX"></div>
+      </div>
+      <div class="form-group"><label class="form-label">Observação do Pagamento</label><input class="form-control" id="fat-obspag" placeholder="Ex: Chave Pix ..."></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modal-fatura')">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveFatura()">Salvar Fatura</button>
     </div>
   </div>
 </div>
@@ -1512,7 +1727,7 @@ const DB={
 // ── NAVIGATION ────────────────────────────────────────────────────────────────
 const VIEW_TITLES={dashboard:'Dashboard',clientes:'Clientes / Fornecedores',funcionarios:'Funcionários',
   equipamentos:'Equipamentos',estoque:'Estoque',orcamentoscli:'Orçamentos',
-  locacoes:'Locações',financeiro:'Financeiro',parcelamentos:'Parcelamentos',
+  locacoes:'Locações',contratos:'Contratos',faturas:'Faturas',financeiro:'Financeiro',parcelamentos:'Parcelamentos',
   orcamento:'Metas',relatorios:'Relatórios'};
 
 function goView(v){
@@ -1523,7 +1738,7 @@ function goView(v){
   closeSidebar();
   ({dashboard:renderDashboard,clientes:renderClientes,funcionarios:renderFuncionarios,
     equipamentos:renderEquipamentos,estoque:renderEstoque,orcamentoscli:renderOrcamentosCli,
-    locacoes:renderLocacoes,financeiro:renderFinanceiro,parcelamentos:renderParcelamentos,
+    locacoes:renderLocacoes,contratos:renderContratos,faturas:renderFaturas,financeiro:renderFinanceiro,parcelamentos:renderParcelamentos,
     orcamento:renderOrcamento,relatorios:()=>{setRelPeriodo('mes');}}[v]||function(){})();
 }
 
@@ -2814,7 +3029,6 @@ function delParcelamento(id){if(!confirm('Excluir este parcelamento?'))return;DB
 
 // ── ORÇAMENTOS CLIENTES ───────────────────────────────────────────────────────
 const ORC_BADGE={pendente:'badge-orange',aprovado:'badge-green',recusado:'badge-red'};
-let orcEquipLines=[];
 function renderOrcamentosCli(){
   const q=(document.getElementById('search-orcamentos')?.value||'').toLowerCase();
   const sf=document.getElementById('filter-orc-status')?.value||'';
@@ -2827,6 +3041,7 @@ function renderOrcamentosCli(){
     const c=clis.find(x=>x.id===o.clienteId);
     const pagLabel=o.pagamento==='parcelado'?`Parcelado ${o.numParcelas}x`:'À Vista';
     return`<tr>
+      <td>${o.numero?'Nº '+o.numero:'—'}</td>
       <td><strong>${esc(c?.nome||'—')}</strong></td>
       <td>${esc(o.descricao||'—')}</td>
       <td style="white-space:nowrap;font-size:12px;color:var(--text-mid)">${fmtD(o.inicio)} – ${fmtD(o.fim)}</td>
@@ -2835,79 +3050,119 @@ function renderOrcamentosCli(){
       <td><span class="badge ${ORC_BADGE[o.status]||'badge-gray'}">${o.status}</span></td>
       <td><div class="td-actions">
         ${o.status==='pendente'?`<button class="btn btn-success btn-xs" onclick="aprovarOrc('${o.id}')" title="Aprovar">✓</button><button class="btn btn-danger btn-xs" onclick="recusarOrc('${o.id}')" title="Recusar">✕</button>`:''}
-        ${o.status==='aprovado'?`<button class="btn btn-primary btn-xs" onclick="converterLocacao('${o.id}')" title="Converter em Locação">→ Locação</button>`:''}
+        ${o.status==='aprovado'?`<button class="btn btn-primary btn-sm" onclick="gerarContratoDeOrcamento('${o.id}')" title="Gerar Contrato">→ Contrato</button><button class="btn btn-ghost btn-sm" onclick="converterLocacao('${o.id}')" title="Converter em Locação (equipamentos)">→ Locação</button>`:''}
+        <button class="btn btn-ghost btn-xs" onclick="imprimirOrcamentoCli('${o.id}')" title="Imprimir">🖨</button>
         <button class="btn btn-ghost btn-xs" onclick="openModalOrcamentoCli('${o.id}')">✏</button>
         <button class="btn btn-danger btn-xs" onclick="delOrcamentoCli('${o.id}')">✕</button>
       </div></td></tr>`;
-  }).join(''):`<tr><td colspan="7"><div class="empty"><div class="empty-icon">📄</div><h3>Nenhum orçamento encontrado</h3></div></td></tr>`;
+  }).join(''):`<tr><td colspan="8"><div class="empty"><div class="empty-icon">📄</div><h3>Nenhum orçamento encontrado</h3></div></td></tr>`;
 }
-function openModalOrcamentoCli(id){
-  orcEquipLines=[];
-  document.getElementById('orccli-equip-list').innerHTML='';
-  const o=id?DB.one('orcamentoscli',id):{};
-  document.getElementById('morccli-title').textContent=id?'Editar Orçamento':'Novo Orçamento';
-  document.getElementById('orccli-id').value=o.id||'';
-  // populate clientes
-  const sel=document.getElementById('orccli-cliente');
-  sel.innerHTML=DB.get('clientes').map(c=>`<option value="${c.id}"${o.clienteId===c.id?' selected':''}>${esc(c.nome)}</option>`).join('');
-  document.getElementById('orccli-desc').value=o.descricao||'';
-  document.getElementById('orccli-inicio').value=o.inicio||today();
-  document.getElementById('orccli-fim').value=o.fim||today();
-  document.getElementById('orccli-valor').value=o.valorTotal||'';
-  document.getElementById('orccli-pagamento').value=o.pagamento||'avista';
-  document.getElementById('orccli-parcelas').value=o.numParcelas||2;
-  document.getElementById('orccli-status').value=o.status||'pendente';
-  document.getElementById('orccli-obs').value=o.observacoes||'';
-  toggleOrcParc();
-  if(o.equipamentos?.length)o.equipamentos.forEach(eq=>addOrcEquip(eq.equipId,eq.descricao));
-  else addOrcEquip();
-  openModal('modal-orcamentocli');
-}
-function addOrcEquip(equipId,desc){
-  const lid=uid();orcEquipLines.push(lid);
-  const equips=DB.get('equipamentos');
-  const estq=DB.get('estoque');
-  let opts='';
+function _quickPickOpts(){
+  const equips=DB.get('equipamentos'),estq=DB.get('estoque');
+  let opts='<option value="">+ Adicionar a partir de Equipamento/Estoque…</option>';
   if(equips.length){
     opts+=`<optgroup label="── Equipamentos ──">`;
-    opts+=equips.map(e=>`<option value="${e.id}"${equipId===e.id?' selected':''}>${esc((e.tipo||'')+' '+(e.marca||'')+' '+(e.modelo||''))}</option>`).join('');
+    opts+=equips.map(e=>`<option value="eq|${e.id}">${esc((e.tipo||'')+' '+(e.marca||'')+' '+(e.modelo||''))}</option>`).join('');
     opts+=`</optgroup>`;
   }
   if(estq.length){
     opts+=`<optgroup label="── Produtos do Estoque ──">`;
-    opts+=estq.map(e=>`<option value="est_${e.id}"${equipId==='est_'+e.id?' selected':''}>${esc(e.nome||'')}${e.categoria?' ('+esc(e.categoria)+')':''}</option>`).join('');
+    opts+=estq.map(e=>`<option value="es|${e.id}">${esc(e.nome||'')}${e.categoria?' ('+esc(e.categoria)+')':''}${e.valorUnit?' — '+fmtR(e.valorUnit):''}</option>`).join('');
     opts+=`</optgroup>`;
   }
-  const row=document.createElement('div');
-  row.id='oe-'+lid;
-  row.style.cssText='display:flex;gap:6px;align-items:center';
-  row.innerHTML=`<select class="form-control" id="oes-${lid}" style="flex:1"><option value="">Selecione…</option>${opts}</select>
-    <input class="form-control" id="oed-${lid}" style="flex:1" placeholder="Descrição/qtd" value="${esc(desc||'')}">
-    <button type="button" class="btn btn-danger btn-xs" onclick="removeOrcEquip('${lid}')">✕</button>`;
-  document.getElementById('orccli-equip-list').appendChild(row);
+  return opts;
 }
-function removeOrcEquip(lid){document.getElementById('oe-'+lid)?.remove();orcEquipLines=orcEquipLines.filter(x=>x!==lid);}
+function _quickPickResolve(val){
+  const [kind,id]=val.split('|');
+  if(kind==='eq'){const e=DB.one('equipamentos',id);return{nome:e?((e.tipo||'')+' '+(e.marca||'')+' '+(e.modelo||'')).trim():'',valorUnit:Number(e?.valorDia)||0};}
+  if(kind==='es'){const e=DB.one('estoque',id);return{nome:e?.nome||'',valorUnit:Number(e?.valorUnit)||0};}
+  return{nome:'',valorUnit:0};
+}
+function orcQuickAdd(){
+  const sel=document.getElementById('orccli-quickpick');
+  if(!sel.value)return;
+  const r=_quickPickResolve(sel.value);
+  addItemRow('orccli-itens-list',r.nome,1,r.valorUnit);
+  sel.value='';
+}
+function ctrQuickAdd(){
+  const sel=document.getElementById('ctr-quickpick');
+  if(!sel.value)return;
+  const r=_quickPickResolve(sel.value);
+  addItemRow('ctr-itens-list',r.nome,1,r.valorUnit);
+  sel.value='';
+}
+function openModalOrcamentoCli(id){
+  itemLines=[];document.getElementById('orccli-itens-list').innerHTML='';
+  parcLines=[];document.getElementById('orccli-parc-list').innerHTML='';
+  document.getElementById('orccli-quickpick').innerHTML=_quickPickOpts();
+  const o=id?DB.one('orcamentoscli',id):{};
+  document.getElementById('morccli-title').textContent=id?'Editar Orçamento':'Novo Orçamento';
+  document.getElementById('orccli-id').value=o.id||'';
+  document.getElementById('orccli-numero').value=o.numero||'';
+  document.getElementById('orccli-numero-view').value=o.numero?('Nº '+o.numero):'Será gerado ao salvar';
+  // populate clientes
+  const sel=document.getElementById('orccli-cliente');
+  sel.innerHTML=DB.get('clientes').map(c=>`<option value="${c.id}"${o.clienteId===c.id?' selected':''}>${esc(c.nome)}</option>`).join('');
+  document.getElementById('orccli-desc').value=o.descricao||'';
+  document.getElementById('orccli-job').value=o.job||'';
+  document.getElementById('orccli-cuidados').value=o.cuidados||'';
+  document.getElementById('orccli-praca').value=o.praca||'';
+  document.getElementById('orccli-local').value=o.local||'';
+  document.getElementById('orccli-inicio').value=o.inicio||today();
+  document.getElementById('orccli-fim').value=o.fim||today();
+  document.getElementById('orccli-entrega').value=o.entrega||o.inicio||today();
+  document.getElementById('orccli-montagem').value=o.montagem||'';
+  document.getElementById('orccli-desmontagem').value=o.desmontagem||'';
+  document.getElementById('orccli-validade').value=o.validade||1;
+  document.getElementById('orccli-pagamento').value=o.pagamento||'avista';
+  document.getElementById('orccli-parcelas').value=o.numParcelas||1;
+  document.getElementById('orccli-transportadora').value=o.transportadora||'Accert tech';
+  document.getElementById('orccli-status').value=o.status||'pendente';
+  document.getElementById('orccli-obs').value=o.observacoes||'';
+  toggleOrcParc();
+  if(o.itens?.length)o.itens.forEach(i=>addItemRow('orccli-itens-list',i.nome,i.qtd,i.valorUnit));
+  else addItemRow('orccli-itens-list');
+  if(o.parcelas?.length)o.parcelas.forEach(p=>addParcRow('orccli-parc-list',p.vencimento,p.valor,p.forma,p.obs));
+  openModal('modal-orcamentocli');
+}
 function toggleOrcParc(){
   const v=document.getElementById('orccli-pagamento').value;
-  document.getElementById('orccli-parc-group').classList.toggle('hidden',v!=='parcelado');
+  const inp=document.getElementById('orccli-parcelas');
+  if(!inp)return;
+  if(v==='avista'){inp.value=1;inp.disabled=true;}else{inp.disabled=false;if(Number(inp.value)<2)inp.value=2;}
 }
 function saveOrcamentoCli(){
   const clienteId=document.getElementById('orccli-cliente').value;
   if(!clienteId){toast('Selecione um cliente','error');return;}
   const inicio=document.getElementById('orccli-inicio').value,fim=document.getElementById('orccli-fim').value;
   if(!inicio||!fim){toast('Informe as datas','error');return;}
-  const valorTotal=Number(document.getElementById('orccli-valor').value);
-  if(!valorTotal){toast('Informe o valor total','error');return;}
+  const itens=collectItens();
+  if(!itens.length){toast('Adicione ao menos um item','error');return;}
+  const valorTotal=itens.reduce((s,i)=>s+i.qtd*i.valorUnit,0);
   const pagamento=document.getElementById('orccli-pagamento').value;
   const numParcelas=pagamento==='parcelado'?Number(document.getElementById('orccli-parcelas').value)||2:1;
-  const equipamentos=orcEquipLines.map(lid=>({equipId:document.getElementById('oes-'+lid)?.value,descricao:document.getElementById('oed-'+lid)?.value})).filter(e=>e.equipId);
+  const parcelas=collectParcelas();
+  const existente=document.getElementById('orccli-id').value?DB.one('orcamentoscli',document.getElementById('orccli-id').value):null;
+  const numero=document.getElementById('orccli-numero').value?Number(document.getElementById('orccli-numero').value):nextNumero('proxOrcamento');
   const item={
     id:document.getElementById('orccli-id').value||uid(),
+    numero,
     clienteId,descricao:document.getElementById('orccli-desc').value,
-    inicio,fim,equipamentos,valorTotal,pagamento,numParcelas,
+    job:document.getElementById('orccli-job').value,
+    cuidados:document.getElementById('orccli-cuidados').value,
+    praca:document.getElementById('orccli-praca').value,
+    local:document.getElementById('orccli-local').value,
+    inicio,fim,
+    entrega:document.getElementById('orccli-entrega').value,
+    montagem:document.getElementById('orccli-montagem').value,
+    desmontagem:document.getElementById('orccli-desmontagem').value,
+    validade:Number(document.getElementById('orccli-validade').value)||1,
+    itens,valorTotal,pagamento,numParcelas,parcelas,
+    transportadora:document.getElementById('orccli-transportadora').value,
     status:document.getElementById('orccli-status').value,
     observacoes:document.getElementById('orccli-obs').value,
-    criado:new Date().toISOString(),
+    criado:existente?.criado||new Date().toISOString(),
   };
   DB.save('orcamentoscli',item);
   closeModal('modal-orcamentocli');renderOrcamentosCli();toast('Orçamento salvo!','success');
@@ -2916,7 +3171,7 @@ function delOrcamentoCli(id){if(!confirm('Excluir este orçamento?'))return;DB.d
 function aprovarOrc(id){
   const o=DB.one('orcamentoscli',id);if(!o)return;
   o.status='aprovado';DB.save('orcamentoscli',o);renderOrcamentosCli();
-  toast('Orçamento aprovado! Clique em "→ Locação" para converter.','success');
+  toast('Orçamento aprovado! Clique em "→ Contrato" para gerar o contrato.','success');
 }
 function recusarOrc(id){
   if(!confirm('Marcar como recusado?'))return;
@@ -2947,6 +3202,567 @@ function converterLocacao(id){
   closeModal('modal-orcamentocli');
   openModal('modal-locacao');
   toast('Preencha a locação e salve!','info');
+}
+
+// ── CONSTRUTORES GENÉRICOS: ITENS E PARCELAS (Orçamento / Contrato) ────────────
+let itemLines=[];
+let parcLines=[];
+function addItemRow(containerId,nome,qtd,valorUnit){
+  const lid=uid();itemLines.push(lid);
+  const row=document.createElement('div');
+  row.id='it-'+lid;
+  row.style.cssText='display:grid;grid-template-columns:2fr 60px 100px 100px 30px;gap:6px;align-items:center';
+  row.innerHTML=`<input class="form-control" id="itn-${lid}" placeholder="Descrição do item/serviço" value="${esc(nome||'')}">
+    <input class="form-control" id="itq-${lid}" type="number" min="0" step="1" value="${qtd||1}" oninput="calcItens()" title="Qtd.">
+    <input class="form-control" id="itv-${lid}" type="number" min="0" step="0.01" placeholder="Vr. unit." value="${valorUnit||''}" oninput="calcItens()">
+    <div id="its-${lid}" style="font-weight:700;font-size:12.5px;text-align:right;white-space:nowrap">R$ 0,00</div>
+    <button type="button" class="btn btn-danger btn-xs" onclick="removeItemRow('${lid}')">✕</button>`;
+  document.getElementById(containerId).appendChild(row);
+  calcItens();
+}
+function removeItemRow(lid){document.getElementById('it-'+lid)?.remove();itemLines=itemLines.filter(x=>x!==lid);calcItens();}
+function calcItens(){
+  let tot=0;
+  itemLines.forEach(lid=>{
+    const q=Number(document.getElementById('itq-'+lid)?.value)||0;
+    const v=Number(document.getElementById('itv-'+lid)?.value)||0;
+    const sub=q*v;tot+=sub;
+    const el=document.getElementById('its-'+lid);if(el)el.textContent=fmtR(sub);
+  });
+  const ov=document.getElementById('orccli-total-view');if(ov)ov.textContent=fmtR(tot);
+  const cv=document.getElementById('ctr-total-view');if(cv)cv.textContent=fmtR(tot);
+  return tot;
+}
+function collectItens(){
+  return itemLines.map(lid=>({
+    nome:document.getElementById('itn-'+lid)?.value||'',
+    qtd:Number(document.getElementById('itq-'+lid)?.value)||0,
+    valorUnit:Number(document.getElementById('itv-'+lid)?.value)||0
+  })).filter(i=>i.nome&&i.qtd>0);
+}
+function addParcRow(containerId,venc,valor,forma,obs){
+  const lid=uid();parcLines.push(lid);
+  const row=document.createElement('div');
+  row.id='pc-'+lid;
+  row.style.cssText='display:grid;grid-template-columns:130px 100px 90px 1fr 30px;gap:6px;align-items:center';
+  row.innerHTML=`<input class="form-control" id="pcd-${lid}" type="date" value="${venc||''}">
+    <input class="form-control" id="pcv-${lid}" type="number" min="0" step="0.01" placeholder="Valor" value="${valor||''}">
+    <select class="form-control" id="pcf-${lid}">
+      <option value="PIX"${!forma||forma==='PIX'?' selected':''}>PIX</option>
+      <option value="Boleto"${forma==='Boleto'?' selected':''}>Boleto</option>
+      <option value="Cartão"${forma==='Cartão'?' selected':''}>Cartão</option>
+      <option value="Transferência"${forma==='Transferência'?' selected':''}>Transferência</option>
+      <option value="Dinheiro"${forma==='Dinheiro'?' selected':''}>Dinheiro</option>
+    </select>
+    <input class="form-control" id="pco-${lid}" placeholder="Observação (ex: chave Pix)" value="${esc(obs||'')}">
+    <button type="button" class="btn btn-danger btn-xs" onclick="removeParcRow('${lid}')">✕</button>`;
+  document.getElementById(containerId).appendChild(row);
+}
+function removeParcRow(lid){document.getElementById('pc-'+lid)?.remove();parcLines=parcLines.filter(x=>x!==lid);}
+function collectParcelas(){
+  return parcLines.map(lid=>({
+    vencimento:document.getElementById('pcd-'+lid)?.value||'',
+    valor:Number(document.getElementById('pcv-'+lid)?.value)||0,
+    forma:document.getElementById('pcf-'+lid)?.value||'PIX',
+    obs:document.getElementById('pco-'+lid)?.value||''
+  })).filter(p=>p.vencimento&&p.valor>0);
+}
+function gerarParcelasAuto(containerId,n,dataBase,total){
+  n=Math.max(1,n||1);
+  document.getElementById(containerId).innerHTML='';parcLines=[];
+  const emp=getEmpresa();
+  const obsPadrao=emp.pix?`Chave Pix : ${emp.pix}${emp.banco?' '+emp.banco:''}${emp.favorecido?' '+emp.favorecido:''}`:'';
+  const valorParc=Math.round(((total||0)/n)*100)/100;
+  for(let i=0;i<n;i++){
+    const d=new Date((dataBase||today())+'T12:00:00');d.setMonth(d.getMonth()+i);
+    addParcRow(containerId,d.toISOString().slice(0,10),valorParc,'PIX',obsPadrao);
+  }
+}
+
+// ── EMPRESA (DADOS USADOS NOS DOCUMENTOS) ──────────────────────────────────────
+function getEmpresa(){
+  const defaults={
+    nome:'Accert Tech',
+    razaoSocial:'A J DA SILVA GOMES TECNOLOGIA DA INFORMAÇÃO',
+    cnpj:'13.694.743/0001-50', ie:'ISENTA',
+    endereco:'Avenida Doutor Ussiel Cirilo, 180 (Sala 03) - Vila Jacuí',
+    cidade:'São Paulo', estado:'SP', cep:'08060-070',
+    telefone:'(11)3090-5831', celular:'(11)99582-3831',
+    email:'adeilton.accerttech@gmail.com',
+    vendedor:'Adeilton gomes',
+    banco:'Banco - CloudWalk Instituição de Pagamento - 0542 - AG 0001 - Conta 2640014-7',
+    pix:'2ad45e80-b253-4f97-9166-b468b07dcce3',
+    favorecido:'ADEILTON JOSE DA SILVA GOMES',
+    textoFiscal:'Não emissão de NF para atividade de locação de bens móveis e prestação de serviços (LC 116/2003, PMSP Portaria SF 074/2003; Decreto 44540/2004, Consulta 2261/2004 DOM-SP)\nNão sujeita a retenções de impostos e incidência de ISS por não se tratar de prestação de serviços (LC 116/2003)\nEsta fatura só terá validade mediante ao comprovante de pagamento.',
+    proxOrcamento:1628, proxContrato:14027, proxFatura:98437
+  };
+  const saved=DB.get('empresa');
+  return (saved&&typeof saved==='object'&&!Array.isArray(saved))?{...defaults,...saved}:defaults;
+}
+function saveEmpresaObj(obj){DB.set('empresa',obj);}
+function nextNumero(campo){
+  const emp=getEmpresa();
+  const n=emp[campo]||1;
+  emp[campo]=n+1;
+  saveEmpresaObj(emp);
+  return n;
+}
+function openModalEmpresa(){
+  const e=getEmpresa();
+  document.getElementById('emp-nome').value=e.nome||'';
+  document.getElementById('emp-razao').value=e.razaoSocial||'';
+  document.getElementById('emp-cnpj').value=e.cnpj||'';
+  document.getElementById('emp-ie').value=e.ie||'';
+  document.getElementById('emp-endereco').value=e.endereco||'';
+  document.getElementById('emp-cidade').value=e.cidade||'';
+  document.getElementById('emp-estado').value=e.estado||'';
+  document.getElementById('emp-cep').value=e.cep||'';
+  document.getElementById('emp-telefone').value=e.telefone||'';
+  document.getElementById('emp-celular').value=e.celular||'';
+  document.getElementById('emp-vendedor').value=e.vendedor||'';
+  document.getElementById('emp-email').value=e.email||'';
+  document.getElementById('emp-banco').value=e.banco||'';
+  document.getElementById('emp-pix').value=e.pix||'';
+  document.getElementById('emp-favorecido').value=e.favorecido||'';
+  document.getElementById('emp-fiscal').value=e.textoFiscal||'';
+  document.getElementById('emp-prox-orc').value=e.proxOrcamento||1;
+  document.getElementById('emp-prox-ctr').value=e.proxContrato||1;
+  document.getElementById('emp-prox-fat').value=e.proxFatura||1;
+  openModal('modal-empresa');
+}
+function saveEmpresaForm(){
+  const obj={
+    nome:document.getElementById('emp-nome').value,
+    razaoSocial:document.getElementById('emp-razao').value,
+    cnpj:document.getElementById('emp-cnpj').value,
+    ie:document.getElementById('emp-ie').value,
+    endereco:document.getElementById('emp-endereco').value,
+    cidade:document.getElementById('emp-cidade').value,
+    estado:document.getElementById('emp-estado').value,
+    cep:document.getElementById('emp-cep').value,
+    telefone:document.getElementById('emp-telefone').value,
+    celular:document.getElementById('emp-celular').value,
+    vendedor:document.getElementById('emp-vendedor').value,
+    email:document.getElementById('emp-email').value,
+    banco:document.getElementById('emp-banco').value,
+    pix:document.getElementById('emp-pix').value,
+    favorecido:document.getElementById('emp-favorecido').value,
+    textoFiscal:document.getElementById('emp-fiscal').value,
+    proxOrcamento:Number(document.getElementById('emp-prox-orc').value)||1,
+    proxContrato:Number(document.getElementById('emp-prox-ctr').value)||1,
+    proxFatura:Number(document.getElementById('emp-prox-fat').value)||1,
+  };
+  saveEmpresaObj(obj);
+  closeModal('modal-empresa');
+  toast('Dados da empresa salvos!','success');
+}
+
+// ── IMPRESSÃO DE DOCUMENTOS (Orçamento / Contrato / Fatura) ────────────────────
+function _docOpen(){return window.open('','_blank','width=900,height=800');}
+function _docStyleBase(){
+  return `*{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:Arial,Helvetica,sans-serif;font-size:12.5px;color:#0f172a;background:#fff;padding:22px}
+  .doc-hd{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:3px solid #1e40af;padding-bottom:12px;margin-bottom:16px}
+  .doc-logo{display:flex;align-items:center;gap:10px}
+  .doc-badge{width:46px;height:46px;border-radius:10px;background:linear-gradient(135deg,#3b82f6,#1e40af);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:16px;flex-shrink:0}
+  .doc-emp-nome{font-size:16px;font-weight:800;color:#1e293b}
+  .doc-emp-info{font-size:11px;color:#64748b;line-height:1.5}
+  .doc-titulo-box{text-align:right}
+  .doc-titulo{font-size:18px;font-weight:800;color:#1e40af}
+  .doc-sub{font-size:11px;color:#64748b;margin-top:2px}
+  .doc-grid{display:grid;grid-template-columns:1fr 1fr;gap:0;border:1px solid #cbd5e1;border-radius:6px;overflow:hidden;margin-bottom:14px}
+  .doc-grid.cols3{grid-template-columns:1fr 1fr 1fr}
+  .doc-cell{padding:7px 10px;border-right:1px solid #e2e8f0;border-bottom:1px solid #e2e8f0}
+  .doc-cell:last-child{border-right:none}
+  .doc-cell b{display:block;font-size:9.5px;text-transform:uppercase;letter-spacing:.4px;color:#64748b;margin-bottom:2px;font-weight:700}
+  .doc-sec-title{background:#1e3a8a;color:#fff;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;padding:6px 10px;border-radius:5px 5px 0 0;margin-top:14px}
+  table.doc-table{width:100%;border-collapse:collapse;border:1px solid #cbd5e1;border-top:none;margin-bottom:4px}
+  table.doc-table th{background:#eff6ff;color:#1e3a8a;font-size:10.5px;text-transform:uppercase;padding:7px 10px;text-align:left;border-bottom:1px solid #cbd5e1}
+  table.doc-table td{padding:7px 10px;border-bottom:1px solid #e2e8f0;font-size:12px}
+  table.doc-table td.r,table.doc-table th.r{text-align:right}
+  table.doc-table tfoot td{font-weight:800;border-top:2px solid #1e3a8a}
+  .doc-fiscal{font-size:10px;color:#64748b;line-height:1.5;border:1px solid #e2e8f0;border-radius:6px;padding:10px;margin-top:14px;white-space:pre-line}
+  .doc-assinatura{margin-top:50px;text-align:center;font-size:11px;color:#475569}
+  .doc-assinatura .linha{border-top:1px solid #0f172a;width:360px;margin:0 auto 6px}
+  .no-print{text-align:center;margin:20px 0}
+  .btn-p{padding:10px 28px;background:#1e40af;color:#fff;border:none;border-radius:7px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit}
+  @media print{.no-print{display:none}body{padding:0}}`;
+}
+function _docHeader(emp,tituloDoc,numero,dataEmissao,subInfo){
+  return `<div class="doc-hd">
+    <div class="doc-logo">
+      <div class="doc-badge">AT</div>
+      <div>
+        <div class="doc-emp-nome">${esc(emp.nome)}</div>
+        <div class="doc-emp-info">${esc(emp.razaoSocial)} — CNPJ: ${esc(emp.cnpj)}<br>${esc(emp.endereco)} - ${esc(emp.cidade)}/${esc(emp.estado)}<br>${esc(emp.telefone)} - ${esc(emp.celular)} — ${esc(emp.email)}</div>
+      </div>
+    </div>
+    <div class="doc-titulo-box">
+      <div class="doc-titulo">${esc(tituloDoc)} Nº ${esc(String(numero))}</div>
+      <div class="doc-sub">${dataEmissao?'Data: '+fmtD(dataEmissao):''}</div>
+      ${subInfo?`<div class="doc-sub">${esc(subInfo)}</div>`:''}
+    </div>
+  </div>`;
+}
+function _clienteBox(cli){
+  if(!cli)return'<div style="color:#dc2626;font-size:12px;margin-bottom:10px">Cliente não encontrado.</div>';
+  const endParts=[cli.endereco,cli.numero,cli.complemento,cli.bairro].filter(Boolean).join(', ');
+  const cidadeUf=[cli.cidade,cli.uf].filter(Boolean).join('/');
+  return `<div class="doc-sec-title">Dados do Cliente</div>
+  <div class="doc-grid">
+    <div class="doc-cell"><b>Nome / Razão Social</b>${esc(cli.nome||'—')}</div>
+    <div class="doc-cell"><b>CNPJ/CPF</b>${esc(cli.cpfCnpj||'—')}</div>
+    <div class="doc-cell" style="grid-column:1/3"><b>Endereço</b>${esc(endParts||'—')}</div>
+    <div class="doc-cell"><b>Cidade</b>${esc(cidadeUf||'—')}</div>
+    <div class="doc-cell"><b>Telefone / E-mail</b>${esc(cli.telefone||'—')}${cli.email?' — '+esc(cli.email):''}</div>
+  </div>`;
+}
+function _itensTable(itens,total){
+  return `<table class="doc-table">
+    <thead><tr><th>Item</th><th>Qtd.</th><th class="r">Vr. Unit.</th><th class="r">Vr. Total</th></tr></thead>
+    <tbody>${(itens||[]).map(i=>`<tr><td>${esc(i.nome)}</td><td>${i.qtd}</td><td class="r">${fmtR(i.valorUnit)}</td><td class="r">${fmtR(i.qtd*i.valorUnit)}</td></tr>`).join('')||'<tr><td colspan="4" style="text-align:center;color:#94a3b8">Nenhum item</td></tr>'}</tbody>
+    <tfoot><tr><td colspan="3">TOTAL</td><td class="r">${fmtR(total)}</td></tr></tfoot>
+  </table>`;
+}
+function _parcelasTable(parcelas){
+  if(!parcelas?.length)return'';
+  return `<div class="doc-sec-title">Dados do Pagamento</div>
+  <table class="doc-table">
+    <thead><tr><th>Vencimento</th><th class="r">Valor</th><th>Forma</th><th>Observação</th></tr></thead>
+    <tbody>${parcelas.map(p=>`<tr><td>${fmtD(p.vencimento)}</td><td class="r">${fmtR(p.valor)}</td><td>${esc(p.forma)}</td><td style="font-size:10.5px;color:#475569">${esc(p.obs||'')}</td></tr>`).join('')}</tbody>
+  </table>`;
+}
+function _assinaturaBox(){
+  return `<div class="doc-assinatura"><div class="linha"></div>Assinatura do Cliente</div>`;
+}
+function _printFooterBtn(){
+  return `<div class="no-print" style="margin-top:20px"><button class="btn-p" onclick="window.print()">🖨 Imprimir / Salvar PDF</button></div>`;
+}
+function imprimirOrcamentoCli(id){
+  const o=DB.one('orcamentoscli',id);if(!o){toast('Orçamento não encontrado','error');return;}
+  const cli=DB.one('clientes',o.clienteId);
+  const emp=getEmpresa();
+  const w=_docOpen();
+  w.document.write(`<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><title>Orçamento ${o.numero||''}</title><style>${_docStyleBase()}</style></head><body>
+  ${_docHeader(emp,'ORÇAMENTO',o.numero||'—',o.criado?o.criado.slice(0,10):today(),o.cuidados?'Aos cuidados de: '+o.cuidados:'')}
+  <div class="doc-grid cols3">
+    <div class="doc-cell"><b>Validade da Proposta</b>${o.validade||1} dia(s)</div>
+    <div class="doc-cell"><b>Previsão de Entrega</b>${fmtD(o.entrega)}</div>
+    <div class="doc-cell"><b>Job</b>${esc(o.job||'—')}</div>
+    <div class="doc-cell"><b>Início</b>${fmtD(o.inicio)}</div>
+    <div class="doc-cell"><b>Término</b>${fmtD(o.fim)}</div>
+    <div class="doc-cell"><b>Praça</b>${esc(o.praca||'—')}</div>
+    <div class="doc-cell" style="grid-column:1/4"><b>Local de Entrega</b>${esc(o.local||'—')}</div>
+  </div>
+  ${_clienteBox(cli)}
+  <div class="doc-sec-title">Serviços</div>
+  ${_itensTable(o.itens,o.valorTotal)}
+  ${_parcelasTable(o.parcelas)}
+  ${o.transportadora?`<div class="doc-sec-title">Transportadora</div><div style="padding:8px 2px;font-size:12px">${esc(o.transportadora)}</div>`:''}
+  ${_assinaturaBox()}
+  ${_printFooterBtn()}
+  </body></html>`);
+  w.document.close();
+}
+
+// ── CONTRATOS ───────────────────────────────────────────────────────────────────
+const CTR_BADGE={ativo:'badge-green',encerrado:'badge-gray',cancelado:'badge-red'};
+function renderContratos(){
+  const q=(document.getElementById('search-contratos')?.value||'').toLowerCase();
+  const sf=document.getElementById('filter-ctr-status')?.value||'';
+  const clis=DB.get('clientes');
+  let lista=DB.get('contratos');
+  if(q)lista=lista.filter(c=>{const cl=clis.find(x=>x.id===c.clienteId);return (cl?.nome||'').toLowerCase().includes(q)||(c.job||'').toLowerCase().includes(q);});
+  if(sf)lista=lista.filter(c=>c.status===sf);
+  lista=[...lista].sort((a,b)=>(b.numero||0)-(a.numero||0));
+  document.getElementById('tb-contratos').innerHTML=lista.length?lista.map(c=>{
+    const cl=clis.find(x=>x.id===c.clienteId);
+    return`<tr>
+      <td>${c.numero||'—'}</td>
+      <td><strong>${esc(cl?.nome||'—')}</strong></td>
+      <td>${esc(c.job||'—')}</td>
+      <td style="white-space:nowrap;font-size:12px;color:var(--text-mid)">${fmtD(c.inicio)} – ${fmtD(c.fim)}</td>
+      <td><strong style="color:var(--blue)">${fmtR(c.valorTotal)}</strong></td>
+      <td><span class="badge ${CTR_BADGE[c.status]||'badge-gray'}">${c.status}</span></td>
+      <td><div class="td-actions">
+        <button class="btn btn-success btn-xs" onclick="gerarFaturasDoContrato('${c.id}')" title="Gerar faturas das parcelas">🧾</button>
+        <button class="btn btn-ghost btn-xs" onclick="imprimirContrato('${c.id}')" title="Imprimir">🖨</button>
+        <button class="btn btn-ghost btn-xs" onclick="openModalContrato('${c.id}')">✏</button>
+        <button class="btn btn-danger btn-xs" onclick="delContrato('${c.id}')">✕</button>
+      </div></td></tr>`;
+  }).join(''):`<tr><td colspan="7"><div class="empty"><div class="empty-icon">📑</div><h3>Nenhum contrato encontrado</h3></div></td></tr>`;
+}
+function calcDiasLocacao(){
+  const i=document.getElementById('ctr-inicio')?.value,f=document.getElementById('ctr-fim')?.value;
+  if(i&&f){
+    const d=Math.round((new Date(f+'T12:00:00')-new Date(i+'T12:00:00'))/86400000)+1;
+    const el=document.getElementById('ctr-dias');if(el)el.value=Math.max(1,d);
+  }
+}
+function openModalContrato(id){
+  itemLines=[];document.getElementById('ctr-itens-list').innerHTML='';
+  parcLines=[];document.getElementById('ctr-parc-list').innerHTML='';
+  document.getElementById('ctr-quickpick').innerHTML=_quickPickOpts();
+  const c=id?DB.one('contratos',id):{};
+  document.getElementById('mctr-title').textContent=id?'Editar Contrato':'Novo Contrato';
+  document.getElementById('ctr-id').value=c.id||'';
+  document.getElementById('ctr-numero').value=c.numero||'';
+  document.getElementById('ctr-orcamentoid').value=c.orcamentoId||'';
+  document.getElementById('ctr-numero-view').value=c.numero?('Nº '+c.numero):'Será gerado ao salvar';
+  const sel=document.getElementById('ctr-cliente');
+  sel.innerHTML=DB.get('clientes').map(cl=>`<option value="${cl.id}"${c.clienteId===cl.id?' selected':''}>${esc(cl.nome)}</option>`).join('');
+  document.getElementById('ctr-job').value=c.job||'';
+  document.getElementById('ctr-praca').value=c.praca||'';
+  document.getElementById('ctr-local').value=c.local||'';
+  document.getElementById('ctr-inicio').value=c.inicio||today();
+  document.getElementById('ctr-fim').value=c.fim||today();
+  document.getElementById('ctr-dias').value=c.dias||1;
+  document.getElementById('ctr-entrega').value=c.entrega||c.inicio||today();
+  document.getElementById('ctr-status').value=c.status||'ativo';
+  document.getElementById('ctr-parcelas').value=c.parcelas?.length||1;
+  document.getElementById('ctr-lancar').value='sim';
+  document.getElementById('ctr-obs').value=c.observacoes||'';
+  if(!c.dias)calcDiasLocacao();
+  if(c.itens?.length)c.itens.forEach(i=>addItemRow('ctr-itens-list',i.nome,i.qtd,i.valorUnit));
+  else addItemRow('ctr-itens-list');
+  if(c.parcelas?.length)c.parcelas.forEach(p=>addParcRow('ctr-parc-list',p.vencimento,p.valor,p.forma,p.obs));
+  openModal('modal-contrato');
+}
+function saveContrato(){
+  const clienteId=document.getElementById('ctr-cliente').value;
+  if(!clienteId){toast('Selecione um cliente','error');return;}
+  const inicio=document.getElementById('ctr-inicio').value,fim=document.getElementById('ctr-fim').value;
+  if(!inicio||!fim){toast('Informe as datas','error');return;}
+  const itens=collectItens();
+  if(!itens.length){toast('Adicione ao menos um item','error');return;}
+  const valorTotal=itens.reduce((s,i)=>s+i.qtd*i.valorUnit,0);
+  const parcelas=collectParcelas();
+  const isNew=!document.getElementById('ctr-id').value;
+  const existente=!isNew?DB.one('contratos',document.getElementById('ctr-id').value):null;
+  const numero=document.getElementById('ctr-numero').value?Number(document.getElementById('ctr-numero').value):nextNumero('proxContrato');
+  const item={
+    id:document.getElementById('ctr-id').value||uid(),
+    numero,
+    orcamentoId:document.getElementById('ctr-orcamentoid').value||null,
+    clienteId,
+    job:document.getElementById('ctr-job').value,
+    praca:document.getElementById('ctr-praca').value,
+    local:document.getElementById('ctr-local').value,
+    inicio,fim,
+    dias:Number(document.getElementById('ctr-dias').value)||1,
+    entrega:document.getElementById('ctr-entrega').value,
+    itens,valorTotal,parcelas,
+    status:document.getElementById('ctr-status').value,
+    observacoes:document.getElementById('ctr-obs').value,
+    criado:existente?.criado||new Date().toISOString(),
+  };
+  DB.save('contratos',item);
+  if(isNew&&document.getElementById('ctr-lancar').value==='sim'&&parcelas.length){
+    const cli=DB.one('clientes',clienteId);
+    const grupoId=uid();
+    parcelas.forEach((p,i)=>{
+      DB.save('transacoes',{id:uid(),tipo:'entrada',categoria:'Locação de Equipamento',descricao:`Contrato ${numero} — ${cli?.nome||''} (${i+1}/${parcelas.length})`,valor:p.valor,data:p.vencimento,status:'pendente',observacoes:p.obs,contratoId:item.id,grupoId});
+    });
+    toast(`Contrato salvo e ${parcelas.length} parcela(s) lançada(s) no Financeiro!`,'success');
+  }else{
+    toast('Contrato salvo!','success');
+  }
+  closeModal('modal-contrato');renderContratos();
+}
+function delContrato(id){if(!confirm('Excluir este contrato?'))return;DB.del('contratos',id);renderContratos();toast('Excluído.','info');}
+function gerarContratoDeOrcamento(id){
+  const o=DB.one('orcamentoscli',id);if(!o)return;
+  itemLines=[];document.getElementById('ctr-itens-list').innerHTML='';
+  parcLines=[];document.getElementById('ctr-parc-list').innerHTML='';
+  document.getElementById('ctr-quickpick').innerHTML=_quickPickOpts();
+  document.getElementById('mctr-title').textContent='Novo Contrato (de Orçamento)';
+  document.getElementById('ctr-id').value='';
+  document.getElementById('ctr-numero').value='';
+  document.getElementById('ctr-numero-view').value='Será gerado ao salvar';
+  document.getElementById('ctr-orcamentoid').value=o.id;
+  const sel=document.getElementById('ctr-cliente');
+  sel.innerHTML=DB.get('clientes').map(cl=>`<option value="${cl.id}"${o.clienteId===cl.id?' selected':''}>${esc(cl.nome)}</option>`).join('');
+  document.getElementById('ctr-job').value=o.job||'';
+  document.getElementById('ctr-praca').value=o.praca||'';
+  document.getElementById('ctr-local').value=o.local||'';
+  document.getElementById('ctr-inicio').value=o.inicio||today();
+  document.getElementById('ctr-fim').value=o.fim||today();
+  document.getElementById('ctr-entrega').value=o.entrega||o.inicio||today();
+  document.getElementById('ctr-status').value='ativo';
+  document.getElementById('ctr-parcelas').value=o.parcelas?.length||o.numParcelas||1;
+  document.getElementById('ctr-lancar').value='sim';
+  document.getElementById('ctr-obs').value=o.observacoes||'';
+  calcDiasLocacao();
+  if(o.itens?.length)o.itens.forEach(i=>addItemRow('ctr-itens-list',i.nome,i.qtd,i.valorUnit));
+  else addItemRow('ctr-itens-list');
+  if(o.parcelas?.length)o.parcelas.forEach(p=>addParcRow('ctr-parc-list',p.vencimento,p.valor,p.forma,p.obs));
+  closeModal('modal-orcamentocli');
+  openModal('modal-contrato');
+  toast('Confira os dados e salve o contrato.','info');
+}
+function imprimirContrato(id){
+  const c=DB.one('contratos',id);if(!c){toast('Contrato não encontrado','error');return;}
+  const cli=DB.one('clientes',c.clienteId);
+  const o=c.orcamentoId?DB.one('orcamentoscli',c.orcamentoId):null;
+  const emp=getEmpresa();
+  const w=_docOpen();
+  w.document.write(`<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><title>Contrato ${c.numero||''}</title><style>${_docStyleBase()}</style></head><body>
+  ${_docHeader(emp,'CONTRATO',c.numero||'—',today())}
+  <div class="doc-grid cols3">
+    <div class="doc-cell"><b>Data de Início</b>${fmtD(c.inicio)}</div>
+    <div class="doc-cell"><b>Data de Término</b>${fmtD(c.fim)}</div>
+    <div class="doc-cell"><b>Dias de Locação</b>${c.dias||'—'}</div>
+    <div class="doc-cell"><b>Orçamento Nº</b>${o?.numero||'—'}</div>
+    <div class="doc-cell"><b>Entrega do Material</b>${fmtD(c.entrega)}</div>
+    <div class="doc-cell"><b>Job</b>${esc(c.job||'—')}</div>
+    <div class="doc-cell"><b>Praça</b>${esc(c.praca||'—')}</div>
+    <div class="doc-cell" style="grid-column:2/4"><b>Local de Entrega</b>${esc(c.local||'—')}</div>
+  </div>
+  ${_clienteBox(cli)}
+  <div class="doc-sec-title">Serviços</div>
+  ${_itensTable(c.itens,c.valorTotal)}
+  ${_parcelasTable(c.parcelas)}
+  ${_assinaturaBox()}
+  ${_printFooterBtn()}
+  </body></html>`);
+  w.document.close();
+}
+
+// ── FATURAS ──────────────────────────────────────────────────────────────────────
+function renderFaturas(){
+  const q=(document.getElementById('search-faturas')?.value||'').toLowerCase();
+  const clis=DB.get('clientes');
+  let lista=DB.get('faturas');
+  if(q)lista=lista.filter(f=>{const cl=clis.find(x=>x.id===f.clienteId);return (cl?.nome||'').toLowerCase().includes(q)||(f.descricao||'').toLowerCase().includes(q);});
+  lista=[...lista].sort((a,b)=>(b.numero||0)-(a.numero||0));
+  document.getElementById('tb-faturas').innerHTML=lista.length?lista.map(f=>{
+    const cl=clis.find(x=>x.id===f.clienteId);
+    return`<tr>
+      <td>${f.numero||'—'}</td>
+      <td><strong>${esc(cl?.nome||'—')}</strong></td>
+      <td style="font-size:12px">${esc(f.descricao||'—')}</td>
+      <td>${fmtD(f.vencimento)}</td>
+      <td><strong style="color:var(--green)">${fmtR(f.valor)}</strong></td>
+      <td><div class="td-actions">
+        <button class="btn btn-ghost btn-xs" onclick="imprimirFatura('${f.id}')" title="Imprimir">🖨</button>
+        <button class="btn btn-danger btn-xs" onclick="delFatura('${f.id}')">✕</button>
+      </div></td></tr>`;
+  }).join(''):`<tr><td colspan="6"><div class="empty"><div class="empty-icon">🧾</div><h3>Nenhuma fatura encontrada</h3></div></td></tr>`;
+}
+function openModalFatura(){
+  document.getElementById('fat-id').value='';
+  document.getElementById('fat-numero').value='';
+  const selC=document.getElementById('fat-contrato');
+  selC.innerHTML='<option value="">— Selecionar para preencher automaticamente —</option>'+DB.get('contratos').map(c=>`<option value="${c.id}">Nº ${c.numero} — ${esc(DB.one('clientes',c.clienteId)?.nome||'')}</option>`).join('');
+  const selCli=document.getElementById('fat-cliente');
+  selCli.innerHTML=DB.get('clientes').map(c=>`<option value="${c.id}">${esc(c.nome)}</option>`).join('');
+  document.getElementById('fat-desc').value='';
+  document.getElementById('fat-valor').value='';
+  document.getElementById('fat-vencimento').value=today();
+  document.getElementById('fat-parcela').value='';
+  document.getElementById('fat-forma').value='PIX';
+  document.getElementById('fat-obspag').value='';
+  openModal('modal-fatura');
+}
+function preencherFaturaDeContrato(){
+  const id=document.getElementById('fat-contrato').value;if(!id)return;
+  const c=DB.one('contratos',id);if(!c)return;
+  document.getElementById('fat-cliente').value=c.clienteId;
+  document.getElementById('fat-desc').value=(c.itens||[]).map(i=>i.nome).join(', ');
+  const emp=getEmpresa();
+  if(c.parcelas?.length){
+    const p=c.parcelas[0];
+    document.getElementById('fat-valor').value=p.valor;
+    document.getElementById('fat-vencimento').value=p.vencimento;
+    document.getElementById('fat-forma').value=p.forma||'PIX';
+    document.getElementById('fat-obspag').value=p.obs||(emp.pix?`Chave Pix : ${emp.pix}`:'');
+  }else{
+    document.getElementById('fat-valor').value=c.valorTotal;
+  }
+}
+function saveFatura(){
+  const clienteId=document.getElementById('fat-cliente').value;
+  if(!clienteId){toast('Selecione um cliente','error');return;}
+  const descricao=document.getElementById('fat-desc').value.trim();
+  if(!descricao){toast('Informe a descrição','error');return;}
+  const valor=Number(document.getElementById('fat-valor').value);
+  if(!valor){toast('Informe o valor','error');return;}
+  const vencimento=document.getElementById('fat-vencimento').value;
+  if(!vencimento){toast('Informe o vencimento','error');return;}
+  const numero=document.getElementById('fat-numero').value?Number(document.getElementById('fat-numero').value):nextNumero('proxFatura');
+  const item={
+    id:document.getElementById('fat-id').value||uid(),
+    numero,
+    contratoId:document.getElementById('fat-contrato').value||null,
+    clienteId,descricao,valor,vencimento,
+    parcela:document.getElementById('fat-parcela').value,
+    forma:document.getElementById('fat-forma').value||'PIX',
+    obsPag:document.getElementById('fat-obspag').value,
+    criado:new Date().toISOString(),
+  };
+  DB.save('faturas',item);
+  closeModal('modal-fatura');renderFaturas();toast('Fatura salva!','success');
+}
+function delFatura(id){if(!confirm('Excluir esta fatura?'))return;DB.del('faturas',id);renderFaturas();toast('Excluído.','info');}
+function gerarFaturasDoContrato(id){
+  const c=DB.one('contratos',id);if(!c)return;
+  if(!c.parcelas?.length){toast('Este contrato não tem parcelas definidas.','error');return;}
+  const existentes=DB.get('faturas').filter(f=>f.contratoId===id);
+  let criadas=0;
+  c.parcelas.forEach((p,i)=>{
+    const jaExiste=existentes.some(f=>f.vencimento===p.vencimento&&f.valor===p.valor);
+    if(jaExiste)return;
+    const numero=nextNumero('proxFatura');
+    DB.save('faturas',{
+      id:uid(),numero,contratoId:id,clienteId:c.clienteId,
+      descricao:(c.itens||[]).map(it=>it.nome).join(', '),
+      valor:p.valor,vencimento:p.vencimento,
+      parcela:`Parcela ${String(i+1).padStart(2,'0')}`,
+      forma:p.forma||'PIX',obsPag:p.obs||'',
+      criado:new Date().toISOString(),
+    });
+    criadas++;
+  });
+  renderFaturas();
+  toast(criadas?`${criadas} fatura(s) gerada(s)!`:'Todas as parcelas já possuem fatura.','success');
+}
+function imprimirFatura(id){
+  const f=DB.one('faturas',id);if(!f){toast('Fatura não encontrada','error');return;}
+  const cli=DB.one('clientes',f.clienteId);
+  const c=f.contratoId?DB.one('contratos',f.contratoId):null;
+  const o=c?.orcamentoId?DB.one('orcamentoscli',c.orcamentoId):null;
+  const emp=getEmpresa();
+  const w=_docOpen();
+  w.document.write(`<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><title>Fatura ${f.numero||''}</title><style>${_docStyleBase()}</style></head><body>
+  <div class="doc-hd">
+    <div>
+      <div class="doc-emp-nome">${esc(emp.razaoSocial)}</div>
+      <div class="doc-emp-info">End: ${esc(emp.endereco)} - ${esc(emp.cidade)}/${esc(emp.estado)}<br>Celular: ${esc(emp.celular)} — E-mail: ${esc(emp.email)}<br>CNPJ: ${esc(emp.cnpj)} I.E.: ${esc(emp.ie)}</div>
+    </div>
+    <div class="doc-titulo-box">
+      <div class="doc-titulo">FATURA DE LOCAÇÃO Nº ${esc(String(f.numero))}</div>
+      <div class="doc-sub">Data de Emissão: ${fmtD(f.criado?f.criado.slice(0,10):today())}</div>
+    </div>
+  </div>
+  ${_clienteBox(cli)}
+  <div class="doc-sec-title">Dados dos Produtos/Serviços Cedidos em Locação</div>
+  <table class="doc-table">
+    <thead><tr><th>Nome</th><th>Qtd.</th><th class="r">Vr. Total</th></tr></thead>
+    <tbody><tr><td>${esc(f.descricao)}</td><td>1,00</td><td class="r">${fmtR(f.valor)}</td></tr></tbody>
+  </table>
+  <div class="doc-grid" style="margin-top:0;border-top:none">
+    <div class="doc-cell"><b>Data de Vencimento</b>${fmtD(f.vencimento)}</div>
+    <div class="doc-cell"><b>Total</b>${fmtR(f.valor)}</div>
+  </div>
+  ${(o||c)?`<div class="doc-sec-title">Observações da Nota</div><div style="padding:8px 2px;font-size:11.5px">${o?`Orçamento Nº ${o.numero} `:''}${c?`Contrato Nº ${c.numero}`:''}${c?.local?' — '+esc(c.local):''}</div>`:''}
+  <div class="doc-sec-title">Forma de Pagamento</div>
+  <div style="padding:8px 2px;font-size:12px;font-style:italic">${esc(f.parcela||'')} ${esc(f.forma||'')}${f.obsPag?': '+esc(f.obsPag):''}</div>
+  <div class="doc-fiscal"><strong>Dados Bancários:</strong> ${esc(emp.banco)}
+
+${esc(emp.textoFiscal)}</div>
+  ${_printFooterBtn()}
+  </body></html>`);
+  w.document.close();
 }
 
 // ── ORÇAMENTO (METAS) ─────────────────────────────────────────────────────────
@@ -3259,7 +4075,6 @@ async function initApp(){
   document.getElementById('topbar-date').textContent=new Date().toLocaleDateString('pt-BR',{weekday:'short',day:'numeric',month:'short',year:'numeric'});
   document.getElementById('fin-mes').value=thisMonth();
   document.getElementById('orc-mes').value=thisMonth();
-  document.getElementById('rel-mes').value=thisMonth();
   renderDashboard();
 }
 
