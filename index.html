@@ -3822,7 +3822,7 @@ function imprimirContrato(id){
   const emp=getEmpresa();
   const w=_docOpen();
   w.document.write(`<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><title>Contrato ${c.numero||''}</title>${_docFonts()}<style>${_docStyleBase()}</style></head><body><div class="sheet">
-  ${_docHeader(emp,'CONTRATO',c.numero||'—',today())}
+  ${_docHeader(emp,'CONTRATO',c.numero||'—',today(),null,true)}
   <div class="doc-grid cols3">
     <div class="doc-cell"><b>Data de Início</b><span class="val">${fmtD(c.inicio)}</span></div>
     <div class="doc-cell"><b>Data de Término</b><span class="val">${fmtD(c.fim)}</span></div>
