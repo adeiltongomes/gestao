@@ -3512,11 +3512,10 @@ function _docStyleBase(){
   .doc-emp-tag{font-family:var(--mono);font-size:8px;text-transform:uppercase;letter-spacing:.18em;color:var(--accent);font-weight:600;margin-top:3px}
   .doc-emp-info{font-family:var(--mono);font-size:9.5px;color:var(--ink-soft);line-height:1.7;margin-top:9px}
   .doc-titulo-box{text-align:right;flex-shrink:0;font-family:var(--mono);font-size:10px;color:var(--ink-soft);line-height:1.8}
-  .doc-titulo-box b{font-weight:600;color:var(--ink)}
-  .doc-hd-bar{display:flex;justify-content:space-between;align-items:baseline;background:var(--ink);padding:11px 24px;border-top:1.5px solid var(--ink)}
-  .doc-hd-titulo{font-family:'Fraunces',serif;font-style:italic;font-weight:600;font-size:18px;color:var(--paper);letter-spacing:.01em}
-  .doc-hd-titulo .num{font-family:var(--mono);font-style:normal;font-weight:600;color:var(--accent);margin-left:10px;font-size:14px;letter-spacing:.02em}
-  .doc-hd-data{font-family:var(--mono);font-size:10.5px;color:#c6c3e8;letter-spacing:.03em}
+  .doc-hd-bar{display:flex;justify-content:space-between;align-items:baseline;background:#eeece5;padding:11px 24px;border-top:1.5px solid var(--ink)}
+  .doc-hd-titulo{font-family:'Fraunces',serif;font-style:italic;font-weight:600;font-size:18px;color:var(--ink);letter-spacing:.01em}
+  .doc-hd-titulo .num{font-family:var(--mono);font-style:normal;font-weight:600;color:var(--brand);margin-left:10px;font-size:14px;letter-spacing:.02em}
+  .doc-hd-data{font-family:var(--mono);font-size:10.5px;color:var(--ink-soft);letter-spacing:.03em}
   .doc-grid{display:grid;grid-template-columns:1fr 1fr;margin-bottom:6px}
   .doc-grid.cols3{grid-template-columns:1fr 1fr 1fr}
   .doc-cell{padding:10px 16px 10px 0;border-bottom:1px solid var(--rule)}
@@ -3559,9 +3558,9 @@ function _docHeader(emp,tituloDoc,numero,dataEmissao,cuidadosNome,useRazao){
       </div>
     </div>
     <div class="doc-titulo-box">
-      <b>${esc(emp.telefone||'')}${emp.celular?' / '+esc(emp.celular):''}</b><br>
+      ${esc(emp.telefone||'')}${emp.celular?' / '+esc(emp.celular):''}<br>
       ${esc(emp.email||'')}<br>
-      Vendedor <b>${esc(emp.vendedor||'—')}</b>${cuidadosNome?`<br>A/C <b>${esc(cuidadosNome)}</b>`:''}
+      Vendedor: ${esc(emp.vendedor||'—')}${cuidadosNome?`<br>A/C: ${esc(cuidadosNome)}`:''}
     </div>
   </div>
   <div class="doc-hd-bar">
