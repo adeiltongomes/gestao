@@ -3777,8 +3777,15 @@ function saveContrato(){
     const grupoId=uid();
     parcelas.forEach((p,i)=>{
       DB.save('transacoes',{id:uid(),tipo:'entrada',categoria:'Locação de Equipamento',descricao:`Contrato ${numero} — ${cli?.nome||''} (${i+1}/${parcelas.length})`,valor:p.valor,data:p.vencimento,status:'pendente',observacoes:p.obs,contratoId:item.id,grupoId});
+      DB.save('faturas',{id:uid(),numero:nextNumero('proxFatura'),contratoId:item.id,clienteId,
+        descricao:itens.map(it=>it.nome).join(', '),
+        valor:p.valor,vencimento:p.vencimento,
+        parcela:`Parcela ${String(i+1).padStart(2,'0')}`,
+        forma:p.forma||'PIX',obsPag:p.obs||'',
+        criado:new Date().toISOString()});
     });
-    toast(`Contrato salvo e ${parcelas.length} parcela(s) lançada(s) no Financeiro!`,'success');
+    renderFaturas();
+    toast(`Contrato salvo, ${parcelas.length} parcela(s) lançada(s) no Financeiro e fatura(s) geradas!`,'success');
   }else{
     toast('Contrato salvo!','success');
   }
