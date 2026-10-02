@@ -3505,10 +3505,11 @@ function _docStyleBase(){
   .sheet::before{content:'';position:absolute;top:0;left:0;right:0;height:6px;background:linear-gradient(90deg,var(--brand) 0%,var(--brand) 80%,var(--accent) 80%,var(--accent) 100%)}
   .doc-hd-box{border:1.5px solid var(--ink);margin-bottom:24px}
   .doc-hd{display:flex;justify-content:space-between;align-items:flex-start;gap:20px;padding:17px 24px 15px}
-  .doc-logo{display:flex;align-items:center;gap:14px}
+  .doc-logo{display:flex;align-items:center;gap:14px;flex:1;min-width:0}
+  .doc-emp-text{min-width:0}
   .doc-badge{width:84px;height:84px;border-radius:50%;background:var(--brand);color:#fff;display:flex;align-items:center;justify-content:center;font-family:'Fraunces',serif;font-style:italic;font-weight:600;font-size:28px;flex-shrink:0;object-fit:contain}
   img.doc-badge{background:#fff;border:1.5px solid var(--ink);padding:4px}
-  .doc-emp-nome{font-family:'Fraunces',serif;font-weight:600;font-size:21px;color:var(--ink);letter-spacing:-.01em}
+  .doc-emp-nome{font-family:'Fraunces',serif;font-weight:600;font-size:18px;line-height:1.2;color:var(--ink);letter-spacing:-.01em;overflow-wrap:break-word}
   .doc-emp-tag{font-family:var(--mono);font-size:8px;text-transform:uppercase;letter-spacing:.18em;color:var(--accent);font-weight:600;margin-top:3px}
   .doc-emp-info{font-family:var(--mono);font-size:9.5px;color:var(--ink-soft);line-height:1.7;margin-top:9px}
   .doc-titulo-box{text-align:right;flex-shrink:0;font-family:var(--mono);font-size:10px;color:var(--ink-soft);line-height:1.8}
@@ -3551,7 +3552,7 @@ function _docHeader(emp,tituloDoc,numero,dataEmissao,cuidadosNome,useRazao){
   <div class="doc-hd">
     <div class="doc-logo">
       ${_docLogoHtml(emp)}
-      <div>
+      <div class="doc-emp-text">
         <div class="doc-emp-nome">${esc(nomePrincipal)}</div>
         <div class="doc-emp-tag">Locação de Tecnologia</div>
         <div class="doc-emp-info">CNPJ ${esc(emp.cnpj)}${emp.ie?' · IE '+esc(emp.ie):''}<br>${esc(emp.endereco)}<br>${cidadeUf?esc(cidadeUf):''}${emp.cep?' · CEP '+esc(emp.cep):''}</div>
