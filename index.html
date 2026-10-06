@@ -3924,15 +3924,21 @@ function addItemFaturaRow(data){
   data=data||{};
   const wrap=document.createElement('div');
   wrap.className='fat-item-row-wrap';
-  wrap.innerHTML=`<div class="fat-item-row" style="display:grid;grid-template-columns:1.4fr .7fr .9fr .9fr .9fr auto;gap:6px;align-items:end;margin-bottom:2px">
-    <div><label class="form-label" style="font-size:10px">Produto</label><input class="form-control fi-produto" placeholder="Ex: Tablets" value="${esc(data.produto||'')}"></div>
-    <div><label class="form-label" style="font-size:10px">Qtd.</label><input class="form-control fi-qtd" type="number" min="0" value="${data.quantidade||''}"></div>
-    <div><label class="form-label" style="font-size:10px">Valor (diária)</label><input class="form-control fi-valor" type="number" step="0.01" value="${data.valor||''}"></div>
-    <div><label class="form-label" style="font-size:10px">Início</label><input class="form-control fi-inicio" type="date" value="${data.inicio||''}"></div>
-    <div><label class="form-label" style="font-size:10px">Término</label><input class="form-control fi-termino" type="date" value="${data.termino||''}"></div>
-    <button type="button" class="btn btn-danger btn-xs" onclick="this.closest('.fat-item-row-wrap').remove();recalcFaturaItens()" title="Remover">✕</button>
-  </div>
-  <div class="fi-resumo" style="font-size:10.5px;color:#8a8a9a;font-family:'IBM Plex Mono',monospace;margin:0 0 8px"></div>`;
+  wrap.style.cssText='border:1.5px solid var(--border);border-radius:10px;padding:14px;margin-bottom:12px;background:var(--surface-2)';
+  wrap.innerHTML=`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+      <span style="font-size:10.5px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--text-mid)">Item de locação</span>
+      <button type="button" class="btn btn-danger btn-xs" onclick="this.closest('.fat-item-row-wrap').remove();recalcFaturaItens()">✕ Remover</button>
+    </div>
+    <div class="form-group"><label class="form-label">Produto</label><input class="form-control fi-produto" placeholder="Ex: Tablets" value="${esc(data.produto||'')}"></div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Quantidade</label><input class="form-control fi-qtd" type="number" min="0" value="${data.quantidade||''}"></div>
+      <div class="form-group"><label class="form-label">Valor (diária)</label><input class="form-control fi-valor" type="number" step="0.01" value="${data.valor||''}"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group" style="margin-bottom:0"><label class="form-label">Início</label><input class="form-control fi-inicio" type="date" value="${data.inicio||''}"></div>
+      <div class="form-group" style="margin-bottom:0"><label class="form-label">Término</label><input class="form-control fi-termino" type="date" value="${data.termino||''}"></div>
+    </div>
+    <div class="fi-resumo" style="font-size:11.5px;color:var(--text-mid);margin-top:10px;font-family:'IBM Plex Mono',monospace;text-align:right"></div>`;
   document.getElementById('fat-itens-list').appendChild(wrap);
   recalcFaturaItens();
 }
