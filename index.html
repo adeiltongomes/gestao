@@ -1505,6 +1505,7 @@ thead th.r{text-align:right}
     </div>
     <div class="modal-footer">
       <button class="btn btn-ghost" onclick="closeModal('modal-link')">Fechar</button>
+      <a class="btn btn-success hidden" id="link-wa-btn" href="#" target="_blank" rel="noopener" style="text-decoration:none">📲 Enviar por WhatsApp</a>
       <button class="btn btn-primary" onclick="copiarLinkModal()">📋 Copiar Link</button>
     </div>
   </div>
@@ -3665,11 +3666,34 @@ function imprimirOrcamentoCli(id){
   </div></body></html>`);
   w.document.close();
 }
+function _waBtnHref(telefone,mensagem){
+  const d=(telefone||'').replace(/\D/g,'');
+  if(!d)return null;
+  const num=d.length<=11?'55'+d:d;
+  return 'https://wa.me/'+num+'?text='+encodeURIComponent(mensagem);
+}
+function _setLinkWaBtn(telefone,mensagem){
+  const btn=document.getElementById('link-wa-btn');
+  const href=_waBtnHref(telefone,mensagem);
+  if(href){btn.href=href;btn.classList.remove('hidden');}
+  else btn.classList.add('hidden');
+}
 function linkAprovacaoOrcamento(id){
   const o=DB.one('orcamentoscli',id);if(!o)return;
+  const cli=DB.one('clientes',o.clienteId);
   const url=location.origin+location.pathname+'?orc='+o.id;
   document.getElementById('link-modal-title').textContent='Link do Orçamento Nº '+(o.numero||'');
   document.getElementById('link-url').value=url;
+  _setLinkWaBtn(cli?.telefone,`Olá${cli?.nome?', '+cli.nome:''}! Segue o orçamento Nº ${o.numero||''} da AccertTech para aprovação: ${url}`);
+  openModal('modal-link');
+}
+function linkFatura(id){
+  const f=DB.one('faturas',id);if(!f){toast('Fatura não encontrada','error');return;}
+  const cli=DB.one('clientes',f.clienteId);
+  const url=location.origin+location.pathname+'?fat='+f.id;
+  document.getElementById('link-modal-title').textContent='Link da Fatura Nº '+(f.numero||'');
+  document.getElementById('link-url').value=url;
+  _setLinkWaBtn(cli?.telefone,`Olá${cli?.nome?', '+cli.nome:''}! Segue a fatura Nº ${f.numero||''} (${fmtR(f.valor)}, vencimento ${fmtD(f.vencimento)}) da AccertTech: ${url}`);
   openModal('modal-link');
 }
 function copiarLinkModal(){
@@ -3867,24 +3891,30 @@ function renderFaturas(){
       <td>${fmtD(f.vencimento)}</td>
       <td><strong style="color:var(--green)">${fmtR(f.valor)}</strong></td>
       <td><div class="td-actions">
+        <button class="btn btn-ghost btn-xs" onclick="openModalFatura('${f.id}')" title="Editar">✏️</button>
         <button class="btn btn-ghost btn-xs" onclick="imprimirFatura('${f.id}')" title="Imprimir">🖨</button>
+        <button class="btn btn-ghost btn-xs" onclick="linkFatura('${f.id}')" title="Enviar para o cliente">📤</button>
         <button class="btn btn-danger btn-xs" onclick="delFatura('${f.id}')">✕</button>
       </div></td></tr>`;
   }).join(''):`<tr><td colspan="6"><div class="empty"><div class="empty-icon">🧾</div><h3>Nenhuma fatura encontrada</h3></div></td></tr>`;
 }
-function openModalFatura(){
-  document.getElementById('fat-id').value='';
-  document.getElementById('fat-numero').value='';
+function openModalFatura(id){
+  const f=id?DB.one('faturas',id):null;
+  document.getElementById('mfat-title').textContent=f?'Editar Fatura Nº '+(f.numero||''):'Nova Fatura';
+  document.getElementById('fat-id').value=f?f.id:'';
+  document.getElementById('fat-numero').value=f?f.numero:'';
   const selC=document.getElementById('fat-contrato');
   selC.innerHTML='<option value="">— Selecionar para preencher automaticamente —</option>'+DB.get('contratos').map(c=>`<option value="${c.id}">Nº ${c.numero} — ${esc(DB.one('clientes',c.clienteId)?.nome||'')}</option>`).join('');
+  selC.value=f?.contratoId||'';
   const selCli=document.getElementById('fat-cliente');
   selCli.innerHTML=DB.get('clientes').map(c=>`<option value="${c.id}">${esc(c.nome)}</option>`).join('');
-  document.getElementById('fat-desc').value='';
-  document.getElementById('fat-valor').value='';
-  document.getElementById('fat-vencimento').value=today();
-  document.getElementById('fat-parcela').value='';
-  document.getElementById('fat-forma').value='PIX';
-  document.getElementById('fat-obspag').value='';
+  selCli.value=f?.clienteId||'';
+  document.getElementById('fat-desc').value=f?.descricao||'';
+  document.getElementById('fat-valor').value=f?.valor||'';
+  document.getElementById('fat-vencimento').value=f?.vencimento||today();
+  document.getElementById('fat-parcela').value=f?.parcela||'';
+  document.getElementById('fat-forma').value=f?.forma||'PIX';
+  document.getElementById('fat-obspag').value=f?.obsPag||'';
   openModal('modal-fatura');
 }
 function preencherFaturaDeContrato(){
@@ -4446,11 +4476,62 @@ function recusarPublico(id){
   renderPublicOrcamentoPage(id);
 }
 
+// ── PÁGINA PÚBLICA DA FATURA (link enviado ao cliente: ?fat=ID) ───────────────
+async function renderPublicFaturaPage(id){
+  const el=document.getElementById('public-view');
+  el.classList.remove('hidden');
+  _injectDocStylesOnce();
+  _pubMsg('Carregando fatura…');
+  try{ await DB.init(); }catch(e){
+    _pubMsg('<span style="color:#b3261e">Não foi possível carregar. Verifique sua conexão e recarregue a página.</span>');
+    return;
+  }
+  const f=DB.one('faturas',id);
+  if(!f){ _pubMsg('<span style="color:#b3261e">Fatura não encontrada ou link inválido.</span>'); return; }
+  const cli=DB.one('clientes',f.clienteId);
+  const emp=getEmpresa();
+  const pixBox=emp.pix?`<div style="margin-top:26px;border:1.5px solid var(--ink);overflow:hidden">
+    <div style="background:var(--brand);color:#fff;font-family:var(--mono);font-size:9.5px;font-weight:600;text-transform:uppercase;letter-spacing:.14em;padding:8px 14px">Pagamento via Pix</div>
+    <div style="display:grid;grid-template-columns:1fr auto;gap:18px;padding:16px;align-items:center">
+      <div style="font-family:var(--mono);font-size:11px;color:var(--ink-soft)">
+        <b style="font-family:'IBM Plex Sans',sans-serif;color:var(--ink);display:block;font-size:13px;margin-bottom:6px">Chave Pix (copia e cola)</b>
+        <div style="word-break:break-all;background:#f4f2ec;padding:8px 10px;border-radius:6px;border:1px solid var(--rule)">${esc(emp.pix)}</div>
+        ${emp.favorecido?`<div style="margin-top:8px">Favorecido: ${esc(emp.favorecido)}</div>`:''}
+      </div>
+      <img src="${_qrCodeUrl(emp.pix,100)}" width="100" height="100" alt="QR Code Pix">
+    </div>
+  </div>`:'';
+  el.innerHTML=`<div class="sheet" style="margin:30px auto">
+    ${_docHeader(emp,'FATURA DE LOCAÇÃO',f.numero,f.criado?f.criado.slice(0,10):today(),null,true)}
+    ${_clienteBox(cli)}
+    <div class="doc-sec-title">Produtos / Serviços Cedidos em Locação</div>
+    <table class="doc-table">
+      <thead><tr><th>Nome</th><th>Qtd.</th><th class="r">Vr. Total</th></tr></thead>
+      <tbody><tr><td>${esc(f.descricao)}</td><td>1,00</td><td class="r">${fmtR(f.valor)}</td></tr></tbody>
+      <tfoot><tr><td>Total</td><td></td><td class="r">${fmtR(f.valor)}</td></tr></tfoot>
+    </table>
+    <div class="doc-grid">
+      <div class="doc-cell"><b>Data de Vencimento</b><span class="val">${fmtD(f.vencimento)}</span></div>
+      <div class="doc-cell"><b>Forma de Pagamento</b><span class="val">${esc(f.parcela||'')} ${esc(f.forma||'')}</span></div>
+    </div>
+    ${pixBox}
+    <div class="doc-fiscal"><strong>Dados bancários:</strong> ${esc(emp.banco)}${f.obsPag?'<br><strong>Pagamento:</strong> '+esc(f.obsPag):''}
+
+${esc(emp.textoFiscal)}</div>
+    ${_docFooterNote(emp)}
+    ${_printFooterBtn()}
+  </div>`;
+}
+
 // ── INIT ──────────────────────────────────────────────────────────────────────
 const _publicOrcId=new URLSearchParams(location.search).get('orc');
+const _publicFatId=new URLSearchParams(location.search).get('fat');
 if(_publicOrcId){
   document.getElementById('login-ov').style.display='none';
   renderPublicOrcamentoPage(_publicOrcId);
+}else if(_publicFatId){
+  document.getElementById('login-ov').style.display='none';
+  renderPublicFaturaPage(_publicFatId);
 }else if(sessionStorage.getItem('gc_ok')){
   document.getElementById('login-ov').style.display='none';
   document.getElementById('app').classList.remove('hidden');
