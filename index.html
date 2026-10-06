@@ -3605,6 +3605,20 @@ function _itensTable(itens,total){
     <tfoot><tr><td colspan="3">Total</td><td class="r">${fmtR(total)}</td></tr></tfoot>
   </table>`;
 }
+function _pixBox(emp){
+  if(!emp.pix)return'';
+  return `<div style="margin-top:26px;border:1.5px solid var(--ink);overflow:hidden">
+    <div style="background:var(--brand);color:#fff;font-family:var(--mono);font-size:9.5px;font-weight:600;text-transform:uppercase;letter-spacing:.14em;padding:8px 14px">Pagamento via Pix</div>
+    <div style="display:grid;grid-template-columns:1fr auto;gap:18px;padding:16px;align-items:center">
+      <div style="font-family:var(--mono);font-size:11px;color:var(--ink-soft)">
+        <b style="font-family:'IBM Plex Sans',sans-serif;color:var(--ink);display:block;font-size:13px;margin-bottom:6px">Chave Pix (copia e cola)</b>
+        <div style="word-break:break-all;background:#f4f2ec;padding:8px 10px;border-radius:6px;border:1px solid var(--rule)">${esc(emp.pix)}</div>
+        ${emp.favorecido?`<div style="margin-top:8px">Favorecido: ${esc(emp.favorecido)}</div>`:''}
+      </div>
+      <img src="${_qrCodeUrl(emp.pix,100)}" width="100" height="100" alt="QR Code Pix">
+    </div>
+  </div>`;
+}
 function _itensLocacaoTable(itens){
   const total=itens.reduce((s,it)=>s+(it.total||0),0);
   return `<table class="doc-table">
@@ -4115,6 +4129,7 @@ function imprimirFatura(id){
     <div class="doc-cell"><b>Forma de Pagamento</b><span class="val">${esc(f.parcela||'')} ${esc(f.forma||'')}</span></div>
     ${(o||c)?`<div class="doc-cell" style="grid-column:1/3"><b>Referências</b><span class="val">${o?`Orçamento Nº ${o.numero} `:''}${c?`· Contrato Nº ${c.numero}`:''}${c?.local?' · '+esc(c.local):''}</span></div>`:''}
   </div>
+  ${_pixBox(emp)}
   <div class="doc-fiscal"><strong>Dados bancários:</strong> ${esc(emp.banco)}${f.obsPag?'<br><strong>Pagamento:</strong> '+esc(f.obsPag):''}
 
 ${esc(emp.textoFiscal)}</div>
@@ -4587,17 +4602,6 @@ async function renderPublicFaturaPage(id){
   if(!f){ _pubMsg('<span style="color:#b3261e">Fatura não encontrada ou link inválido.</span>'); return; }
   const cli=DB.one('clientes',f.clienteId);
   const emp=getEmpresa();
-  const pixBox=emp.pix?`<div style="margin-top:26px;border:1.5px solid var(--ink);overflow:hidden">
-    <div style="background:var(--brand);color:#fff;font-family:var(--mono);font-size:9.5px;font-weight:600;text-transform:uppercase;letter-spacing:.14em;padding:8px 14px">Pagamento via Pix</div>
-    <div style="display:grid;grid-template-columns:1fr auto;gap:18px;padding:16px;align-items:center">
-      <div style="font-family:var(--mono);font-size:11px;color:var(--ink-soft)">
-        <b style="font-family:'IBM Plex Sans',sans-serif;color:var(--ink);display:block;font-size:13px;margin-bottom:6px">Chave Pix (copia e cola)</b>
-        <div style="word-break:break-all;background:#f4f2ec;padding:8px 10px;border-radius:6px;border:1px solid var(--rule)">${esc(emp.pix)}</div>
-        ${emp.favorecido?`<div style="margin-top:8px">Favorecido: ${esc(emp.favorecido)}</div>`:''}
-      </div>
-      <img src="${_qrCodeUrl(emp.pix,100)}" width="100" height="100" alt="QR Code Pix">
-    </div>
-  </div>`:'';
   el.innerHTML=`<div class="sheet" style="margin:30px auto">
     ${_docHeader(emp,'FATURA DE LOCAÇÃO',f.numero,f.criado?f.criado.slice(0,10):today(),null,true)}
     ${_clienteBox(cli)}
@@ -4611,7 +4615,7 @@ async function renderPublicFaturaPage(id){
       <div class="doc-cell"><b>Data de Vencimento</b><span class="val">${fmtD(f.vencimento)}</span></div>
       <div class="doc-cell"><b>Forma de Pagamento</b><span class="val">${esc(f.parcela||'')} ${esc(f.forma||'')}</span></div>
     </div>
-    ${pixBox}
+    ${_pixBox(emp)}
     <div class="doc-fiscal"><strong>Dados bancários:</strong> ${esc(emp.banco)}${f.obsPag?'<br><strong>Pagamento:</strong> '+esc(f.obsPag):''}
 
 ${esc(emp.textoFiscal)}</div>
