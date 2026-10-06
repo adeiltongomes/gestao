@@ -1485,6 +1485,12 @@ thead th.r{text-align:right}
         <div class="form-group"><label class="form-label">Forma de Pagamento</label><input class="form-control" id="fat-forma" value="PIX"></div>
       </div>
       <div class="form-group"><label class="form-label">Observação do Pagamento</label><input class="form-control" id="fat-obspag" placeholder="Ex: Chave Pix ..."></div>
+      <div class="form-group">
+        <label class="form-label">Itens de Locação (opcional — só aparece na fatura impressa se preenchido)</label>
+        <div id="fat-itens-list" oninput="recalcFaturaItens()"></div>
+        <button type="button" class="btn btn-ghost btn-xs" onclick="addItemFaturaRow()">+ Adicionar item</button>
+        <div id="fat-itens-total" style="font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:600;margin-top:8px;text-align:right"></div>
+      </div>
     </div>
     <div class="modal-footer">
       <button class="btn btn-ghost" onclick="closeModal('modal-fatura')">Cancelar</button>
@@ -1744,6 +1750,14 @@ const esc=s=>String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>
 const fmtR=v=>Number(v||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
 const fmtD=s=>s?new Date(s+'T12:00:00').toLocaleDateString('pt-BR'):'—';
 const today=()=>new Date().toISOString().slice(0,10);
+const MESES_PT=['JANEIRO','FEVEREIRO','MARÇO','ABRIL','MAIO','JUNHO','JULHO','AGOSTO','SETEMBRO','OUTUBRO','NOVEMBRO','DEZEMBRO'];
+function _diasEntre(ini,fim){
+  if(!ini||!fim)return 0;
+  const a=new Date(ini+'T12:00:00'),b=new Date(fim+'T12:00:00');
+  const d=Math.round((b-a)/86400000)+1;
+  return d>0?d:0;
+}
+function _mesDe(iso){ return iso?MESES_PT[new Date(iso+'T12:00:00').getMonth()]:''; }
 const thisMonth=()=>new Date().toISOString().slice(0,7);
 
 function toast(msg,type='info'){
@@ -3591,6 +3605,14 @@ function _itensTable(itens,total){
     <tfoot><tr><td colspan="3">Total</td><td class="r">${fmtR(total)}</td></tr></tfoot>
   </table>`;
 }
+function _itensLocacaoTable(itens){
+  const total=itens.reduce((s,it)=>s+(it.total||0),0);
+  return `<table class="doc-table">
+    <thead><tr><th>Produto</th><th>Quantidade</th><th class="r">Valor</th><th>Início</th><th>Término</th><th>Qtd Dias</th><th>Mês</th><th class="r">Total</th></tr></thead>
+    <tbody>${itens.map(it=>`<tr><td>${esc(it.produto)}</td><td>${it.quantidade}</td><td class="r">${fmtR(it.valor)}</td><td>${fmtD(it.inicio)}</td><td>${fmtD(it.termino)}</td><td>${it.qtdDias}</td><td>${esc(it.mes)}</td><td class="r">${fmtR(it.total)}</td></tr>`).join('')}</tbody>
+    <tfoot><tr><td colspan="7">Total</td><td class="r">${fmtR(total)}</td></tr></tfoot>
+  </table>`;
+}
 function _parcelasTable(parcelas){
   if(!parcelas?.length)return'';
   return `<div class="doc-sec-title">Condições de Pagamento</div>
@@ -3898,6 +3920,67 @@ function renderFaturas(){
       </div></td></tr>`;
   }).join(''):`<tr><td colspan="6"><div class="empty"><div class="empty-icon">🧾</div><h3>Nenhuma fatura encontrada</h3></div></td></tr>`;
 }
+function addItemFaturaRow(data){
+  data=data||{};
+  const wrap=document.createElement('div');
+  wrap.className='fat-item-row-wrap';
+  wrap.innerHTML=`<div class="fat-item-row" style="display:grid;grid-template-columns:1.4fr .7fr .9fr .9fr .9fr auto;gap:6px;align-items:end;margin-bottom:2px">
+    <div><label class="form-label" style="font-size:10px">Produto</label><input class="form-control fi-produto" placeholder="Ex: Tablets" value="${esc(data.produto||'')}"></div>
+    <div><label class="form-label" style="font-size:10px">Qtd.</label><input class="form-control fi-qtd" type="number" min="0" value="${data.quantidade||''}"></div>
+    <div><label class="form-label" style="font-size:10px">Valor (diária)</label><input class="form-control fi-valor" type="number" step="0.01" value="${data.valor||''}"></div>
+    <div><label class="form-label" style="font-size:10px">Início</label><input class="form-control fi-inicio" type="date" value="${data.inicio||''}"></div>
+    <div><label class="form-label" style="font-size:10px">Término</label><input class="form-control fi-termino" type="date" value="${data.termino||''}"></div>
+    <button type="button" class="btn btn-danger btn-xs" onclick="this.closest('.fat-item-row-wrap').remove();recalcFaturaItens()" title="Remover">✕</button>
+  </div>
+  <div class="fi-resumo" style="font-size:10.5px;color:#8a8a9a;font-family:'IBM Plex Mono',monospace;margin:0 0 8px"></div>`;
+  document.getElementById('fat-itens-list').appendChild(wrap);
+  recalcFaturaItens();
+}
+function _itemFaturaCalc(it){
+  const dias=_diasEntre(it.inicio,it.termino);
+  const total=(it.quantidade||0)*(it.valor||0)*dias;
+  const mes=_mesDe(it.inicio);
+  return {...it,qtdDias:dias,mes,total};
+}
+function _coletarItensFatura(){
+  return Array.from(document.querySelectorAll('#fat-itens-list .fat-item-row-wrap')).map(w=>({
+    produto:w.querySelector('.fi-produto').value.trim(),
+    quantidade:Number(w.querySelector('.fi-qtd').value)||0,
+    valor:Number(w.querySelector('.fi-valor').value)||0,
+    inicio:w.querySelector('.fi-inicio').value,
+    termino:w.querySelector('.fi-termino').value,
+  })).filter(it=>it.produto||it.quantidade||it.valor||it.inicio||it.termino);
+}
+function recalcFaturaItens(){
+  const wraps=document.querySelectorAll('#fat-itens-list .fat-item-row-wrap');
+  let grand=0,completos=0;
+  wraps.forEach(w=>{
+    const it={
+      produto:w.querySelector('.fi-produto').value.trim(),
+      quantidade:Number(w.querySelector('.fi-qtd').value)||0,
+      valor:Number(w.querySelector('.fi-valor').value)||0,
+      inicio:w.querySelector('.fi-inicio').value,
+      termino:w.querySelector('.fi-termino').value,
+    };
+    const c=_itemFaturaCalc(it);
+    const resumo=w.querySelector('.fi-resumo');
+    const ok=it.produto&&it.quantidade&&it.valor&&it.inicio&&it.termino;
+    resumo.textContent=ok?`${c.qtdDias} dia(s) · ${c.mes} · Total ${fmtR(c.total)}`:'';
+    if(ok){grand+=c.total;completos++;}
+  });
+  const totalEl=document.getElementById('fat-itens-total');
+  const valorInp=document.getElementById('fat-valor');
+  if(completos>0){
+    totalEl.textContent='Total dos itens: '+fmtR(grand);
+    valorInp.value=grand.toFixed(2);
+    valorInp.readOnly=true;
+    valorInp.title='Calculado automaticamente a partir dos itens de locação';
+  }else{
+    totalEl.textContent='';
+    valorInp.readOnly=false;
+    valorInp.title='';
+  }
+}
 function openModalFatura(id){
   const f=id?DB.one('faturas',id):null;
   document.getElementById('mfat-title').textContent=f?'Editar Fatura Nº '+(f.numero||''):'Nova Fatura';
@@ -3915,6 +3998,11 @@ function openModalFatura(id){
   document.getElementById('fat-parcela').value=f?.parcela||'';
   document.getElementById('fat-forma').value=f?.forma||'PIX';
   document.getElementById('fat-obspag').value=f?.obsPag||'';
+  document.getElementById('fat-itens-list').innerHTML='';
+  document.getElementById('fat-itens-total').textContent='';
+  document.getElementById('fat-valor').readOnly=false;
+  document.getElementById('fat-valor').title='';
+  (f?.itens||[]).forEach(it=>addItemFaturaRow(it));
   openModal('modal-fatura');
 }
 function preencherFaturaDeContrato(){
@@ -3943,6 +4031,8 @@ function saveFatura(){
   const vencimento=document.getElementById('fat-vencimento').value;
   if(!vencimento){toast('Informe o vencimento','error');return;}
   const numero=document.getElementById('fat-numero').value?Number(document.getElementById('fat-numero').value):nextNumero('proxFatura');
+  const itensRaw=_coletarItensFatura().filter(it=>it.produto&&it.quantidade&&it.valor&&it.inicio&&it.termino);
+  const itens=itensRaw.map(_itemFaturaCalc);
   const item={
     id:document.getElementById('fat-id').value||uid(),
     numero,
@@ -3951,6 +4041,7 @@ function saveFatura(){
     parcela:document.getElementById('fat-parcela').value,
     forma:document.getElementById('fat-forma').value||'PIX',
     obsPag:document.getElementById('fat-obspag').value,
+    itens,
     criado:new Date().toISOString(),
   };
   DB.save('faturas',item);
@@ -4008,11 +4099,11 @@ function imprimirFatura(id){
   ${_docHeader(emp,'FATURA DE LOCAÇÃO',f.numero,f.criado?f.criado.slice(0,10):today(),null,true)}
   ${_clienteBox(cli)}
   <div class="doc-sec-title">Produtos / Serviços Cedidos em Locação</div>
-  <table class="doc-table">
+  ${f.itens?.length?_itensLocacaoTable(f.itens):`<table class="doc-table">
     <thead><tr><th>Nome</th><th>Qtd.</th><th class="r">Vr. Total</th></tr></thead>
     <tbody><tr><td>${esc(f.descricao)}</td><td>1,00</td><td class="r">${fmtR(f.valor)}</td></tr></tbody>
     <tfoot><tr><td>Total</td><td></td><td class="r">${fmtR(f.valor)}</td></tr></tfoot>
-  </table>
+  </table>`}
   <div class="doc-grid">
     <div class="doc-cell"><b>Data de Vencimento</b><span class="val">${fmtD(f.vencimento)}</span></div>
     <div class="doc-cell"><b>Forma de Pagamento</b><span class="val">${esc(f.parcela||'')} ${esc(f.forma||'')}</span></div>
@@ -4505,11 +4596,11 @@ async function renderPublicFaturaPage(id){
     ${_docHeader(emp,'FATURA DE LOCAÇÃO',f.numero,f.criado?f.criado.slice(0,10):today(),null,true)}
     ${_clienteBox(cli)}
     <div class="doc-sec-title">Produtos / Serviços Cedidos em Locação</div>
-    <table class="doc-table">
+    ${f.itens?.length?_itensLocacaoTable(f.itens):`<table class="doc-table">
       <thead><tr><th>Nome</th><th>Qtd.</th><th class="r">Vr. Total</th></tr></thead>
       <tbody><tr><td>${esc(f.descricao)}</td><td>1,00</td><td class="r">${fmtR(f.valor)}</td></tr></tbody>
       <tfoot><tr><td>Total</td><td></td><td class="r">${fmtR(f.valor)}</td></tr></tfoot>
-    </table>
+    </table>`}
     <div class="doc-grid">
       <div class="doc-cell"><b>Data de Vencimento</b><span class="val">${fmtD(f.vencimento)}</span></div>
       <div class="doc-cell"><b>Forma de Pagamento</b><span class="val">${esc(f.parcela||'')} ${esc(f.forma||'')}</span></div>
