@@ -3927,7 +3927,7 @@ function addItemFaturaRow(data){
   wrap.style.cssText='border:1.5px solid var(--border);border-radius:10px;padding:14px;margin-bottom:12px;background:var(--surface-2)';
   wrap.innerHTML=`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
       <span style="font-size:10.5px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--text-mid)">Item de locação</span>
-      <button type="button" class="btn btn-danger btn-xs" onclick="this.closest('.fat-item-row-wrap').remove();recalcFaturaItens()">✕ Remover</button>
+      <button type="button" class="btn btn-danger btn-xs" onclick="this.closest('.fat-item-row-wrap').remove();recalcFaturaItens()" title="Remover item">✕</button>
     </div>
     <div class="form-group"><label class="form-label">Produto</label><input class="form-control fi-produto" placeholder="Ex: Tablets" value="${esc(data.produto||'')}"></div>
     <div class="form-row">
