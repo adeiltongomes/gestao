@@ -3590,13 +3590,13 @@ function _clienteBox(cli){
   const endParts=[cli.endereco,cli.numero,cli.complemento,cli.bairro].filter(Boolean).join(', ');
   const cidadeUf=[cli.cidade,cli.uf].filter(Boolean).join('/');
   return `<div class="doc-sec-title">Dados do Cliente</div>
-  <div class="doc-grid">
-    <div class="doc-cell" style="grid-column:1/3"><b>Nome / Razão Social</b><span class="val">${esc(cli.nome||'—')}</span></div>
+  <div class="doc-grid cols3">
+    <div class="doc-cell" style="grid-column:1/4"><b>Nome / Razão Social</b><span class="val">${esc(cli.nome||'—')}</span></div>
     <div class="doc-cell"><b>CNPJ/CPF</b><span class="val">${esc(cli.cpfCnpj||'—')}</span></div>
     <div class="doc-cell"><b>Telefone</b><span class="val">${esc(cli.telefone||'—')}</span></div>
-    <div class="doc-cell" style="grid-column:1/3"><b>Endereço</b><span class="val">${esc(endParts||'—')}</span></div>
     <div class="doc-cell"><b>Cidade</b><span class="val">${esc(cidadeUf||'—')}</span></div>
-    <div class="doc-cell"><b>E-mail</b><span class="val">${esc(cli.email||'—')}</span></div>
+    <div class="doc-cell" style="grid-column:1/4"><b>Endereço</b><span class="val">${esc(endParts||'—')}</span></div>
+    <div class="doc-cell" style="grid-column:1/4"><b>E-mail</b><span class="val">${esc(cli.email||'—')}</span></div>
   </div>`;
 }
 function _itensTable(itens,total){
