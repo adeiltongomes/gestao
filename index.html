@@ -3645,7 +3645,10 @@ function generatePixPayload(key,amount,merchantName,city){
 }
 function _pixBox(emp){
   if(!emp.pix)return'';
-  const qrData=generatePixPayload(emp.pix,undefined,emp.nome,emp.cidade);
+  // Se o campo já tem o código "Pix Copia e Cola" completo (gerado oficialmente pelo banco/PSP, começa
+  // com "000201" - o indicador de formato do padrão EMV), usa ele direto no QR em vez de tentar montar
+  // um payload novo - evita qualquer dúvida sobre como aquela chave está registrada de verdade no DICT.
+  const qrData=emp.pix.trim().startsWith('000201')?emp.pix.trim():generatePixPayload(emp.pix,undefined,emp.nome,emp.cidade);
   return `<div style="margin-top:26px;border:1.5px solid var(--ink);overflow:hidden">
     <div style="background:var(--brand);color:#fff;font-family:var(--mono);font-size:9.5px;font-weight:600;text-transform:uppercase;letter-spacing:.14em;padding:8px 14px">Pagamento via Pix</div>
     <div style="display:grid;grid-template-columns:1fr auto;gap:18px;padding:16px;align-items:center">
