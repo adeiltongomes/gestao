@@ -3606,8 +3606,46 @@ function _itensTable(itens,total){
     <tfoot><tr><td colspan="3">Total</td><td class="r">${fmtR(total)}</td></tr></tfoot>
   </table>`;
 }
+// Payload real do Pix (padrão EMV/BR Code) - um QR Pix de verdade NÃO pode só codificar a chave crua
+// (isso é rejeitado como "QRCode Inválido" por qualquer app de banco); precisa desse formato TLV com
+// nome/cidade do recebedor e um checksum CRC16 no final. Mesma lógica já testada e usada de verdade
+// no projeto AJF Academia de Goleiros (src/lib/pix.ts) e replicada no Doce Presença.
+function _pixTlv(id,value){return id+String(value.length).padStart(2,'0')+value}
+function _pixCrc16(str){
+  let crc=0xffff
+  for(let i=0;i<str.length;i++){
+    crc^=str.charCodeAt(i)<<8
+    for(let j=0;j<8;j++){crc=crc&0x8000?(crc<<1)^0x1021:crc<<1}
+  }
+  return(crc&0xffff).toString(16).toUpperCase().padStart(4,'0')
+}
+function _pixSanitize(str,maxLen){
+  // NFD separa a letra do acento; o filtro seguinte já descarta qualquer coisa fora de A-Z/0-9/espaço,
+  // incluindo o acento combinável que sobra - não precisa de uma segunda regex pra faixa Unicode dos acentos.
+  const s=(str||'').normalize('NFD').replace(/[^A-Za-z0-9 ]/g,'').toUpperCase().trim()
+  return s.slice(0,maxLen)||'NA'
+}
+function generatePixPayload(key,amount,merchantName,city){
+  const merchantAccount=_pixTlv('26',_pixTlv('00','br.gov.bcb.pix')+_pixTlv('01',key))
+  const additionalData=_pixTlv('62',_pixTlv('05','***'))
+  const parts=[
+    _pixTlv('00','01'),
+    merchantAccount,
+    _pixTlv('52','0000'),
+    _pixTlv('53','986'),
+    ...(amount!=null?[_pixTlv('54',Number(amount).toFixed(2))]:[]),
+    _pixTlv('58','BR'),
+    _pixTlv('59',_pixSanitize(merchantName,25)),
+    _pixTlv('60',_pixSanitize(city||'BRASIL',15)),
+    additionalData,
+    '6304',
+  ]
+  const payload=parts.join('')
+  return payload+_pixCrc16(payload)
+}
 function _pixBox(emp){
   if(!emp.pix)return'';
+  const qrData=generatePixPayload(emp.pix,undefined,emp.nome,emp.cidade);
   return `<div style="margin-top:26px;border:1.5px solid var(--ink);overflow:hidden">
     <div style="background:var(--brand);color:#fff;font-family:var(--mono);font-size:9.5px;font-weight:600;text-transform:uppercase;letter-spacing:.14em;padding:8px 14px">Pagamento via Pix</div>
     <div style="display:grid;grid-template-columns:1fr auto;gap:18px;padding:16px;align-items:center">
@@ -3616,7 +3654,7 @@ function _pixBox(emp){
         <div style="word-break:break-all;background:#f4f2ec;padding:8px 10px;border-radius:6px;border:1px solid var(--rule)">${esc(emp.pix)}</div>
         ${emp.favorecido?`<div style="margin-top:8px">Favorecido: ${esc(emp.favorecido)}</div>`:''}
       </div>
-      <img src="${_qrCodeUrl(emp.pix,100)}" width="100" height="100" alt="QR Code Pix">
+      <img src="${_qrCodeUrl(qrData,100)}" width="100" height="100" alt="QR Code Pix">
     </div>
   </div>`;
 }
