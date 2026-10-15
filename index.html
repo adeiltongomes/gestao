@@ -1425,8 +1425,11 @@ thead th.r{text-align:right}
         <div class="form-group"><label class="form-label">Previsão de Entrega</label><input class="form-control" id="orccli-entrega" type="date"></div>
       </div>
       <div class="form-row-3">
+        <div class="form-group"><label class="form-label">Devolução</label><input class="form-control" id="orccli-devolucao" type="date"></div>
         <div class="form-group"><label class="form-label">Montagem</label><input class="form-control" id="orccli-montagem" placeholder="Ex: 23/09 / 24/09"></div>
         <div class="form-group"><label class="form-label">Desmontagem</label><input class="form-control" id="orccli-desmontagem" placeholder="Ex: 29/09 / 30/09"></div>
+      </div>
+      <div class="form-row-3">
         <div class="form-group"><label class="form-label">Validade da Proposta (dias)</label><input class="form-control" id="orccli-validade" type="number" min="1" value="1"></div>
       </div>
       <div class="form-group">
@@ -3433,6 +3436,7 @@ function openModalOrcamentoCli(id){
   document.getElementById('orccli-inicio').value=o.inicio||today();
   document.getElementById('orccli-fim').value=o.fim||today();
   document.getElementById('orccli-entrega').value=o.entrega||o.inicio||today();
+  document.getElementById('orccli-devolucao').value=o.devolucao||o.fim||today();
   document.getElementById('orccli-montagem').value=o.montagem||'';
   document.getElementById('orccli-desmontagem').value=o.desmontagem||'';
   document.getElementById('orccli-validade').value=o.validade||1;
@@ -3476,6 +3480,7 @@ function saveOrcamentoCli(){
     local:document.getElementById('orccli-local').value,
     inicio,fim,
     entrega:document.getElementById('orccli-entrega').value,
+    devolucao:document.getElementById('orccli-devolucao').value,
     montagem:document.getElementById('orccli-montagem').value,
     desmontagem:document.getElementById('orccli-desmontagem').value,
     validade:Number(document.getElementById('orccli-validade').value)||1,
@@ -3973,30 +3978,126 @@ function _docFooterNote(emp){
 function _printFooterBtn(){
   return `<div class="no-print" style="margin-top:22px"><button class="btn-p" onclick="window.print()">🖨 Imprimir / Salvar PDF</button></div>`;
 }
+// ── Impressão do Orçamento no layout "GestãoClick" (pedido explícito do usuário 15/10/2026:
+// reproduzir fielmente o visual do sistema antigo) — propositalmente NÃO reaproveita
+// _docStyleBase/_docHeader/_clienteBox/_itensTable/_parcelasTable/_assinaturaBox, que continuam
+// servindo Contrato/Fatura sem mudança nenhuma. Tudo abaixo (prefixo _gc) é exclusivo do Orçamento.
+function _gcNum(v){return Number(v||0).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});}
+function _gcDias(inicio,fim){
+  if(!inicio||!fim)return null;
+  const d=Math.round((new Date(fim+'T12:00:00')-new Date(inicio+'T12:00:00'))/86400000)+1;
+  return d>0?d:null;
+}
+function _gcLogoHtml(emp){
+  if(emp.logoDataUrl)return`<img class="gc-logo" src="${emp.logoDataUrl}" alt="logo">`;
+  return`<div class="gc-logo-fallback">${esc((emp.nome||'AT').trim().slice(0,2).toUpperCase())}</div>`;
+}
+function _gcStyle(){
+  return `*{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#1a1a1a;background:#ccc;padding:18px 0}
+  .gc-sheet{max-width:800px;margin:0 auto;background:#fff;padding:16px 20px 20px}
+  .gc-hdr{display:flex;justify-content:space-between;gap:16px;border:1px solid #888;padding:10px 16px}
+  .gc-logo{max-width:95px;max-height:75px;object-fit:contain;flex-shrink:0}
+  .gc-logo-fallback{width:75px;height:75px;border:1px solid #888;display:flex;align-items:center;justify-content:center;font-weight:bold;font-size:22px;color:#555;flex-shrink:0}
+  .gc-emp{flex:1;min-width:0}
+  .gc-emp-nome{font-weight:bold;font-size:14px}
+  .gc-emp-info{font-size:10px;line-height:1.55;margin-top:3px;color:#222}
+  .gc-contato{text-align:right;font-size:10px;line-height:1.55;flex-shrink:0;color:#222;white-space:nowrap}
+  .gc-contato b{font-weight:bold;color:#000}
+  .gc-titlebar{display:flex;justify-content:space-between;align-items:center;border:1px solid #888;margin-top:-1px;padding:8px 16px}
+  .gc-titlebar .tit{font-weight:bold;font-size:13.5px}
+  .gc-titlebar .dt{font-size:11px}
+  .gc-aviso{font-size:10px;line-height:1.45;margin:10px 0;color:#1a1a1a}
+  .gc-resumo{display:flex;gap:40px;font-size:10.5px;font-weight:bold;margin-bottom:8px}
+  .gc-grid{display:grid;grid-template-columns:1fr 1fr;border-top:1px solid #888;border-left:1px solid #888}
+  .gc-cell{border-bottom:1px solid #888;border-right:1px solid #888;padding:5px 12px;font-size:10.5px;line-height:1.4}
+  .gc-cell.full{grid-column:1/3}
+  .gc-cell b{font-weight:bold}
+  .gc-sectitle{background:#e2e2e2;font-weight:bold;font-size:10.5px;padding:5px 12px;border:1px solid #888;margin-top:14px;text-transform:uppercase;letter-spacing:.02em}
+  table.gc-table{width:100%;border-collapse:collapse;font-size:10.5px;border:1px solid #888;border-top:none;margin-top:-1px}
+  table.gc-table th,table.gc-table td{border:1px solid #888;padding:6px 8px;text-align:left;vertical-align:top}
+  table.gc-table th{background:#e2e2e2;font-weight:bold;font-size:10px;text-transform:uppercase}
+  table.gc-table td.r,table.gc-table th.r{text-align:right}
+  table.gc-table tfoot td{font-weight:bold;background:#f2f2f2}
+  table.gc-table tr{page-break-inside:avoid;break-inside:avoid}
+  .gc-totalbar{border:1px solid #888;border-top:none;margin-top:-1px;background:#e2e2e2;padding:6px 12px;text-align:right;font-size:10.5px}
+  .gc-totalbar div{line-height:1.7}
+  .gc-plain{border:1px solid #888;border-top:none;margin-top:-1px;padding:7px 12px;font-size:10.5px}
+  .gc-ass-box{border:1px solid #888;padding:34px 14px 14px;margin-top:18px;text-align:center;page-break-inside:avoid;break-inside:avoid}
+  .gc-ass-linha{border-top:1px solid #333;width:320px;margin:0 auto 6px}
+  .gc-ft{margin-top:14px;padding-top:8px;border-top:1px solid #ddd;font-size:9px;color:#888;display:flex;justify-content:space-between}
+  .gc-noprint{text-align:center;margin-top:18px}
+  .gc-btn{padding:9px 24px;background:#2e2a86;color:#fff;border:none;border-radius:3px;font-size:12px;font-weight:600;cursor:pointer;font-family:Arial,sans-serif}
+  .gc-hint{font-size:10px;color:#777;margin-top:7px}
+  @media print{body{background:#fff;padding:0}.gc-sheet{max-width:100%;padding:0}.gc-noprint{display:none}}
+  @page{margin:8mm}`;
+}
 function imprimirOrcamentoCli(id){
   const o=DB.one('orcamentoscli',id);if(!o){toast('Orçamento não encontrado','error');return;}
   const cli=DB.one('clientes',o.clienteId);
   const emp=getEmpresa();
+  const cidadeUfEmp=[emp.cidade,emp.estado].filter(Boolean).join('/');
+  const cel=(label,valor,full)=>`<div class="gc-cell${full?' full':''}"><b>${esc(label)}:</b> ${esc(valor||'—')}</div>`;
+  const dias=_gcDias(o.inicio,o.fim);
+  const endCli=cli?[cli.endereco,cli.numero,cli.complemento,cli.bairro].filter(Boolean).join(', '):'';
+  const cidadeUfCli=cli?[cli.cidade,cli.uf].filter(Boolean).join('/'):'';
+  const itens=o.itens||[];
+  const totalQtd=itens.reduce((s,i)=>s+Number(i.qtd||0),0);
+  const assinaturaHtml=(o.status==='aprovado'&&o.aprovacao)
+    ?`<div class="gc-ass-box"><div style="font-size:11px"><b>✓ Aprovado e assinado digitalmente</b><br>${esc(o.aprovacao.nome)} em ${new Date(o.aprovacao.data).toLocaleString('pt-BR')}</div></div>`
+    :`<div class="gc-ass-box"><div class="gc-ass-linha"></div>Assinatura do cliente</div>`;
   const w=_docOpen();
-  w.document.write(`<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><title>Orçamento ${o.numero||''}</title>${_docFonts()}<style>${_docStyleBase()}</style></head><body><div class="sheet">
-  ${_docHeader(emp,'ORÇAMENTO',o.numero||'—',o.criado?o.criado.slice(0,10):today(),o.cuidados)}
-  <div class="doc-grid cols3">
-    <div class="doc-cell"><b>Validade da Proposta</b><span class="val">${o.validade||1} dia(s)</span></div>
-    <div class="doc-cell"><b>Previsão de Entrega</b><span class="val">${fmtD(o.entrega)}</span></div>
-    <div class="doc-cell"><b>Job</b><span class="val">${esc(o.job||'—')}</span></div>
-    <div class="doc-cell"><b>Início</b><span class="val">${fmtD(o.inicio)}</span></div>
-    <div class="doc-cell"><b>Término</b><span class="val">${fmtD(o.fim)}</span></div>
-    <div class="doc-cell"><b>Praça</b><span class="val">${esc(o.praca||'—')}</span></div>
-    <div class="doc-cell" style="grid-column:1/4"><b>Local de Entrega</b><span class="val">${esc(o.local||'—')}</span></div>
+  w.document.write(`<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><title>Orçamento ${o.numero||''}</title><style>${_gcStyle()}</style></head><body><div class="gc-sheet">
+  <div class="gc-hdr">
+    <div style="display:flex;gap:14px;flex:1;min-width:0">
+      ${_gcLogoHtml(emp)}
+      <div class="gc-emp">
+        <div class="gc-emp-nome">${esc(emp.nome||'—')}</div>
+        <div class="gc-emp-info">CNPJ: ${esc(emp.cnpj||'—')}<br>${esc(emp.endereco||'')}<br>${cidadeUfEmp?esc(cidadeUfEmp):''}${emp.cep?' - CEP: '+esc(emp.cep):''}</div>
+      </div>
+    </div>
+    <div class="gc-contato">
+      ${esc(emp.telefone||'')}${emp.telefone&&emp.celular?' - ':''}${esc(emp.celular||'')}<br>
+      <b>${esc(emp.email||'')}</b><br>
+      Vendedor: <b>${esc(emp.vendedor||'—')}</b>${o.cuidados?`<br>Aos cuidados de: <b>${esc(o.cuidados)}</b>`:''}
+    </div>
   </div>
-  ${_clienteBox(cli)}
-  <div class="doc-sec-title">Serviços</div>
-  ${_itensTable(o.itens,o.valorTotal)}
-  ${_parcelasTable(o.parcelas)}
-  ${o.transportadora?`<div class="doc-sec-title">Transportadora</div><div style="padding:4px 0;font-size:12.5px">${esc(o.transportadora)}</div>`:''}
-  ${_assinaturaDigitalBox(o)}
-  ${_docFooterNote(emp)}
-  ${_printFooterBtn()}
+  <div class="gc-titlebar"><div class="tit">ORÇAMENTO Nº ${esc(String(o.numero||'—'))}</div><div class="dt">${o.criado?fmtD(o.criado.slice(0,10)):fmtD(today())}</div></div>
+  <div class="gc-aviso">Antes de assinar a proposta, solicitamos que verifique atentamente todas as informações e confirme se estão de acordo com o que foi solicitado e previamente acordado.</div>
+  <div class="gc-resumo"><div>VALIDADE DA PROPOSTA: ${esc(String(o.validade||1))}</div><div>PREVISÃO DE ENTREGA: ${fmtD(o.entrega)}</div></div>
+  <div class="gc-grid">
+    ${cel('Local de entrega',o.local)}${cel('Início',fmtD(o.inicio))}
+    ${cel('Devolução',fmtD(o.devolucao))}${cel('Término',fmtD(o.fim))}
+    ${cel('Dias de locação',dias!=null?String(dias).padStart(2,'0'):'—')}${cel('Job',o.job)}
+    ${cel('Praça',o.praca)}${cel('Dta. Montagem',o.montagem)}
+    ${cel('Dta. Desmontagem',o.desmontagem,true)}
+  </div>
+  <div class="gc-sectitle">Dados do Cliente</div>
+  <div class="gc-grid">
+    ${cel('Razão social',cli?.nome)}${cel('Nome fantasia',cli?.nome)}
+    ${cel('CNPJ/CPF',cli?.cpfCnpj)}${cel('Endereço',endCli)}
+    ${cel('CEP',cli?.cep)}${cel('Cidade/UF',cidadeUfCli)}
+    ${cel('Telefone',cli?.telefone)}${cel('E-mail',cli?.email)}
+  </div>
+  <div class="gc-sectitle">Serviços</div>
+  <table class="gc-table">
+    <thead><tr><th>Item</th><th>Nome</th><th class="r">Qtd.</th><th class="r">Vr. Unit.</th><th class="r">Subtotal</th></tr></thead>
+    <tbody>${itens.map((i,idx)=>`<tr><td>${idx+1}</td><td>${esc(i.nome)}</td><td class="r">${_gcNum(i.qtd)}</td><td class="r">${_gcNum(i.valorUnit)}</td><td class="r">${_gcNum(i.qtd*i.valorUnit)}</td></tr>`).join('')||'<tr><td colspan="5" style="text-align:center;color:#999">Nenhum item</td></tr>'}</tbody>
+    <tfoot><tr><td colspan="2">Total</td><td class="r">${_gcNum(totalQtd)}</td><td></td><td class="r">${_gcNum(o.valorTotal)}</td></tr></tfoot>
+  </table>
+  <div class="gc-totalbar"><div>Serviços: ${_gcNum(o.valorTotal)}</div><div><b>Total: ${fmtR(o.valorTotal)}</b></div></div>
+  ${(o.parcelas?.length)?`<div class="gc-sectitle">Dados do Pagamento</div>
+  <table class="gc-table">
+    <thead><tr><th>Vencimento</th><th class="r">Valor da Parcela</th><th>Forma de Pagamento</th><th>Observação</th></tr></thead>
+    <tbody>${o.parcelas.map(p=>`<tr><td>${fmtD(p.vencimento)}</td><td class="r">${_gcNum(p.valor)}</td><td>${esc(p.forma)}</td><td style="font-size:10px;color:#444">${esc(p.obs||'')}</td></tr>`).join('')}</tbody>
+  </table>`:''}
+  ${o.transportadora?`<div class="gc-sectitle">Transportadora</div><div class="gc-plain">${esc(o.transportadora)}</div>`:''}
+  ${assinaturaHtml}
+  <div class="gc-ft"><span>${esc(emp.nome||'')}</span><span>Gerado em ${new Date().toLocaleDateString('pt-BR')}</span></div>
+  <div class="gc-noprint">
+    <button class="gc-btn" onclick="window.print()">🖨 Imprimir / Salvar PDF</button>
+    <div class="gc-hint">Dica: na janela de impressão, em "Mais configurações", desmarque "Cabeçalhos e rodapés" para um PDF limpo (sem a linha "about:blank").</div>
+  </div>
   </div></body></html>`);
   w.document.close();
 }
