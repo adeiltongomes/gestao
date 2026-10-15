@@ -4040,14 +4040,14 @@ function _gcStyle(){
 // mesmo modelo de apresentação. Vai do cabeçalho até Transportadora; a seção de
 // assinatura/rodapé/ação fica a cargo de cada chamador, que tem necessidades diferentes
 // (impressão tem botão de imprimir; a página pública tem o formulário de aprovação).
-function _gcOrcamentoBodyHtml(o,cli,emp){
+// ── Peças compartilhadas do layout GestãoClick — usadas por Orçamento, Contrato E
+// Fatura (impressão + páginas públicas), pra garantir que o sistema inteiro tenha
+// sempre a mesma cara, não só o Orçamento. Ver _gcStyle() pro CSS.
+function _gcCel(label,valor,full){
+  return `<div class="gc-cell${full?' full':''}"><b>${esc(label)}:</b> ${esc(valor||'—')}</div>`;
+}
+function _gcHeaderHtml(emp,tituloDoc,numero,dataEmissao,cuidadosNome){
   const cidadeUfEmp=[emp.cidade,emp.estado].filter(Boolean).join('/');
-  const cel=(label,valor,full)=>`<div class="gc-cell${full?' full':''}"><b>${esc(label)}:</b> ${esc(valor||'—')}</div>`;
-  const dias=_gcDias(o.inicio,o.fim);
-  const endCli=cli?[cli.endereco,cli.numero,cli.complemento,cli.bairro].filter(Boolean).join(', '):'';
-  const cidadeUfCli=cli?[cli.cidade,cli.uf].filter(Boolean).join('/'):'';
-  const itens=o.itens||[];
-  const totalQtd=itens.reduce((s,i)=>s+Number(i.qtd||0),0);
   return `<div class="gc-hdr">
     <div style="display:flex;gap:14px;flex:1;min-width:0">
       ${_gcLogoHtml(emp)}
@@ -4059,10 +4059,51 @@ function _gcOrcamentoBodyHtml(o,cli,emp){
     <div class="gc-contato">
       ${esc(emp.telefone||'')}${emp.telefone&&emp.celular?' - ':''}${esc(emp.celular||'')}<br>
       <b>${esc(emp.email||'')}</b><br>
-      Vendedor: <b>${esc(emp.vendedor||'—')}</b>${o.cuidados?`<br>Aos cuidados de: <b>${esc(o.cuidados)}</b>`:''}
+      Vendedor: <b>${esc(emp.vendedor||'—')}</b>${cuidadosNome?`<br>Aos cuidados de: <b>${esc(cuidadosNome)}</b>`:''}
     </div>
   </div>
-  <div class="gc-titlebar"><div class="tit">ORÇAMENTO Nº ${esc(String(o.numero||'—'))}</div><div class="dt">${o.criado?fmtD(o.criado.slice(0,10)):fmtD(today())}</div></div>
+  <div class="gc-titlebar"><div class="tit">${esc(tituloDoc)} Nº ${esc(String(numero||'—'))}</div><div class="dt">${fmtD(dataEmissao)}</div></div>`;
+}
+function _gcClienteGridHtml(cli){
+  const endCli=cli?[cli.endereco,cli.numero,cli.complemento,cli.bairro].filter(Boolean).join(', '):'';
+  const cidadeUfCli=cli?[cli.cidade,cli.uf].filter(Boolean).join('/'):'';
+  return `<div class="gc-sectitle">Dados do Cliente</div>
+  <div class="gc-grid">
+    ${_gcCel('Razão social',cli?.nome)}${_gcCel('Nome fantasia',cli?.nome)}
+    ${_gcCel('CNPJ/CPF',cli?.cpfCnpj)}${_gcCel('Endereço',endCli)}
+    ${_gcCel('CEP',cli?.cep)}${_gcCel('Cidade/UF',cidadeUfCli)}
+    ${_gcCel('Telefone',cli?.telefone)}${_gcCel('E-mail',cli?.email)}
+  </div>`;
+}
+function _gcItensTableHtml(itens,total,titulo){
+  itens=itens||[];
+  const totalQtd=itens.reduce((s,i)=>s+Number(i.qtd||0),0);
+  return `<div class="gc-sectitle">${esc(titulo||'Serviços')}</div>
+  <table class="gc-table">
+    <thead><tr><th class="c">Item</th><th>Nome</th><th class="c">Qtd.</th><th class="c">Vr. Unit.</th><th class="c">Subtotal</th></tr></thead>
+    <tbody>${itens.map((i,idx)=>`<tr><td class="c">${idx+1}</td><td>${esc(i.nome)}</td><td class="c">${_gcNum(i.qtd)}</td><td class="c">${_gcNum(i.valorUnit)}</td><td class="c">${_gcNum(i.qtd*i.valorUnit)}</td></tr>`).join('')||'<tr><td colspan="5" style="text-align:center;color:#999">Nenhum item</td></tr>'}</tbody>
+    <tfoot><tr><td colspan="2">Total</td><td class="c">${_gcNum(totalQtd)}</td><td></td><td class="c">${_gcNum(total)}</td></tr></tfoot>
+  </table>
+  <div class="gc-totalbar"><div>Serviços: ${_gcNum(total)}</div><div><b>Total: ${fmtR(total)}</b></div></div>`;
+}
+function _gcParcelasTableHtml(parcelas){
+  if(!parcelas?.length)return'';
+  return `<div class="gc-sectitle">Dados do Pagamento</div>
+  <table class="gc-table">
+    <thead><tr><th class="c">Vencimento</th><th class="c">Valor da Parcela</th><th class="c">Forma de Pagamento</th><th>Observação</th></tr></thead>
+    <tbody>${parcelas.map(p=>`<tr><td class="c">${fmtD(p.vencimento)}</td><td class="c">${_gcNum(p.valor)}</td><td class="c">${esc(p.forma)}</td><td style="font-size:10px;color:#444">${esc(p.obs||'')}</td></tr>`).join('')}</tbody>
+  </table>`;
+}
+function _gcAssinaturaBlankBoxHtml(){
+  return `<div class="gc-ass-box"><div class="gc-ass-linha"></div>Assinatura do cliente</div>`;
+}
+function _gcFooterHtml(emp){
+  return `<div class="gc-ft"><span>${esc(emp.nome||'')}</span><span>Gerado em ${new Date().toLocaleDateString('pt-BR')}</span></div>`;
+}
+function _gcOrcamentoBodyHtml(o,cli,emp){
+  const dias=_gcDias(o.inicio,o.fim);
+  const cel=_gcCel;
+  return `${_gcHeaderHtml(emp,'ORÇAMENTO',o.numero,o.criado?o.criado.slice(0,10):today(),o.cuidados)}
   <div class="gc-aviso">Antes de assinar a proposta, solicitamos que verifique atentamente todas as informações e confirme se estão de acordo com o que foi solicitado e previamente acordado.</div>
   <div class="gc-resumo"><div>VALIDADE DA PROPOSTA: ${esc(String(o.validade||1))}</div><div>PREVISÃO DE ENTREGA: ${fmtD(o.entrega)}</div></div>
   <div class="gc-grid">
@@ -4072,29 +4113,10 @@ function _gcOrcamentoBodyHtml(o,cli,emp){
     ${cel('Praça',o.praca)}${cel('Dta. Montagem',o.montagem)}
     ${cel('Dta. Desmontagem',o.desmontagem,true)}
   </div>
-  <div class="gc-sectitle">Dados do Cliente</div>
-  <div class="gc-grid">
-    ${cel('Razão social',cli?.nome)}${cel('Nome fantasia',cli?.nome)}
-    ${cel('CNPJ/CPF',cli?.cpfCnpj)}${cel('Endereço',endCli)}
-    ${cel('CEP',cli?.cep)}${cel('Cidade/UF',cidadeUfCli)}
-    ${cel('Telefone',cli?.telefone)}${cel('E-mail',cli?.email)}
-  </div>
-  <div class="gc-sectitle">Serviços</div>
-  <table class="gc-table">
-    <thead><tr><th class="c">Item</th><th>Nome</th><th class="c">Qtd.</th><th class="c">Vr. Unit.</th><th class="c">Subtotal</th></tr></thead>
-    <tbody>${itens.map((i,idx)=>`<tr><td class="c">${idx+1}</td><td>${esc(i.nome)}</td><td class="c">${_gcNum(i.qtd)}</td><td class="c">${_gcNum(i.valorUnit)}</td><td class="c">${_gcNum(i.qtd*i.valorUnit)}</td></tr>`).join('')||'<tr><td colspan="5" style="text-align:center;color:#999">Nenhum item</td></tr>'}</tbody>
-    <tfoot><tr><td colspan="2">Total</td><td class="c">${_gcNum(totalQtd)}</td><td></td><td class="c">${_gcNum(o.valorTotal)}</td></tr></tfoot>
-  </table>
-  <div class="gc-totalbar"><div>Serviços: ${_gcNum(o.valorTotal)}</div><div><b>Total: ${fmtR(o.valorTotal)}</b></div></div>
-  ${(o.parcelas?.length)?`<div class="gc-sectitle">Dados do Pagamento</div>
-  <table class="gc-table">
-    <thead><tr><th class="c">Vencimento</th><th class="c">Valor da Parcela</th><th class="c">Forma de Pagamento</th><th>Observação</th></tr></thead>
-    <tbody>${o.parcelas.map(p=>`<tr><td class="c">${fmtD(p.vencimento)}</td><td class="c">${_gcNum(p.valor)}</td><td class="c">${esc(p.forma)}</td><td style="font-size:10px;color:#444">${esc(p.obs||'')}</td></tr>`).join('')}</tbody>
-  </table>`:''}
+  ${_gcClienteGridHtml(cli)}
+  ${_gcItensTableHtml(o.itens,o.valorTotal,'Serviços')}
+  ${_gcParcelasTableHtml(o.parcelas)}
   ${o.transportadora?`<div class="gc-sectitle">Transportadora</div><div class="gc-plain">${esc(o.transportadora)}</div>`:''}`;
-}
-function _gcFooterHtml(emp){
-  return `<div class="gc-ft"><span>${esc(emp.nome||'')}</span><span>Gerado em ${new Date().toLocaleDateString('pt-BR')}</span></div>`;
 }
 function imprimirOrcamentoCli(id){
   const o=DB.one('orcamentoscli',id);if(!o){toast('Orçamento não encontrado','error');return;}
@@ -4317,31 +4339,33 @@ function gerarContratoDeOrcamento(id){
   openModal('modal-contrato');
   toast('Confira os dados e salve o contrato.','info');
 }
+function _gcContratoBodyHtml(c,cli,o,emp){
+  const cel=_gcCel;
+  return `${_gcHeaderHtml(emp,'CONTRATO',c.numero,today())}
+  <div class="gc-grid">
+    ${cel('Data de Início',fmtD(c.inicio))}${cel('Data de Término',fmtD(c.fim))}
+    ${cel('Dias de Locação',c.dias||'—')}${cel('Orçamento Nº',o?.numero?String(o.numero):'—')}
+    ${cel('Entrega do Material',fmtD(c.entrega))}${cel('Job',c.job)}
+    ${cel('Praça',c.praca)}${cel('Local de Entrega',c.local)}
+  </div>
+  ${_gcClienteGridHtml(cli)}
+  ${_gcItensTableHtml(c.itens,c.valorTotal,'Serviços')}
+  ${_gcParcelasTableHtml(c.parcelas)}`;
+}
 function imprimirContrato(id){
   const c=DB.one('contratos',id);if(!c){toast('Contrato não encontrado','error');return;}
   const cli=DB.one('clientes',c.clienteId);
   const o=c.orcamentoId?DB.one('orcamentoscli',c.orcamentoId):null;
   const emp=getEmpresa();
   const w=_docOpen();
-  w.document.write(`<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><title>Contrato ${c.numero||''}</title>${_docFonts()}<style>${_docStyleBase()}</style></head><body><div class="sheet">
-  ${_docHeader(emp,'CONTRATO',c.numero||'—',today(),null,true)}
-  <div class="doc-grid cols3">
-    <div class="doc-cell"><b>Data de Início</b><span class="val">${fmtD(c.inicio)}</span></div>
-    <div class="doc-cell"><b>Data de Término</b><span class="val">${fmtD(c.fim)}</span></div>
-    <div class="doc-cell"><b>Dias de Locação</b><span class="val">${c.dias||'—'}</span></div>
-    <div class="doc-cell"><b>Orçamento Nº</b><span class="val">${o?.numero||'—'}</span></div>
-    <div class="doc-cell"><b>Entrega do Material</b><span class="val">${fmtD(c.entrega)}</span></div>
-    <div class="doc-cell"><b>Job</b><span class="val">${esc(c.job||'—')}</span></div>
-    <div class="doc-cell"><b>Praça</b><span class="val">${esc(c.praca||'—')}</span></div>
-    <div class="doc-cell" style="grid-column:2/4"><b>Local de Entrega</b><span class="val">${esc(c.local||'—')}</span></div>
+  w.document.write(`<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><title>Contrato ${c.numero||''}</title><style>${_gcStyle()}</style></head><body><div class="gc-sheet">
+  ${_gcContratoBodyHtml(c,cli,o,emp)}
+  ${_gcAssinaturaBlankBoxHtml()}
+  ${_gcFooterHtml(emp)}
+  <div class="gc-noprint">
+    <button class="gc-btn" onclick="window.print()">🖨 Imprimir / Salvar PDF</button>
+    <div class="gc-hint">Dica: na janela de impressão, em "Mais configurações", desmarque "Cabeçalhos e rodapés" para um PDF limpo (sem a linha "about:blank").</div>
   </div>
-  ${_clienteBox(cli)}
-  <div class="doc-sec-title">Serviços</div>
-  ${_itensTable(c.itens,c.valorTotal)}
-  ${_parcelasTable(c.parcelas)}
-  ${_assinaturaBox()}
-  ${_docFooterNote(emp)}
-  ${_printFooterBtn()}
   </div></body></html>`);
   w.document.close();
 }
@@ -4543,6 +4567,47 @@ function imprimirFaturaDeTransacao(transId){
   }
   imprimirFatura(f.id);
 }
+function _gcItensLocacaoTableHtml(itens){
+  const total=itens.reduce((s,it)=>s+(it.total||0),0);
+  return `<table class="gc-table">
+    <thead><tr><th>Produto</th><th class="c">Qtd.</th><th class="c">Valor</th><th class="c">Início</th><th class="c">Término</th><th class="c">Dias</th><th class="c">Mês</th><th class="c">Total</th></tr></thead>
+    <tbody>${itens.map(it=>`<tr><td>${esc(it.produto)}</td><td class="c">${it.quantidade}</td><td class="c">${_gcNum(it.valor)}</td><td class="c">${fmtD(it.inicio)}</td><td class="c">${fmtD(it.termino)}</td><td class="c">${it.qtdDias}</td><td class="c">${esc(it.mes)}</td><td class="c">${_gcNum(it.total)}</td></tr>`).join('')}</tbody>
+    <tfoot><tr><td colspan="7">Total</td><td class="c">${_gcNum(total)}</td></tr></tfoot>
+  </table>`;
+}
+function _gcPixBoxHtml(emp){
+  if(!emp.pix)return'';
+  const qrData=emp.pix.trim().startsWith('000201')?emp.pix.trim():generatePixPayload(emp.pix,undefined,emp.nome,emp.cidade);
+  return `<div class="gc-sectitle">Pagamento via Pix</div>
+  <div class="gc-plain" style="display:flex;gap:16px;align-items:center;flex-wrap:wrap">
+    <div style="flex:1;min-width:200px">
+      <b>Chave Pix (copia e cola)</b>
+      <div style="word-break:break-all;background:#f2f2f2;padding:6px 8px;border:1px solid #ccc;border-radius:3px;margin-top:4px">${esc(emp.pix)}</div>
+      ${emp.favorecido?`<div style="margin-top:6px">Favorecido: ${esc(emp.favorecido)}</div>`:''}
+    </div>
+    <img src="${_qrCodeUrl(qrData,90)}" width="90" height="90" alt="QR Code Pix">
+  </div>`;
+}
+function _gcFaturaBodyHtml(f,cli,c,o,emp){
+  const cel=_gcCel;
+  return `${_gcHeaderHtml(emp,'FATURA DE LOCAÇÃO',f.numero,f.criado?f.criado.slice(0,10):today())}
+  ${_gcClienteGridHtml(cli)}
+  <div class="gc-sectitle">Produtos / Serviços Cedidos em Locação</div>
+  ${f.itens?.length?_gcItensLocacaoTableHtml(f.itens):`<table class="gc-table">
+    <thead><tr><th>Nome</th><th class="c">Qtd.</th><th class="c">Vr. Total</th></tr></thead>
+    <tbody><tr><td>${esc(f.descricao)}</td><td class="c">1,00</td><td class="c">${_gcNum(f.valor)}</td></tr></tbody>
+    <tfoot><tr><td>Total</td><td></td><td class="c">${_gcNum(f.valor)}</td></tr></tfoot>
+  </table>`}
+  <div class="gc-grid">
+    ${cel('Data de Vencimento',fmtD(f.vencimento))}${cel('Forma de Pagamento',[f.parcela,f.forma].filter(Boolean).join(' '))}
+    ${(o||c)?cel('Referências',[o?`Orçamento Nº ${o.numero}`:'',c?`Contrato Nº ${c.numero}`:'',c?.local||''].filter(Boolean).join(' · '),true):''}
+  </div>
+  ${_gcPixBoxHtml(emp)}
+  <div class="gc-sectitle">Dados Bancários</div>
+  <div class="gc-plain" style="white-space:pre-line">${esc(emp.banco)}${f.obsPag?'\nPagamento: '+esc(f.obsPag):''}
+
+${esc(emp.textoFiscal)}</div>`;
+}
 function imprimirFatura(id){
   const f=DB.one('faturas',id);if(!f){toast('Fatura não encontrada','error');return;}
   const cli=DB.one('clientes',f.clienteId);
@@ -4550,26 +4615,13 @@ function imprimirFatura(id){
   const o=c?.orcamentoId?DB.one('orcamentoscli',c.orcamentoId):null;
   const emp=getEmpresa();
   const w=_docOpen();
-  w.document.write(`<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><title>Fatura ${f.numero||''}</title>${_docFonts()}<style>${_docStyleBase()}</style></head><body><div class="sheet">
-  ${_docHeader(emp,'FATURA DE LOCAÇÃO',f.numero,f.criado?f.criado.slice(0,10):today(),null,true)}
-  ${_clienteBox(cli)}
-  <div class="doc-sec-title">Produtos / Serviços Cedidos em Locação</div>
-  ${f.itens?.length?_itensLocacaoTable(f.itens):`<table class="doc-table">
-    <thead><tr><th>Nome</th><th>Qtd.</th><th class="r">Vr. Total</th></tr></thead>
-    <tbody><tr><td>${esc(f.descricao)}</td><td>1,00</td><td class="r">${fmtR(f.valor)}</td></tr></tbody>
-    <tfoot><tr><td>Total</td><td></td><td class="r">${fmtR(f.valor)}</td></tr></tfoot>
-  </table>`}
-  <div class="doc-grid">
-    <div class="doc-cell"><b>Data de Vencimento</b><span class="val">${fmtD(f.vencimento)}</span></div>
-    <div class="doc-cell"><b>Forma de Pagamento</b><span class="val">${esc(f.parcela||'')} ${esc(f.forma||'')}</span></div>
-    ${(o||c)?`<div class="doc-cell" style="grid-column:1/3"><b>Referências</b><span class="val">${o?`Orçamento Nº ${o.numero} `:''}${c?`· Contrato Nº ${c.numero}`:''}${c?.local?' · '+esc(c.local):''}</span></div>`:''}
+  w.document.write(`<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><title>Fatura ${f.numero||''}</title><style>${_gcStyle()}</style></head><body><div class="gc-sheet">
+  ${_gcFaturaBodyHtml(f,cli,c,o,emp)}
+  ${_gcFooterHtml(emp)}
+  <div class="gc-noprint">
+    <button class="gc-btn" onclick="window.print()">🖨 Imprimir / Salvar PDF</button>
+    <div class="gc-hint">Dica: na janela de impressão, em "Mais configurações", desmarque "Cabeçalhos e rodapés" para um PDF limpo (sem a linha "about:blank").</div>
   </div>
-  ${_pixBox(emp)}
-  <div class="doc-fiscal"><strong>Dados bancários:</strong> ${esc(emp.banco)}${f.obsPag?'<br><strong>Pagamento:</strong> '+esc(f.obsPag):''}
-
-${esc(emp.textoFiscal)}</div>
-  ${_docFooterNote(emp)}
-  ${_printFooterBtn()}
   </div></body></html>`);
   w.document.close();
 }
@@ -5038,7 +5090,7 @@ function recusarPublico(id){
 async function renderPublicFaturaPage(id){
   const el=document.getElementById('public-view');
   el.classList.remove('hidden');
-  _injectDocStylesOnce();
+  _gcInjectStylesOnce();
   _pubMsg('Carregando fatura…');
   try{ await DB.init(); }catch(e){
     _pubMsg('<span style="color:#b3261e">Não foi possível carregar. Verifique sua conexão e recarregue a página.</span>');
@@ -5047,26 +5099,12 @@ async function renderPublicFaturaPage(id){
   const f=DB.one('faturas',id);
   if(!f){ _pubMsg('<span style="color:#b3261e">Fatura não encontrada ou link inválido.</span>'); return; }
   const cli=DB.one('clientes',f.clienteId);
+  const c=f.contratoId?DB.one('contratos',f.contratoId):null;
+  const o=c?.orcamentoId?DB.one('orcamentoscli',c.orcamentoId):null;
   const emp=getEmpresa();
-  el.innerHTML=`<div class="sheet" style="margin:30px auto">
-    ${_docHeader(emp,'FATURA DE LOCAÇÃO',f.numero,f.criado?f.criado.slice(0,10):today(),null,true)}
-    ${_clienteBox(cli)}
-    <div class="doc-sec-title">Produtos / Serviços Cedidos em Locação</div>
-    ${f.itens?.length?_itensLocacaoTable(f.itens):`<table class="doc-table">
-      <thead><tr><th>Nome</th><th>Qtd.</th><th class="r">Vr. Total</th></tr></thead>
-      <tbody><tr><td>${esc(f.descricao)}</td><td>1,00</td><td class="r">${fmtR(f.valor)}</td></tr></tbody>
-      <tfoot><tr><td>Total</td><td></td><td class="r">${fmtR(f.valor)}</td></tr></tfoot>
-    </table>`}
-    <div class="doc-grid">
-      <div class="doc-cell"><b>Data de Vencimento</b><span class="val">${fmtD(f.vencimento)}</span></div>
-      <div class="doc-cell"><b>Forma de Pagamento</b><span class="val">${esc(f.parcela||'')} ${esc(f.forma||'')}</span></div>
-    </div>
-    ${_pixBox(emp)}
-    <div class="doc-fiscal"><strong>Dados bancários:</strong> ${esc(emp.banco)}${f.obsPag?'<br><strong>Pagamento:</strong> '+esc(f.obsPag):''}
-
-${esc(emp.textoFiscal)}</div>
-    ${_docFooterNote(emp)}
-    ${_printFooterBtn()}
+  el.innerHTML=`<div class="gc-sheet" style="margin:24px auto">
+    ${_gcFaturaBodyHtml(f,cli,c,o,emp)}
+    ${_gcFooterHtml(emp)}
   </div>`;
 }
 
