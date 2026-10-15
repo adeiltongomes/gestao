@@ -4018,6 +4018,7 @@ function _gcStyle(){
   table.gc-table th,table.gc-table td{border:1px solid #888;padding:6px 8px;text-align:left;vertical-align:top}
   table.gc-table th{background:#e2e2e2;font-weight:bold;font-size:10px;text-transform:uppercase}
   table.gc-table td.r,table.gc-table th.r{text-align:right}
+  table.gc-table td.c,table.gc-table th.c{text-align:center}
   table.gc-table tfoot td{font-weight:bold;background:#f2f2f2}
   table.gc-table tr{page-break-inside:avoid;break-inside:avoid}
   .gc-totalbar{border:1px solid #888;border-top:none;margin-top:-1px;background:#e2e2e2;padding:6px 12px;text-align:right;font-size:10.5px}
@@ -4087,8 +4088,8 @@ function _gcOrcamentoBodyHtml(o,cli,emp){
   <div class="gc-totalbar"><div>Serviços: ${_gcNum(o.valorTotal)}</div><div><b>Total: ${fmtR(o.valorTotal)}</b></div></div>
   ${(o.parcelas?.length)?`<div class="gc-sectitle">Dados do Pagamento</div>
   <table class="gc-table">
-    <thead><tr><th>Vencimento</th><th class="r">Valor da Parcela</th><th>Forma de Pagamento</th><th>Observação</th></tr></thead>
-    <tbody>${o.parcelas.map(p=>`<tr><td>${fmtD(p.vencimento)}</td><td class="r">${_gcNum(p.valor)}</td><td>${esc(p.forma)}</td><td style="font-size:10px;color:#444">${esc(p.obs||'')}</td></tr>`).join('')}</tbody>
+    <thead><tr><th class="c">Vencimento</th><th class="c">Valor da Parcela</th><th class="c">Forma de Pagamento</th><th>Observação</th></tr></thead>
+    <tbody>${o.parcelas.map(p=>`<tr><td class="c">${fmtD(p.vencimento)}</td><td class="c">${_gcNum(p.valor)}</td><td class="c">${esc(p.forma)}</td><td style="font-size:10px;color:#444">${esc(p.obs||'')}</td></tr>`).join('')}</tbody>
   </table>`:''}
   ${o.transportadora?`<div class="gc-sectitle">Transportadora</div><div class="gc-plain">${esc(o.transportadora)}</div>`:''}`;
 }
