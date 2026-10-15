@@ -569,6 +569,12 @@ thead th.r{text-align:right}
       <div class="nav-item" data-view="estoque">
         <span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg></span>Estoque
       </div>
+      <div class="nav-item" data-view="estruturas">
+        <span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M3 21h18M5 21V7l7-4 7 4v14M9 21v-6h6v6"/></svg></span>Estruturas
+      </div>
+      <div class="nav-item" data-view="servicos">
+        <span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg></span>Serviços
+      </div>
     </div>
     <div class="nav-section">
       <div class="nav-label">Operações</div>
@@ -749,6 +755,36 @@ thead th.r{text-align:right}
         <table>
           <thead><tr><th>Item</th><th>Categoria</th><th>Qtd</th><th>Qtd Mín.</th><th>Val. Unit.</th><th>Total</th><th>Status</th><th></th></tr></thead>
           <tbody id="tb-estoque"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ESTRUTURAS -->
+    <div id="view-estruturas" class="view-section hidden">
+      <div class="sec-hdr">
+        <div class="sec-title">Estruturas</div>
+        <input class="form-control s-search" id="search-estruturas" placeholder="Buscar…" oninput="renderEstruturas()">
+        <button class="btn btn-primary" onclick="openModalEstrutura()">+ Nova Estrutura</button>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Item</th><th>Categoria</th><th>Disponível/Total</th><th>Val./Dia</th><th>Status</th><th></th></tr></thead>
+          <tbody id="tb-estruturas"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- SERVIÇOS -->
+    <div id="view-servicos" class="view-section hidden">
+      <div class="sec-hdr">
+        <div class="sec-title">Serviços</div>
+        <input class="form-control s-search" id="search-servicos" placeholder="Buscar…" oninput="renderServicos()">
+        <button class="btn btn-primary" onclick="openModalServico()">+ Novo Serviço</button>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Serviço</th><th>Categoria</th><th>Valor Padrão</th><th></th></tr></thead>
+          <tbody id="tb-servicos"></tbody>
         </table>
       </div>
     </div>
@@ -1092,8 +1128,8 @@ thead th.r{text-align:right}
           <select class="form-control" id="equip-tipo" onchange="toggleEquipTipoOutro()">
             <option value="">Selecione…</option>
             <option>Tablet</option><option>Celular</option><option>Notebook</option>
-            <option>Monitor</option><option>Computador</option><option>Impressora</option>
-            <option>Roteador</option><option>Projetor</option><option>Scanner</option><option>Outro</option>
+            <option>Monitor</option><option>TV</option><option>Computador</option><option>Impressora</option>
+            <option>Roteador</option><option>Projetor</option><option>Scanner</option><option>Acessório</option><option>Outro</option>
           </select>
           <input class="form-control hidden" id="equip-tipo-outro" style="margin-top:6px" placeholder="Especifique o tipo">
         </div>
@@ -1152,6 +1188,60 @@ thead th.r{text-align:right}
     <div class="modal-footer">
       <button class="btn btn-ghost" onclick="_quickItemTarget=null;closeModal('modal-estoque')">Cancelar</button>
       <button class="btn btn-primary" onclick="saveEstoque()">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Estrutura -->
+<div class="modal-overlay hidden" id="modal-estrutura">
+  <div class="modal">
+    <div class="modal-hdr"><div class="modal-title" id="mestrut-title">Nova Estrutura</div><button class="modal-close" onclick="_quickItemTarget=null;closeModal('modal-estrutura')">×</button></div>
+    <div class="modal-body">
+      <input type="hidden" id="estrut-id">
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Nome / Descrição *</label><input class="form-control" id="estrut-nome" placeholder="Ex: Treliça Q30 2m"></div>
+        <div class="form-group"><label class="form-label">Categoria</label>
+          <div style="display:flex;gap:6px">
+            <select class="form-control" id="estrut-cat" style="flex:1"></select>
+            <button type="button" class="btn btn-ghost btn-sm" title="Nova categoria" onclick="addCat('estrutura','estrut-cat')" style="flex-shrink:0;font-size:20px;padding:0 13px;line-height:1">+</button>
+          </div>
+        </div>
+      </div>
+      <div class="form-row-3">
+        <div class="form-group"><label class="form-label">Quantidade Total</label><input class="form-control" id="estrut-qtdtotal" type="number" min="0" placeholder="0" oninput="syncEstrutDisponivel()"></div>
+        <div class="form-group"><label class="form-label">Qtd. Disponível</label><input class="form-control" id="estrut-qtddisp" type="number" min="0" placeholder="0"></div>
+        <div class="form-group"><label class="form-label">Val. Locação/Dia (R$)</label><input class="form-control" id="estrut-valor" type="number" step="0.01" placeholder="0,00"></div>
+      </div>
+      <div class="form-group"><label class="form-label">Observações</label><textarea class="form-control" id="estrut-obs" rows="2"></textarea></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="_quickItemTarget=null;closeModal('modal-estrutura')">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveEstrutura()">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Serviço -->
+<div class="modal-overlay hidden" id="modal-servico">
+  <div class="modal">
+    <div class="modal-hdr"><div class="modal-title" id="mserv-title">Novo Serviço</div><button class="modal-close" onclick="_quickItemTarget=null;closeModal('modal-servico')">×</button></div>
+    <div class="modal-body">
+      <input type="hidden" id="serv-id">
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Nome do Serviço *</label><input class="form-control" id="serv-nome" placeholder="Ex: Montagem de Estrutura"></div>
+        <div class="form-group"><label class="form-label">Categoria</label>
+          <div style="display:flex;gap:6px">
+            <select class="form-control" id="serv-cat" style="flex:1"></select>
+            <button type="button" class="btn btn-ghost btn-sm" title="Nova categoria" onclick="addCat('servico','serv-cat')" style="flex-shrink:0;font-size:20px;padding:0 13px;line-height:1">+</button>
+          </div>
+        </div>
+      </div>
+      <div class="form-group"><label class="form-label">Valor Padrão (R$)</label><input class="form-control" id="serv-valor" type="number" step="0.01" placeholder="0,00"></div>
+      <div class="form-group"><label class="form-label">Observações</label><textarea class="form-control" id="serv-obs" rows="2"></textarea></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="_quickItemTarget=null;closeModal('modal-servico')">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveServico()">Salvar</button>
     </div>
   </div>
 </div>
@@ -1347,6 +1437,8 @@ thead th.r{text-align:right}
           </select>
           <button type="button" class="btn btn-ghost btn-sm" title="Cadastrar novo equipamento" onclick="quickNovoEquipamento('orccli-itens-list')">+ Equip.</button>
           <button type="button" class="btn btn-ghost btn-sm" title="Cadastrar novo item de estoque" onclick="quickNovoEstoque('orccli-itens-list')">+ Estoque</button>
+          <button type="button" class="btn btn-ghost btn-sm" title="Cadastrar nova estrutura" onclick="quickNovoEstrutura('orccli-itens-list')">+ Estrutura</button>
+          <button type="button" class="btn btn-ghost btn-sm" title="Cadastrar novo serviço" onclick="quickNovoServico('orccli-itens-list')">+ Serviço</button>
         </div>
         <div id="orccli-itens-list" style="display:flex;flex-direction:column;gap:6px;max-height:200px;overflow-y:auto;padding:8px;background:var(--surface-2);border-radius:8px;border:1.5px solid var(--border)"></div>
         <button type="button" class="btn btn-ghost btn-sm" style="margin-top:6px" onclick="addItemRow('orccli-itens-list')">+ Adicionar Item em Branco</button>
@@ -1432,6 +1524,8 @@ thead th.r{text-align:right}
           </select>
           <button type="button" class="btn btn-ghost btn-sm" title="Cadastrar novo equipamento" onclick="quickNovoEquipamento('ctr-itens-list')">+ Equip.</button>
           <button type="button" class="btn btn-ghost btn-sm" title="Cadastrar novo item de estoque" onclick="quickNovoEstoque('ctr-itens-list')">+ Estoque</button>
+          <button type="button" class="btn btn-ghost btn-sm" title="Cadastrar nova estrutura" onclick="quickNovoEstrutura('ctr-itens-list')">+ Estrutura</button>
+          <button type="button" class="btn btn-ghost btn-sm" title="Cadastrar novo serviço" onclick="quickNovoServico('ctr-itens-list')">+ Serviço</button>
         </div>
         <div id="ctr-itens-list" style="display:flex;flex-direction:column;gap:6px;max-height:200px;overflow-y:auto;padding:8px;background:var(--surface-2);border-radius:8px;border:1.5px solid var(--border)"></div>
         <button type="button" class="btn btn-ghost btn-sm" style="margin-top:6px" onclick="addItemRow('ctr-itens-list')">+ Adicionar Item em Branco</button>
@@ -1813,7 +1907,7 @@ const DB={
 
 // ── NAVIGATION ────────────────────────────────────────────────────────────────
 const VIEW_TITLES={dashboard:'Dashboard',empresa:'Minha Empresa',clientes:'Clientes / Fornecedores',funcionarios:'Funcionários',
-  equipamentos:'Equipamentos',estoque:'Estoque',orcamentoscli:'Orçamentos',
+  equipamentos:'Equipamentos',estoque:'Estoque',estruturas:'Estruturas',servicos:'Serviços',orcamentoscli:'Orçamentos',
   locacoes:'Locações',contratos:'Contratos',faturas:'Faturas',financeiro:'Financeiro',parcelamentos:'Parcelamentos',
   orcamento:'Metas',relatorios:'Relatórios'};
 
@@ -1824,7 +1918,7 @@ function goView(v){
   document.getElementById('page-title').textContent=VIEW_TITLES[v]||v;
   closeSidebar();
   const _renderFn=({dashboard:renderDashboard,empresa:renderEmpresaView,clientes:renderClientes,funcionarios:renderFuncionarios,
-    equipamentos:renderEquipamentos,estoque:renderEstoque,orcamentoscli:renderOrcamentosCli,
+    equipamentos:renderEquipamentos,estoque:renderEstoque,estruturas:renderEstruturas,servicos:renderServicos,orcamentoscli:renderOrcamentosCli,
     locacoes:renderLocacoes,contratos:renderContratos,faturas:renderFaturas,financeiro:renderFinanceiro,parcelamentos:renderParcelamentos,
     orcamento:renderOrcamento,relatorios:()=>{setRelPeriodo('mes');}}[v]||function(){});
   _renderFn();
@@ -2052,7 +2146,7 @@ function renderEquipamentos(){
     <td><div class="td-actions"><button class="btn btn-ghost btn-xs" onclick="openModalEquipamento('${e.id}')">✏</button><button class="btn btn-danger btn-xs" onclick="delEquipamento('${e.id}')">✕</button></div></td></tr>`)
     .join(''):`<tr><td colspan="6"><div class="empty"><div class="empty-icon">💻</div><h3>Nenhum equipamento cadastrado</h3></div></td></tr>`;
 }
-const EQUIP_TIPOS_FIXOS=['Tablet','Celular','Notebook','Monitor','Computador','Impressora','Roteador','Projetor','Scanner'];
+const EQUIP_TIPOS_FIXOS=['Tablet','Celular','Notebook','Monitor','TV','Computador','Impressora','Roteador','Projetor','Scanner','Acessório'];
 function toggleEquipTipoOutro(){
   const sel=document.getElementById('equip-tipo').value;
   document.getElementById('equip-tipo-outro').classList.toggle('hidden',sel!=='Outro');
@@ -2123,6 +2217,80 @@ function saveEstoque(){
 }
 function delEstoque(id){if(!confirm('Excluir?'))return;DB.del('estoque',id);renderEstoque();toast('Excluído.','info');}
 
+// ── ESTRUTURAS (itens de montagem de eventos — tratados por quantidade, não por unidade serializada) ──
+function syncEstrutDisponivel(){
+  // ao criar uma estrutura nova, a qtd disponível começa igual à qtd total (edição não mexe, só o novo cadastro)
+  if(document.getElementById('estrut-id').value)return;
+  document.getElementById('estrut-qtddisp').value=document.getElementById('estrut-qtdtotal').value;
+}
+function renderEstruturas(){
+  const q=(document.getElementById('search-estruturas')?.value||'').toLowerCase();
+  const rows=DB.get('estruturas').filter(e=>!q||e.nome?.toLowerCase().includes(q)||e.categoria?.toLowerCase().includes(q));
+  document.getElementById('tb-estruturas').innerHTML=rows.length?rows.map(e=>{
+    const disp=Number(e.qtdDisponivel||0),tot=Number(e.qtdTotal||0);
+    const indisp=disp<=0&&tot>0;
+    return`<tr><td><strong>${esc(e.nome)}</strong></td><td>${esc(e.categoria||'—')}</td>
+      <td style="font-weight:600;color:${indisp?'var(--red)':'inherit'}">${disp}/${tot}</td>
+      <td>${fmtR(e.valorDia)}</td>
+      <td><span class="badge ${indisp?'badge-red':'badge-green'}">${indisp?'Indisponível':'Disponível'}</span></td>
+      <td><div class="td-actions"><button class="btn btn-ghost btn-xs" onclick="openModalEstrutura('${e.id}')">✏</button><button class="btn btn-danger btn-xs" onclick="delEstrutura('${e.id}')">✕</button></div></td></tr>`;
+  }).join(''):`<tr><td colspan="6"><div class="empty"><div class="empty-icon">🏗️</div><h3>Nenhuma estrutura cadastrada</h3></div></td></tr>`;
+}
+function openModalEstrutura(id){
+  const e=id?DB.one('estruturas',id):{};
+  document.getElementById('mestrut-title').textContent=id?'Editar Estrutura':'Nova Estrutura';
+  document.getElementById('estrut-id').value=e.id||'';document.getElementById('estrut-nome').value=e.nome||'';
+  populateCatSelect('estrut-cat','estrutura',e.categoria||'Treliça');
+  document.getElementById('estrut-qtdtotal').value=e.qtdTotal||'';document.getElementById('estrut-qtddisp').value=e.qtdDisponivel??e.qtdTotal??'';
+  document.getElementById('estrut-valor').value=e.valorDia||'';document.getElementById('estrut-obs').value=e.observacoes||'';
+  openModal('modal-estrutura');
+}
+function saveEstrutura(){
+  const nome=document.getElementById('estrut-nome').value.trim();
+  if(!nome){toast('Informe o nome da estrutura','error');return;}
+  const qtdTotal=Number(document.getElementById('estrut-qtdtotal').value)||0;
+  let qtdDisponivel=Number(document.getElementById('estrut-qtddisp').value)||0;
+  if(qtdDisponivel>qtdTotal)qtdDisponivel=qtdTotal;
+  DB.save('estruturas',{id:document.getElementById('estrut-id').value||uid(),nome,categoria:document.getElementById('estrut-cat').value,qtdTotal,qtdDisponivel,valorDia:document.getElementById('estrut-valor').value,observacoes:document.getElementById('estrut-obs').value});
+  closeModal('modal-estrutura');renderEstruturas();toast('Estrutura salva!','success');
+  if(_quickItemTarget){
+    const e=DB.get('estruturas')[0];
+    if(e)addItemRow(_quickItemTarget,e.nome||'',1,Number(e.valorDia)||0,'estrutura',e.id);
+    _quickItemTarget=null;
+  }
+}
+function delEstrutura(id){if(!confirm('Excluir?'))return;DB.del('estruturas',id);renderEstruturas();toast('Excluído.','info');}
+
+// ── SERVIÇOS (catálogo de serviços de evento — não controla estoque/quantidade) ──
+function renderServicos(){
+  const q=(document.getElementById('search-servicos')?.value||'').toLowerCase();
+  const rows=DB.get('servicos').filter(s=>!q||s.nome?.toLowerCase().includes(q)||s.categoria?.toLowerCase().includes(q));
+  document.getElementById('tb-servicos').innerHTML=rows.length?rows.map(s=>
+    `<tr><td><strong>${esc(s.nome)}</strong></td><td>${esc(s.categoria||'—')}</td><td>${fmtR(s.valorPadrao)}</td>
+      <td><div class="td-actions"><button class="btn btn-ghost btn-xs" onclick="openModalServico('${s.id}')">✏</button><button class="btn btn-danger btn-xs" onclick="delServico('${s.id}')">✕</button></div></td></tr>`
+  ).join(''):`<tr><td colspan="4"><div class="empty"><div class="empty-icon">🔧</div><h3>Nenhum serviço cadastrado</h3></div></td></tr>`;
+}
+function openModalServico(id){
+  const s=id?DB.one('servicos',id):{};
+  document.getElementById('mserv-title').textContent=id?'Editar Serviço':'Novo Serviço';
+  document.getElementById('serv-id').value=s.id||'';document.getElementById('serv-nome').value=s.nome||'';
+  populateCatSelect('serv-cat','servico',s.categoria||'Montagem');
+  document.getElementById('serv-valor').value=s.valorPadrao||'';document.getElementById('serv-obs').value=s.observacoes||'';
+  openModal('modal-servico');
+}
+function saveServico(){
+  const nome=document.getElementById('serv-nome').value.trim();
+  if(!nome){toast('Informe o nome do serviço','error');return;}
+  DB.save('servicos',{id:document.getElementById('serv-id').value||uid(),nome,categoria:document.getElementById('serv-cat').value,valorPadrao:document.getElementById('serv-valor').value,observacoes:document.getElementById('serv-obs').value});
+  closeModal('modal-servico');renderServicos();toast('Serviço salvo!','success');
+  if(_quickItemTarget){
+    const s=DB.get('servicos')[0];
+    if(s)addItemRow(_quickItemTarget,s.nome||'',1,Number(s.valorPadrao)||0,'servico',s.id);
+    _quickItemTarget=null;
+  }
+}
+function delServico(id){if(!confirm('Excluir?'))return;DB.del('servicos',id);renderServicos();toast('Excluído.','info');}
+
 // ── LOCAÇÕES ──────────────────────────────────────────────────────────────────
 let locLines=[];
 function toggleParcelas(){
@@ -2189,9 +2357,14 @@ function saveLocacao(){
   const pagamento=document.getElementById('loc-pagamento').value;
   const numParcelas=Number(document.getElementById('loc-parcelas').value)||2;
   const isNew=!document.getElementById('loc-id').value;
-  const item={id:document.getElementById('loc-id').value||uid(),clienteId,inicio,fim,valor:Number(valor),pagamento,numParcelas:pagamento==='parcelado'?numParcelas:1,equipamentos,status:document.getElementById('loc-status').value,observacoes:document.getElementById('loc-obs').value,criado:new Date().toISOString()};
+  const existente=!isNew?DB.one('locacoes',document.getElementById('loc-id').value):null;
+  const item={id:document.getElementById('loc-id').value||uid(),clienteId,inicio,fim,valor:Number(valor),pagamento,numParcelas:pagamento==='parcelado'?numParcelas:1,equipamentos,status:document.getElementById('loc-status').value,observacoes:document.getElementById('loc-obs').value,criado:existente?.criado||new Date().toISOString()};
   DB.save('locacoes',item);
-  if(item.status==='ativa')equipamentos.forEach(le=>{const e=DB.one('equipamentos',le.equipId);if(e){e.status='locado';DB.save('equipamentos',e);}});
+  // saída/devolução automática conforme a transição de status (ativa <-> encerrada/cancelada)
+  const statusAnterior=existente?.status||null;
+  const itensEquip=equipamentos.map(le=>({tipo:'equipamento',refId:le.equipId}));
+  if(statusAnterior!=='ativa'&&item.status==='ativa')_aplicarMovimentoEstoque(itensEquip,-1);
+  else if(statusAnterior==='ativa'&&item.status!=='ativa')_aplicarMovimentoEstoque(itensEquip,1);
   if(isNew){
     const cli=DB.one('clientes',clienteId);
     const grupoId=uid();
@@ -2215,11 +2388,13 @@ function delLocacao(id){if(!confirm('Excluir esta locação?'))return;DB.del('lo
 const CATS_DEF_E=['Locação de Equipamento','Venda de Equipamento','Serviço de Manutenção','Multa/Juros','Outros'];
 const CATS_DEF_S=['Compra de Equipamento','Manutenção/Reparo','Salários','Aluguel','Energia/Internet','Impostos','Frete','Marketing','Outros'];
 const CATS_DEF_EST=['Acessório','Cabo','Carregador','Peça','Embalagem','Consumível','Outro'];
+const CATS_DEF_ESTRUT=['Treliça','Tablado/Palco','Tenda/Cobertura','Iluminação de Estrutura','Painel/Cenografia','Grade/Isolamento','Outro'];
+const CATS_DEF_SERV=['Montagem','Desmontagem','Instalação','Suporte Técnico','Transporte','Outro'];
 const CATS_DEF_ORC=[{v:'receita_total',l:'Receita Total'},{v:'Locação de Equipamento',l:'Locação de Equipamento'},{v:'Serviço de Manutenção',l:'Serviço de Manutenção'},{v:'Compra de Equipamento',l:'Compra de Equipamento'},{v:'Salários',l:'Salários'},{v:'Manutenção/Reparo',l:'Manutenção/Reparo'},{v:'Outros',l:'Outros'}];
 
 function getCats(type){
   const custom=DB.get('cats_'+type)||[];
-  const def=type==='entrada'?CATS_DEF_E:type==='saida'?CATS_DEF_S:type==='estoque'?CATS_DEF_EST:[];
+  const def=type==='entrada'?CATS_DEF_E:type==='saida'?CATS_DEF_S:type==='estoque'?CATS_DEF_EST:type==='estrutura'?CATS_DEF_ESTRUT:type==='servico'?CATS_DEF_SERV:[];
   return [...def,...custom.filter(c=>!def.includes(c))];
 }
 function getCatsOrc(){
@@ -3192,11 +3367,11 @@ function renderOrcamentosCli(){
   }).join(''):`<tr><td colspan="8"><div class="empty"><div class="empty-icon">📄</div><h3>Nenhum orçamento encontrado</h3></div></td></tr>`;
 }
 function _quickPickOpts(){
-  const equips=DB.get('equipamentos'),estq=DB.get('estoque');
-  let opts='<option value="">+ Adicionar a partir de Equipamento/Estoque…</option>';
+  const equips=DB.get('equipamentos'),estq=DB.get('estoque'),estruts=DB.get('estruturas'),servs=DB.get('servicos');
+  let opts='<option value="">+ Adicionar a partir de Equipamento/Estoque/Estrutura/Serviço…</option>';
   if(equips.length){
     opts+=`<optgroup label="── Equipamentos ──">`;
-    opts+=equips.map(e=>`<option value="eq|${e.id}">${esc((e.tipo||'')+' '+(e.marca||'')+' '+(e.modelo||''))}</option>`).join('');
+    opts+=equips.map(e=>`<option value="eq|${e.id}">${esc((e.tipo||'')+' '+(e.marca||'')+' '+(e.modelo||''))}${e.status&&e.status!=='disponivel'?' ['+esc(EQUIP_LBL[e.status]||e.status)+']':''}</option>`).join('');
     opts+=`</optgroup>`;
   }
   if(estq.length){
@@ -3204,26 +3379,38 @@ function _quickPickOpts(){
     opts+=estq.map(e=>`<option value="es|${e.id}">${esc(e.nome||'')}${e.categoria?' ('+esc(e.categoria)+')':''}${e.valorUnit?' — '+fmtR(e.valorUnit):''}</option>`).join('');
     opts+=`</optgroup>`;
   }
+  if(estruts.length){
+    opts+=`<optgroup label="── Estruturas ──">`;
+    opts+=estruts.map(e=>`<option value="et|${e.id}">${esc(e.nome||'')}${e.categoria?' ('+esc(e.categoria)+')':''} — ${Number(e.qtdDisponivel||0)}/${Number(e.qtdTotal||0)} disp. — ${fmtR(e.valorDia)}/dia</option>`).join('');
+    opts+=`</optgroup>`;
+  }
+  if(servs.length){
+    opts+=`<optgroup label="── Serviços ──">`;
+    opts+=servs.map(s=>`<option value="sv|${s.id}">${esc(s.nome||'')}${s.categoria?' ('+esc(s.categoria)+')':''}${s.valorPadrao?' — '+fmtR(s.valorPadrao):''}</option>`).join('');
+    opts+=`</optgroup>`;
+  }
   return opts;
 }
 function _quickPickResolve(val){
   const [kind,id]=val.split('|');
-  if(kind==='eq'){const e=DB.one('equipamentos',id);return{nome:e?((e.tipo||'')+' '+(e.marca||'')+' '+(e.modelo||'')).trim():'',valorUnit:Number(e?.valorDia)||0};}
-  if(kind==='es'){const e=DB.one('estoque',id);return{nome:e?.nome||'',valorUnit:Number(e?.valorUnit)||0};}
-  return{nome:'',valorUnit:0};
+  if(kind==='eq'){const e=DB.one('equipamentos',id);return{nome:e?((e.tipo||'')+' '+(e.marca||'')+' '+(e.modelo||'')).trim():'',valorUnit:Number(e?.valorDia)||0,tipo:'equipamento',refId:id};}
+  if(kind==='es'){const e=DB.one('estoque',id);return{nome:e?.nome||'',valorUnit:Number(e?.valorUnit)||0,tipo:'estoque',refId:id};}
+  if(kind==='et'){const e=DB.one('estruturas',id);return{nome:e?.nome||'',valorUnit:Number(e?.valorDia)||0,tipo:'estrutura',refId:id};}
+  if(kind==='sv'){const s=DB.one('servicos',id);return{nome:s?.nome||'',valorUnit:Number(s?.valorPadrao)||0,tipo:'servico',refId:id};}
+  return{nome:'',valorUnit:0,tipo:'',refId:''};
 }
 function orcQuickAdd(){
   const sel=document.getElementById('orccli-quickpick');
   if(!sel.value)return;
   const r=_quickPickResolve(sel.value);
-  addItemRow('orccli-itens-list',r.nome,1,r.valorUnit);
+  addItemRow('orccli-itens-list',r.nome,1,r.valorUnit,r.tipo,r.refId);
   sel.value='';
 }
 function ctrQuickAdd(){
   const sel=document.getElementById('ctr-quickpick');
   if(!sel.value)return;
   const r=_quickPickResolve(sel.value);
-  addItemRow('ctr-itens-list',r.nome,1,r.valorUnit);
+  addItemRow('ctr-itens-list',r.nome,1,r.valorUnit,r.tipo,r.refId);
   sel.value='';
 }
 function openModalOrcamentoCli(id){
@@ -3255,7 +3442,7 @@ function openModalOrcamentoCli(id){
   document.getElementById('orccli-status').value=o.status||'pendente';
   document.getElementById('orccli-obs').value=o.observacoes||'';
   toggleOrcParc();
-  if(o.itens?.length)o.itens.forEach(i=>addItemRow('orccli-itens-list',i.nome,i.qtd,i.valorUnit));
+  if(o.itens?.length)o.itens.forEach(i=>addItemRow('orccli-itens-list',i.nome,i.qtd,i.valorUnit,i.tipo,i.refId,i.dataExecucao,i.responsavel));
   else addItemRow('orccli-itens-list');
   if(o.parcelas?.length)o.parcelas.forEach(p=>addParcRow('orccli-parc-list',p.vencimento,p.valor,p.forma,p.obs));
   openModal('modal-orcamentocli');
@@ -3329,7 +3516,8 @@ function converterLocacao(id){
   document.getElementById('loc-status').value='ativa';
   document.getElementById('loc-obs').value=o.observacoes||'';
   toggleParcelas();
-  if(o.equipamentos?.length)o.equipamentos.forEach(eq=>{addLocEquip();document.getElementById('ls-'+locLines[locLines.length-1]).value=eq.equipId;});
+  const equipItens=(o.itens||[]).filter(i=>i.tipo==='equipamento'&&i.refId);
+  if(equipItens.length)equipItens.forEach(eq=>{addLocEquip();document.getElementById('ls-'+locLines[locLines.length-1]).value=eq.refId;});
   else addLocEquip();
   // Mark orçamento as converted
   o.convertidoEmLocacao=true;DB.save('orcamentoscli',o);
@@ -3356,19 +3544,44 @@ function quickNovoEstoque(targetContainerId){
   openModalEstoque();
   document.body.appendChild(document.getElementById('modal-estoque'));
 }
+function quickNovoEstrutura(targetContainerId){
+  _quickItemTarget=targetContainerId;
+  openModalEstrutura();
+  document.body.appendChild(document.getElementById('modal-estrutura'));
+}
+function quickNovoServico(targetContainerId){
+  _quickItemTarget=targetContainerId;
+  openModalServico();
+  document.body.appendChild(document.getElementById('modal-servico'));
+}
 let itemLines=[];
 let parcLines=[];
-function addItemRow(containerId,nome,qtd,valorUnit){
+const ITEM_TIPO_ICON={equipamento:'💻',estoque:'📦',estrutura:'🏗️',servico:'🔧'};
+function addItemRow(containerId,nome,qtd,valorUnit,tipo,refId,dataExecucao,responsavel){
   const lid=uid();itemLines.push(lid);
+  const wrap=document.createElement('div');
+  wrap.id='it-'+lid;
+  wrap.dataset.tipo=tipo||'';
   const row=document.createElement('div');
-  row.id='it-'+lid;
-  row.style.cssText='display:grid;grid-template-columns:2fr 60px 100px 100px 30px;gap:6px;align-items:center';
-  row.innerHTML=`<input class="form-control" id="itn-${lid}" placeholder="Descrição do item/serviço" value="${esc(nome||'')}">
+  row.style.cssText='display:grid;grid-template-columns:24px 2fr 60px 100px 100px 30px;gap:6px;align-items:center';
+  row.innerHTML=`<div style="text-align:center;font-size:13px" title="${esc(tipo||'item avulso')}">${ITEM_TIPO_ICON[tipo]||''}</div>
+    <input class="form-control" id="itn-${lid}" placeholder="Descrição do item/serviço" value="${esc(nome||'')}">
     <input class="form-control" id="itq-${lid}" type="number" min="0" step="1" value="${qtd||1}" oninput="calcItens()" title="Qtd.">
     <input class="form-control" id="itv-${lid}" type="number" min="0" step="0.01" placeholder="Vr. unit." value="${valorUnit||''}" oninput="calcItens()">
     <div id="its-${lid}" style="font-weight:700;font-size:12.5px;text-align:right;white-space:nowrap">R$ 0,00</div>
-    <button type="button" class="btn btn-danger btn-xs" onclick="removeItemRow('${lid}')">✕</button>`;
-  document.getElementById(containerId).appendChild(row);
+    <button type="button" class="btn btn-danger btn-xs" onclick="removeItemRow('${lid}')">✕</button>
+    <input type="hidden" id="itt-${lid}" value="${esc(tipo||'')}">
+    <input type="hidden" id="itr-${lid}" value="${esc(refId||'')}">`;
+  wrap.appendChild(row);
+  if(tipo==='servico'){
+    const sub=document.createElement('div');
+    sub.style.cssText='display:grid;grid-template-columns:24px 1fr 1fr;gap:6px;margin-top:4px';
+    sub.innerHTML=`<div></div>
+      <input class="form-control" id="itd-${lid}" type="date" value="${dataExecucao||''}" title="Data de execução" placeholder="Data de execução">
+      <input class="form-control" id="itp-${lid}" placeholder="Equipe / Responsável" value="${esc(responsavel||'')}">`;
+    wrap.appendChild(sub);
+  }
+  document.getElementById(containerId).appendChild(wrap);
   calcItens();
 }
 function removeItemRow(lid){document.getElementById('it-'+lid)?.remove();itemLines=itemLines.filter(x=>x!==lid);calcItens();}
@@ -3385,11 +3598,20 @@ function calcItens(){
   return tot;
 }
 function collectItens(){
-  return itemLines.map(lid=>({
-    nome:document.getElementById('itn-'+lid)?.value||'',
-    qtd:Number(document.getElementById('itq-'+lid)?.value)||0,
-    valorUnit:Number(document.getElementById('itv-'+lid)?.value)||0
-  })).filter(i=>i.nome&&i.qtd>0);
+  return itemLines.map(lid=>{
+    const tipo=document.getElementById('itt-'+lid)?.value||'';
+    const item={
+      nome:document.getElementById('itn-'+lid)?.value||'',
+      qtd:Number(document.getElementById('itq-'+lid)?.value)||0,
+      valorUnit:Number(document.getElementById('itv-'+lid)?.value)||0,
+      tipo,refId:document.getElementById('itr-'+lid)?.value||''
+    };
+    if(tipo==='servico'){
+      item.dataExecucao=document.getElementById('itd-'+lid)?.value||'';
+      item.responsavel=document.getElementById('itp-'+lid)?.value||'';
+    }
+    return item;
+  }).filter(i=>i.nome&&i.qtd>0);
 }
 function addParcRow(containerId,venc,valor,forma,obs){
   const lid=uid();parcLines.push(lid);
@@ -3633,10 +3855,10 @@ function _clienteBox(cli){
     <div class="doc-cell" style="grid-column:1/4"><b>E-mail</b><span class="val">${esc(cli.email||'—')}</span></div>
   </div>`;
 }
-function _itensTable(itens,total){
+function _itensTable(itens,total,ocultarDetalheServico){
   return `<table class="doc-table">
     <thead><tr><th>Item</th><th>Qtd.</th><th class="r">Vr. Unit.</th><th class="r">Vr. Total</th></tr></thead>
-    <tbody>${(itens||[]).map(i=>`<tr><td>${esc(i.nome)}</td><td>${i.qtd}</td><td class="r">${fmtR(i.valorUnit)}</td><td class="r">${fmtR(i.qtd*i.valorUnit)}</td></tr>`).join('')||'<tr><td colspan="4" style="text-align:center;color:#a39d8f">Nenhum item</td></tr>'}</tbody>
+    <tbody>${(itens||[]).map(i=>`<tr><td>${esc(i.nome)}${!ocultarDetalheServico&&i.tipo==='servico'&&(i.dataExecucao||i.responsavel)?`<div style="font-size:11px;color:#8a8372">${i.dataExecucao?'Execução: '+fmtD(i.dataExecucao):''}${i.dataExecucao&&i.responsavel?' · ':''}${i.responsavel?'Resp.: '+esc(i.responsavel):''}</div>`:''}</td><td>${i.qtd}</td><td class="r">${fmtR(i.valorUnit)}</td><td class="r">${fmtR(i.qtd*i.valorUnit)}</td></tr>`).join('')||'<tr><td colspan="4" style="text-align:center;color:#a39d8f">Nenhum item</td></tr>'}</tbody>
     <tfoot><tr><td colspan="3">Total</td><td class="r">${fmtR(total)}</td></tr></tfoot>
   </table>`;
 }
@@ -3817,6 +4039,24 @@ function copiarLinkModal(){
 }
 
 // ── CONTRATOS ───────────────────────────────────────────────────────────────────
+// Saída/devolução de equipamentos e estruturas referenciados num item de orçamento/contrato
+// (itens avulsos digitados à mão, sem refId, não são afetados). direcao: -1 = saída (retira
+// disponibilidade), +1 = devolução (repõe disponibilidade). Compartilhado entre Contratos e Locações.
+function _aplicarMovimentoEstoque(itens,direcao){
+  (itens||[]).forEach(i=>{
+    if(i.tipo==='equipamento'&&i.refId){
+      const e=DB.one('equipamentos',i.refId);
+      if(e){e.status=direcao<0?'locado':'disponivel';DB.save('equipamentos',e);}
+    }else if(i.tipo==='estrutura'&&i.refId){
+      const e=DB.one('estruturas',i.refId);
+      if(e){
+        let disp=Number(e.qtdDisponivel||0)+direcao*Number(i.qtd||0);
+        disp=Math.max(0,Math.min(Number(e.qtdTotal||0),disp));
+        e.qtdDisponivel=disp;DB.save('estruturas',e);
+      }
+    }
+  });
+}
 const CTR_BADGE={ativo:'badge-green',encerrado:'badge-gray',cancelado:'badge-red'};
 function renderContratos(){
   const q=(document.getElementById('search-contratos')?.value||'').toLowerCase();
@@ -3874,7 +4114,7 @@ function openModalContrato(id){
   document.getElementById('ctr-lancar').value='sim';
   document.getElementById('ctr-obs').value=c.observacoes||'';
   if(!c.dias)calcDiasLocacao();
-  if(c.itens?.length)c.itens.forEach(i=>addItemRow('ctr-itens-list',i.nome,i.qtd,i.valorUnit));
+  if(c.itens?.length)c.itens.forEach(i=>addItemRow('ctr-itens-list',i.nome,i.qtd,i.valorUnit,i.tipo,i.refId,i.dataExecucao,i.responsavel));
   else addItemRow('ctr-itens-list');
   if(c.parcelas?.length)c.parcelas.forEach(p=>addParcRow('ctr-parc-list',p.vencimento,p.valor,p.forma,p.obs));
   openModal('modal-contrato');
@@ -3908,6 +4148,10 @@ function saveContrato(){
     criado:existente?.criado||new Date().toISOString(),
   };
   DB.save('contratos',item);
+  // saída/devolução automática de equipamentos e estruturas conforme a transição de status do contrato
+  const statusAnterior=existente?.status||null;
+  if(statusAnterior!=='ativo'&&item.status==='ativo')_aplicarMovimentoEstoque(itens,-1);
+  else if(statusAnterior==='ativo'&&item.status!=='ativo')_aplicarMovimentoEstoque(itens,1);
   if(isNew&&document.getElementById('ctr-lancar').value==='sim'&&parcelas.length){
     const cli=DB.one('clientes',clienteId);
     const grupoId=uid();
@@ -3951,7 +4195,7 @@ function gerarContratoDeOrcamento(id){
   document.getElementById('ctr-lancar').value='sim';
   document.getElementById('ctr-obs').value=o.observacoes||'';
   calcDiasLocacao();
-  if(o.itens?.length)o.itens.forEach(i=>addItemRow('ctr-itens-list',i.nome,i.qtd,i.valorUnit));
+  if(o.itens?.length)o.itens.forEach(i=>addItemRow('ctr-itens-list',i.nome,i.qtd,i.valorUnit,i.tipo,i.refId,i.dataExecucao,i.responsavel));
   else addItemRow('ctr-itens-list');
   if(o.parcelas?.length)o.parcelas.forEach(p=>addParcRow('ctr-parc-list',p.vencimento,p.valor,p.forma,p.obs));
   closeModal('modal-orcamentocli');
@@ -4601,7 +4845,7 @@ async function renderPublicOrcamentoPage(id){
     </div>
     ${_clienteBox(cli)}
     <div class="doc-sec-title">Serviços</div>
-    ${_itensTable(o.itens,o.valorTotal)}
+    ${_itensTable(o.itens,o.valorTotal,true)}
     ${_parcelasTable(o.parcelas)}
     ${acaoHtml}
     ${_docFooterNote(emp)}
