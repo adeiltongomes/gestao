@@ -4081,9 +4081,9 @@ function _gcOrcamentoBodyHtml(o,cli,emp){
   </div>
   <div class="gc-sectitle">Serviços</div>
   <table class="gc-table">
-    <thead><tr><th>Item</th><th>Nome</th><th class="r">Qtd.</th><th class="r">Vr. Unit.</th><th class="r">Subtotal</th></tr></thead>
-    <tbody>${itens.map((i,idx)=>`<tr><td>${idx+1}</td><td>${esc(i.nome)}</td><td class="r">${_gcNum(i.qtd)}</td><td class="r">${_gcNum(i.valorUnit)}</td><td class="r">${_gcNum(i.qtd*i.valorUnit)}</td></tr>`).join('')||'<tr><td colspan="5" style="text-align:center;color:#999">Nenhum item</td></tr>'}</tbody>
-    <tfoot><tr><td colspan="2">Total</td><td class="r">${_gcNum(totalQtd)}</td><td></td><td class="r">${_gcNum(o.valorTotal)}</td></tr></tfoot>
+    <thead><tr><th class="c">Item</th><th>Nome</th><th class="c">Qtd.</th><th class="c">Vr. Unit.</th><th class="c">Subtotal</th></tr></thead>
+    <tbody>${itens.map((i,idx)=>`<tr><td class="c">${idx+1}</td><td>${esc(i.nome)}</td><td class="c">${_gcNum(i.qtd)}</td><td class="c">${_gcNum(i.valorUnit)}</td><td class="c">${_gcNum(i.qtd*i.valorUnit)}</td></tr>`).join('')||'<tr><td colspan="5" style="text-align:center;color:#999">Nenhum item</td></tr>'}</tbody>
+    <tfoot><tr><td colspan="2">Total</td><td class="c">${_gcNum(totalQtd)}</td><td></td><td class="c">${_gcNum(o.valorTotal)}</td></tr></tfoot>
   </table>
   <div class="gc-totalbar"><div>Serviços: ${_gcNum(o.valorTotal)}</div><div><b>Total: ${fmtR(o.valorTotal)}</b></div></div>
   ${(o.parcelas?.length)?`<div class="gc-sectitle">Dados do Pagamento</div>
