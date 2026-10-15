@@ -4029,13 +4029,17 @@ function _gcStyle(){
   .gc-noprint{text-align:center;margin-top:18px}
   .gc-btn{padding:9px 24px;background:#2e2a86;color:#fff;border:none;border-radius:3px;font-size:12px;font-weight:600;cursor:pointer;font-family:Arial,sans-serif}
   .gc-hint{font-size:10px;color:#777;margin-top:7px}
+  .gc-input{width:100%;padding:7px 10px;border:1px solid #999;border-radius:3px;font-size:11px;font-family:Arial,sans-serif;color:#222}
   @media print{body{background:#fff;padding:0}.gc-sheet{max-width:100%;padding:0}.gc-noprint{display:none}}
   @page{margin:8mm}`;
 }
-function imprimirOrcamentoCli(id){
-  const o=DB.one('orcamentoscli',id);if(!o){toast('Orçamento não encontrado','error');return;}
-  const cli=DB.one('clientes',o.clienteId);
-  const emp=getEmpresa();
+// Corpo compartilhado do Orçamento no layout GestãoClick — usado tanto pela impressão
+// (imprimirOrcamentoCli) quanto pela página pública do link de aprovação
+// (renderPublicOrcamentoPage), pra garantir que os dois SEMPRE mostrem exatamente o
+// mesmo modelo de apresentação. Vai do cabeçalho até Transportadora; a seção de
+// assinatura/rodapé/ação fica a cargo de cada chamador, que tem necessidades diferentes
+// (impressão tem botão de imprimir; a página pública tem o formulário de aprovação).
+function _gcOrcamentoBodyHtml(o,cli,emp){
   const cidadeUfEmp=[emp.cidade,emp.estado].filter(Boolean).join('/');
   const cel=(label,valor,full)=>`<div class="gc-cell${full?' full':''}"><b>${esc(label)}:</b> ${esc(valor||'—')}</div>`;
   const dias=_gcDias(o.inicio,o.fim);
@@ -4043,12 +4047,7 @@ function imprimirOrcamentoCli(id){
   const cidadeUfCli=cli?[cli.cidade,cli.uf].filter(Boolean).join('/'):'';
   const itens=o.itens||[];
   const totalQtd=itens.reduce((s,i)=>s+Number(i.qtd||0),0);
-  const assinaturaHtml=(o.status==='aprovado'&&o.aprovacao)
-    ?`<div class="gc-ass-box"><div style="font-size:11px"><b>✓ Aprovado e assinado digitalmente</b><br>${esc(o.aprovacao.nome)} em ${new Date(o.aprovacao.data).toLocaleString('pt-BR')}</div></div>`
-    :`<div class="gc-ass-box"><div class="gc-ass-linha"></div>Assinatura do cliente</div>`;
-  const w=_docOpen();
-  w.document.write(`<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><title>Orçamento ${o.numero||''}</title><style>${_gcStyle()}</style></head><body><div class="gc-sheet">
-  <div class="gc-hdr">
+  return `<div class="gc-hdr">
     <div style="display:flex;gap:14px;flex:1;min-width:0">
       ${_gcLogoHtml(emp)}
       <div class="gc-emp">
@@ -4091,9 +4090,23 @@ function imprimirOrcamentoCli(id){
     <thead><tr><th>Vencimento</th><th class="r">Valor da Parcela</th><th>Forma de Pagamento</th><th>Observação</th></tr></thead>
     <tbody>${o.parcelas.map(p=>`<tr><td>${fmtD(p.vencimento)}</td><td class="r">${_gcNum(p.valor)}</td><td>${esc(p.forma)}</td><td style="font-size:10px;color:#444">${esc(p.obs||'')}</td></tr>`).join('')}</tbody>
   </table>`:''}
-  ${o.transportadora?`<div class="gc-sectitle">Transportadora</div><div class="gc-plain">${esc(o.transportadora)}</div>`:''}
+  ${o.transportadora?`<div class="gc-sectitle">Transportadora</div><div class="gc-plain">${esc(o.transportadora)}</div>`:''}`;
+}
+function _gcFooterHtml(emp){
+  return `<div class="gc-ft"><span>${esc(emp.nome||'')}</span><span>Gerado em ${new Date().toLocaleDateString('pt-BR')}</span></div>`;
+}
+function imprimirOrcamentoCli(id){
+  const o=DB.one('orcamentoscli',id);if(!o){toast('Orçamento não encontrado','error');return;}
+  const cli=DB.one('clientes',o.clienteId);
+  const emp=getEmpresa();
+  const assinaturaHtml=(o.status==='aprovado'&&o.aprovacao)
+    ?`<div class="gc-ass-box"><div style="font-size:11px"><b>✓ Aprovado e assinado digitalmente</b><br>${esc(o.aprovacao.nome)} em ${new Date(o.aprovacao.data).toLocaleString('pt-BR')}</div></div>`
+    :`<div class="gc-ass-box"><div class="gc-ass-linha"></div>Assinatura do cliente</div>`;
+  const w=_docOpen();
+  w.document.write(`<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><title>Orçamento ${o.numero||''}</title><style>${_gcStyle()}</style></head><body><div class="gc-sheet">
+  ${_gcOrcamentoBodyHtml(o,cli,emp)}
   ${assinaturaHtml}
-  <div class="gc-ft"><span>${esc(emp.nome||'')}</span><span>Gerado em ${new Date().toLocaleDateString('pt-BR')}</span></div>
+  ${_gcFooterHtml(emp)}
   <div class="gc-noprint">
     <button class="gc-btn" onclick="window.print()">🖨 Imprimir / Salvar PDF</button>
     <div class="gc-hint">Dica: na janela de impressão, em "Mais configurações", desmarque "Cabeçalhos e rodapés" para um PDF limpo (sem a linha "about:blank").</div>
@@ -4900,12 +4913,36 @@ function _injectDocStylesOnce(){
   document.head.appendChild(style);
 }
 function _pubMsg(html){
-  document.getElementById('public-view').innerHTML=`<div style="min-height:100vh;display:flex;align-items:center;justify-content:center;font-family:'IBM Plex Sans',sans-serif;color:#6b6459;padding:20px;text-align:center">${html}</div>`;
+  document.getElementById('public-view').innerHTML=`<div style="min-height:100vh;display:flex;align-items:center;justify-content:center;font-family:Arial,sans-serif;color:#555;padding:20px;text-align:center">${html}</div>`;
+}
+function _gcInjectStylesOnce(){
+  if(document.getElementById('_gc-print-styles'))return;
+  const style=document.createElement('style');style.id='_gc-print-styles';
+  style.textContent=_gcStyle();
+  document.head.appendChild(style);
+}
+// Caixa de assinatura digital já aprovada, no mesmo estilo simples usado na impressão —
+// mantém todos os dados de auditoria (nome, data, IP, geo, dispositivo, imagem da
+// assinatura), só troca a casca visual fantasiosa (banner verde + QR) pela caixa plana.
+function _gcAssinaturaDigitalBox(o){
+  const a=o.aprovacao;if(!a)return `<div class="gc-ass-box"><div class="gc-ass-linha"></div>Assinatura do cliente</div>`;
+  return `<div class="gc-ass-box" style="text-align:left">
+    <div style="font-size:11px;margin-bottom:10px"><b>✓ Aprovado e assinado digitalmente</b></div>
+    <div style="display:flex;gap:18px;flex-wrap:wrap;align-items:flex-start">
+      <div style="font-size:10px;color:#444;line-height:1.7">
+        <b>${esc(a.nome)}</b><br>
+        Assinado em ${new Date(a.data).toLocaleString('pt-BR')}<br>
+        IP: ${esc(a.ip||'—')}${a.geo?' · Local aprox.: '+a.geo.lat.toFixed(3)+', '+a.geo.lng.toFixed(3):''}<br>
+        Dispositivo: ${esc((a.dispositivo||'—').slice(0,80))}
+      </div>
+      ${a.assinaturaImg?`<img src="${a.assinaturaImg}" style="max-width:170px;max-height:70px;border-bottom:1px solid #888;padding-bottom:4px">`:''}
+    </div>
+  </div>`;
 }
 async function renderPublicOrcamentoPage(id){
   const el=document.getElementById('public-view');
   el.classList.remove('hidden');
-  _injectDocStylesOnce();
+  _gcInjectStylesOnce();
   _pubMsg('Carregando orçamento…');
   try{ await DB.init(); }catch(e){
     _pubMsg('<span style="color:#b3261e">Não foi possível carregar. Verifique sua conexão e recarregue a página.</span>');
@@ -4917,39 +4954,26 @@ async function renderPublicOrcamentoPage(id){
   const emp=getEmpresa();
   let acaoHtml;
   if(o.status==='aprovado'){
-    acaoHtml=_assinaturaDigitalBox(o);
+    acaoHtml=_gcAssinaturaDigitalBox(o);
   }else if(o.status==='recusado'){
-    acaoHtml=`<div class="doc-fiscal" style="margin-top:28px;border-color:#b3261e"><strong style="color:#b3261e">✕ Orçamento recusado.</strong></div>`;
+    acaoHtml=`<div class="gc-ass-box" style="border-color:#b3261e;color:#b3261e"><b>✕ Orçamento recusado.</b></div>`;
   }else{
-    acaoHtml=`<div style="margin-top:34px;padding-top:24px;border-top:1px solid var(--rule)">
-      <div style="font-size:9px;text-transform:uppercase;letter-spacing:.12em;color:var(--ink-soft);margin-bottom:10px;font-weight:600">Aprovação do Cliente</div>
-      <input class="form-control" id="pub-nome-aprov" placeholder="Seu nome completo" style="margin-bottom:12px;max-width:340px;font-family:'IBM Plex Sans',sans-serif">
-      <div style="font-size:9.5px;color:var(--ink-soft);margin-bottom:6px">Assine no quadro abaixo (use o mouse ou o dedo na tela)</div>
-      <canvas id="pub-sig-canvas" width="340" height="140" style="border:1.5px dashed var(--rule);border-radius:6px;background:#fff;touch-action:none;cursor:crosshair;max-width:100%"></canvas>
-      <div style="margin:6px 0 14px"><button type="button" onclick="limparAssinatura()" style="background:none;border:none;color:var(--brand);font-size:11px;text-decoration:underline;cursor:pointer;font-family:inherit">Limpar assinatura</button></div>
+    acaoHtml=`<div class="gc-sectitle">Aprovação do Cliente</div>
+    <div class="gc-plain">
+      <input class="gc-input" id="pub-nome-aprov" placeholder="Seu nome completo" style="margin-bottom:10px;max-width:340px;display:block">
+      <div style="font-size:10px;color:#666;margin-bottom:6px">Assine no quadro abaixo (use o mouse ou o dedo na tela)</div>
+      <canvas id="pub-sig-canvas" width="340" height="140" style="border:1.5px dashed #999;border-radius:4px;background:#fff;touch-action:none;cursor:crosshair;max-width:100%"></canvas>
+      <div style="margin:6px 0 12px"><button type="button" onclick="limparAssinatura()" style="background:none;border:none;color:#2e2a86;font-size:10.5px;text-decoration:underline;cursor:pointer;font-family:inherit">Limpar assinatura</button></div>
       <div style="display:flex;gap:10px;flex-wrap:wrap">
-        <button class="btn-p" onclick="aprovarPublico('${o.id}')">✓ Aprovar e Assinar</button>
-        <button class="btn-p" style="background:#fff;color:#b3261e;border:1px solid #b3261e" onclick="recusarPublico('${o.id}')">✕ Recusar</button>
+        <button class="gc-btn" onclick="aprovarPublico('${o.id}')">✓ Aprovar e Assinar</button>
+        <button class="gc-btn" style="background:#fff;color:#b3261e;border:1px solid #b3261e" onclick="recusarPublico('${o.id}')">✕ Recusar</button>
       </div>
     </div>`;
   }
-  el.innerHTML=`<div class="sheet" style="margin:30px auto">
-    ${_docHeader(emp,'ORÇAMENTO',o.numero||'—',o.criado?o.criado.slice(0,10):today(),o.cuidados)}
-    <div class="doc-grid cols3">
-      <div class="doc-cell"><b>Validade da Proposta</b><span class="val">${o.validade||1} dia(s)</span></div>
-      <div class="doc-cell"><b>Previsão de Entrega</b><span class="val">${fmtD(o.entrega)}</span></div>
-      <div class="doc-cell"><b>Job</b><span class="val">${esc(o.job||'—')}</span></div>
-      <div class="doc-cell"><b>Início</b><span class="val">${fmtD(o.inicio)}</span></div>
-      <div class="doc-cell"><b>Término</b><span class="val">${fmtD(o.fim)}</span></div>
-      <div class="doc-cell"><b>Praça</b><span class="val">${esc(o.praca||'—')}</span></div>
-      <div class="doc-cell" style="grid-column:1/4"><b>Local de Entrega</b><span class="val">${esc(o.local||'—')}</span></div>
-    </div>
-    ${_clienteBox(cli)}
-    <div class="doc-sec-title">Serviços</div>
-    ${_itensTable(o.itens,o.valorTotal,true)}
-    ${_parcelasTable(o.parcelas)}
+  el.innerHTML=`<div class="gc-sheet" style="margin:24px auto">
+    ${_gcOrcamentoBodyHtml(o,cli,emp)}
     ${acaoHtml}
-    ${_docFooterNote(emp)}
+    ${_gcFooterHtml(emp)}
   </div>`;
   if(o.status!=='aprovado'&&o.status!=='recusado')initSigCanvas();
 }
