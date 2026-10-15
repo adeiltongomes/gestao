@@ -1014,7 +1014,7 @@ thead th.r{text-align:right}
         </div>
       </div>
       <div class="form-row">
-        <div class="form-group"><label class="form-label">CPF / CNPJ</label><input class="form-control" id="cli-doc" placeholder="000.000.000-00 ou 00.000.000/0001-00"></div>
+        <div class="form-group"><label class="form-label">CPF / CNPJ</label><input class="form-control" id="cli-doc" placeholder="000.000.000-00 ou 00.000.000/0001-00" oninput="buscaCnpj(this.value)"></div>
         <div class="form-group"><label class="form-label">Telefone</label><input class="form-control" id="cli-tel" placeholder="(00) 00000-0000"></div>
       </div>
       <div class="form-row">
@@ -1906,6 +1906,25 @@ async function buscaCep(v){
     document.getElementById('cli-cidade').value=j.localidade||'';
     document.getElementById('cli-uf').value=j.uf||'';
     document.getElementById('cli-num').focus();
+  }catch(e){}
+}
+async function buscaCnpj(v){
+  const d=v.replace(/\D/g,'');if(d.length!==14)return;
+  try{
+    const r=await fetch('https://brasilapi.com.br/api/cnpj/v1/'+d);
+    if(!r.ok)return;
+    const j=await r.json();
+    const set=(id,val)=>{const el=document.getElementById(id);if(el&&!el.value.trim())el.value=val||'';};
+    set('cli-nome',j.razao_social||j.nome_fantasia);
+    if(j.ddd_telefone_1){const t=j.ddd_telefone_1.replace(/\D/g,'');if(t.length>=10)set('cli-tel','('+t.slice(0,2)+') '+(t.length===11?t.slice(2,7)+'-'+t.slice(7):t.slice(2,6)+'-'+t.slice(6)));}
+    set('cli-email',j.email);
+    if(j.cep){const c=j.cep.replace(/\D/g,'');set('cli-cep',c.length===8?c.slice(0,5)+'-'+c.slice(5):j.cep);}
+    set('cli-end',j.logradouro);
+    set('cli-num',j.numero);
+    set('cli-comp',j.complemento);
+    set('cli-bairro',j.bairro);
+    set('cli-cidade',j.municipio);
+    set('cli-uf',j.uf);
   }catch(e){}
 }
 const CLI_TIPO_LBL={cliente:'Cliente',fornecedor:'Fornecedor',ambos:'Cli. e Forn.'};
