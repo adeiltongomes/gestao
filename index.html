@@ -1089,12 +1089,13 @@ thead th.r{text-align:right}
       <input type="hidden" id="equip-id">
       <div class="form-row">
         <div class="form-group"><label class="form-label">Tipo *</label>
-          <select class="form-control" id="equip-tipo">
+          <select class="form-control" id="equip-tipo" onchange="toggleEquipTipoOutro()">
             <option value="">Selecione…</option>
             <option>Tablet</option><option>Celular</option><option>Notebook</option>
             <option>Monitor</option><option>Computador</option><option>Impressora</option>
             <option>Roteador</option><option>Projetor</option><option>Scanner</option><option>Outro</option>
           </select>
+          <input class="form-control hidden" id="equip-tipo-outro" style="margin-top:6px" placeholder="Especifique o tipo">
         </div>
         <div class="form-group"><label class="form-label">Marca</label><input class="form-control" id="equip-marca" placeholder="Ex: Samsung, Dell…"></div>
       </div>
@@ -2051,10 +2052,20 @@ function renderEquipamentos(){
     <td><div class="td-actions"><button class="btn btn-ghost btn-xs" onclick="openModalEquipamento('${e.id}')">✏</button><button class="btn btn-danger btn-xs" onclick="delEquipamento('${e.id}')">✕</button></div></td></tr>`)
     .join(''):`<tr><td colspan="6"><div class="empty"><div class="empty-icon">💻</div><h3>Nenhum equipamento cadastrado</h3></div></td></tr>`;
 }
+const EQUIP_TIPOS_FIXOS=['Tablet','Celular','Notebook','Monitor','Computador','Impressora','Roteador','Projetor','Scanner'];
+function toggleEquipTipoOutro(){
+  const sel=document.getElementById('equip-tipo').value;
+  document.getElementById('equip-tipo-outro').classList.toggle('hidden',sel!=='Outro');
+}
 function openModalEquipamento(id){
   const e=id?DB.one('equipamentos',id):{};
   document.getElementById('mequip-title').textContent=id?'Editar Equipamento':'Novo Equipamento';
-  document.getElementById('equip-id').value=e.id||'';document.getElementById('equip-tipo').value=e.tipo||'';
+  const tipoSalvo=e.tipo||'';
+  const ehCustom=tipoSalvo&&!EQUIP_TIPOS_FIXOS.includes(tipoSalvo);
+  document.getElementById('equip-id').value=e.id||'';
+  document.getElementById('equip-tipo').value=ehCustom?'Outro':tipoSalvo;
+  document.getElementById('equip-tipo-outro').value=ehCustom?tipoSalvo:'';
+  toggleEquipTipoOutro();
   document.getElementById('equip-marca').value=e.marca||'';document.getElementById('equip-modelo').value=e.modelo||'';
   document.getElementById('equip-serie').value=e.numSerie||'';document.getElementById('equip-compra').value=e.valorCompra||'';
   document.getElementById('equip-dia').value=e.valorDia||'';document.getElementById('equip-status').value=e.status||'disponivel';
@@ -2062,8 +2073,12 @@ function openModalEquipamento(id){
   openModal('modal-equipamento');
 }
 function saveEquipamento(){
-  if(!document.getElementById('equip-tipo').value){toast('Selecione o tipo','error');return;}
-  DB.save('equipamentos',{id:document.getElementById('equip-id').value||uid(),tipo:document.getElementById('equip-tipo').value,marca:document.getElementById('equip-marca').value,modelo:document.getElementById('equip-modelo').value,numSerie:document.getElementById('equip-serie').value,valorCompra:document.getElementById('equip-compra').value,valorDia:document.getElementById('equip-dia').value,status:document.getElementById('equip-status').value,desc:document.getElementById('equip-desc').value,observacoes:document.getElementById('equip-obs').value});
+  const tipoSel=document.getElementById('equip-tipo').value;
+  if(!tipoSel){toast('Selecione o tipo','error');return;}
+  const tipoOutro=document.getElementById('equip-tipo-outro').value.trim();
+  if(tipoSel==='Outro'&&!tipoOutro){toast('Digite o tipo do equipamento','error');return;}
+  const tipoFinal=tipoSel==='Outro'?tipoOutro:tipoSel;
+  DB.save('equipamentos',{id:document.getElementById('equip-id').value||uid(),tipo:tipoFinal,marca:document.getElementById('equip-marca').value,modelo:document.getElementById('equip-modelo').value,numSerie:document.getElementById('equip-serie').value,valorCompra:document.getElementById('equip-compra').value,valorDia:document.getElementById('equip-dia').value,status:document.getElementById('equip-status').value,desc:document.getElementById('equip-desc').value,observacoes:document.getElementById('equip-obs').value});
   closeModal('modal-equipamento');renderEquipamentos();toast('Equipamento salvo!','success');
   if(_quickItemTarget){
     const e=DB.get('equipamentos')[0];
