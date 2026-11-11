@@ -34,6 +34,7 @@
   --blue-bg:rgba(108,99,214,.15);--blue-text:#cfc9f7;
   --blue-light:#8a82e8;
   --emerald:#34d399;--emerald-bg:rgba(52,211,153,.15);--emerald-text:#86efac;
+  --green:#34d399;
   --red:#f87171;--red-bg:rgba(248,113,113,.15);--red-text:#fca5a5;
   --amber:#c2873c;--amber-bg:rgba(194,135,60,.18);--amber-text:#e3b872;
   --purple:#a78bfa;--purple-bg:rgba(167,139,250,.15);--purple-text:#c4b5fd;
@@ -494,6 +495,21 @@ thead th.r{text-align:right}
   #view-financeiro .fin-row-amount{flex:0 0 auto;min-width:0}
   #view-financeiro tr.fin-row>td.fin-row-amount+td{flex:1 1 100%}
   #view-financeiro .td-actions{justify-content:flex-start}
+  /* Listas simples (Clientes, Equipamentos, Locações, Orçamentos etc.) — mesma
+     ideia do fin-row acima, só que genérica: cada <tr> vira um cartão, cada
+     <td> mostra seu data-label como rótulo à esquerda do valor, e o <td> de
+     ações (sem data-label) vira uma faixa cheia separada por uma linha. */
+  .resp-table table,.resp-table tbody{display:block;width:100%}
+  .resp-table thead{display:none}
+  .resp-table tr{display:block;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:4px 14px;margin-bottom:10px}
+  .resp-table tr:last-child{margin-bottom:0}
+  .resp-table td{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;padding:8px 0!important;border:none!important;border-bottom:1px solid var(--border)!important;text-align:right}
+  .resp-table td::before{content:attr(data-label);font-size:11px;font-weight:600;color:var(--text-dim);text-align:left;flex:0 0 auto;margin-right:8px;white-space:nowrap}
+  .resp-table td:not([data-label]):not([colspan]){display:none}
+  .resp-table td[colspan]{display:block;border-bottom:none!important}
+  .resp-table td.td-actions-cell{display:block;padding-top:10px!important;border-top:1px dashed var(--border)!important;border-bottom:none!important}
+  .resp-table td.td-actions-cell::before{content:none}
+  .resp-table td.td-actions-cell .td-actions{justify-content:flex-start;flex-wrap:wrap}
 }
 @media(max-width:480px){
   .cards-row{grid-template-columns:1fr}
@@ -718,7 +734,7 @@ thead th.r{text-align:right}
         <input class="form-control s-search" id="search-clientes" placeholder="Buscar por nome, CPF, telefone…" oninput="renderClientes()">
         <button class="btn btn-primary" id="cli-new-btn" onclick="openModalCliente()">+ Novo Cliente</button>
       </div>
-      <div class="table-wrap">
+      <div class="table-wrap resp-table">
         <table>
           <thead><tr><th>Nome</th><th>Tipo</th><th>CPF/CNPJ</th><th>Telefone</th><th>Chave PIX</th><th>Cidade</th><th>Locações</th><th></th></tr></thead>
           <tbody id="tb-clientes"></tbody>
@@ -733,7 +749,7 @@ thead th.r{text-align:right}
         <input class="form-control s-search" id="search-funcionarios" placeholder="Buscar…" oninput="renderFuncionarios()">
         <button class="btn btn-primary" onclick="openModalFuncionario()">+ Novo Funcionário</button>
       </div>
-      <div class="table-wrap">
+      <div class="table-wrap resp-table">
         <table>
           <thead><tr><th>Nome</th><th>Cargo</th><th>Salário</th><th>Telefone</th><th>Admissão</th><th></th></tr></thead>
           <tbody id="tb-funcionarios"></tbody>
@@ -755,7 +771,7 @@ thead th.r{text-align:right}
         </select>
         <button class="btn btn-primary" onclick="openModalEquipamento()">+ Novo Equipamento</button>
       </div>
-      <div class="table-wrap">
+      <div class="table-wrap resp-table">
         <table>
           <thead><tr><th>Tipo</th><th>Marca / Modelo</th><th>Nº Série</th><th>Val./Dia</th><th>Status</th><th></th></tr></thead>
           <tbody id="tb-equipamentos"></tbody>
@@ -770,7 +786,7 @@ thead th.r{text-align:right}
         <input class="form-control s-search" id="search-estoque" placeholder="Buscar item…" oninput="renderEstoque()">
         <button class="btn btn-primary" onclick="openModalEstoque()">+ Novo Item</button>
       </div>
-      <div class="table-wrap">
+      <div class="table-wrap resp-table">
         <table>
           <thead><tr><th>Item</th><th>Categoria</th><th>Qtd</th><th>Qtd Mín.</th><th>Val. Unit.</th><th>Total</th><th>Status</th><th></th></tr></thead>
           <tbody id="tb-estoque"></tbody>
@@ -785,7 +801,7 @@ thead th.r{text-align:right}
         <input class="form-control s-search" id="search-estruturas" placeholder="Buscar…" oninput="renderEstruturas()">
         <button class="btn btn-primary" onclick="openModalEstrutura()">+ Nova Estrutura</button>
       </div>
-      <div class="table-wrap">
+      <div class="table-wrap resp-table">
         <table>
           <thead><tr><th>Item</th><th>Categoria</th><th>Disponível/Total</th><th>Val./Dia</th><th>Status</th><th></th></tr></thead>
           <tbody id="tb-estruturas"></tbody>
@@ -800,7 +816,7 @@ thead th.r{text-align:right}
         <input class="form-control s-search" id="search-servicos" placeholder="Buscar…" oninput="renderServicos()">
         <button class="btn btn-primary" onclick="openModalServico()">+ Novo Serviço</button>
       </div>
-      <div class="table-wrap">
+      <div class="table-wrap resp-table">
         <table>
           <thead><tr><th>Serviço</th><th>Categoria</th><th>Valor Padrão</th><th></th></tr></thead>
           <tbody id="tb-servicos"></tbody>
@@ -821,7 +837,7 @@ thead th.r{text-align:right}
         </select>
         <button class="btn btn-primary" onclick="openModalLocacao()">+ Nova Locação</button>
       </div>
-      <div class="table-wrap">
+      <div class="table-wrap resp-table">
         <table>
           <thead><tr><th>Cliente</th><th>Equipamentos</th><th>Início</th><th>Fim</th><th>Valor</th><th>Pagamento</th><th>Status</th><th></th></tr></thead>
           <tbody id="tb-locacoes"></tbody>
@@ -842,7 +858,7 @@ thead th.r{text-align:right}
         </select>
         <button class="btn btn-primary" onclick="openModalContrato()">+ Novo Contrato</button>
       </div>
-      <div class="table-wrap">
+      <div class="table-wrap resp-table">
         <table>
           <thead><tr><th>Nº</th><th>Cliente</th><th>Job</th><th>Período</th><th>Valor</th><th>Status</th><th></th></tr></thead>
           <tbody id="tb-contratos"></tbody>
@@ -857,7 +873,7 @@ thead th.r{text-align:right}
         <input class="form-control s-search" id="search-faturas" placeholder="Buscar cliente…" oninput="renderFaturas()">
         <button class="btn btn-primary" onclick="openModalFatura()">+ Nova Fatura</button>
       </div>
-      <div class="table-wrap">
+      <div class="table-wrap resp-table">
         <table>
           <thead><tr><th>Nº</th><th>Cliente</th><th>Descrição</th><th>Vencimento</th><th>Valor</th><th></th></tr></thead>
           <tbody id="tb-faturas"></tbody>
@@ -959,7 +975,7 @@ thead th.r{text-align:right}
         </select>
         <button class="btn btn-primary" onclick="openModalOrcamentoCli()">+ Novo Orçamento</button>
       </div>
-      <div class="table-wrap">
+      <div class="table-wrap resp-table">
         <table>
           <thead><tr><th>Nº</th><th>Cliente</th><th>Descrição</th><th>Período</th><th>Valor Total</th><th>Pagamento</th><th>Status</th><th></th></tr></thead>
           <tbody id="tb-orcamentos"></tbody>
@@ -1352,7 +1368,7 @@ thead th.r{text-align:right}
           <input class="form-control" id="trans-nparc" type="number" min="1" max="60" value="1" placeholder="1 = à vista" oninput="toggleTransParc()">
         </div>
       </div>
-      <div id="trans-cart-info" style="display:none;background:#fef3c7;border:1px solid #fbbf24;border-radius:8px;padding:10px 13px;font-size:12.5px;color:#92400e;margin-bottom:8px">
+      <div id="trans-cart-info" style="display:none;background:var(--amber-bg);border:1px solid var(--amber);border-radius:8px;padding:10px 13px;font-size:12.5px;color:var(--amber-text);margin-bottom:8px">
         💳 <strong>Cartão de Crédito</strong> — <span id="trans-cart-resumo">1x à vista</span>
       </div>
       <div id="trans-vencimento-group" style="display:none">
@@ -2063,13 +2079,13 @@ function renderClientes(){
     const tipo=c.tipo||'cliente';
     const dadosBanc=c.banco?`${esc(c.banco)}${c.agencia?' Ag:'+esc(c.agencia):''}${c.conta?' C:'+esc(c.conta):''}`:null;
     return`<tr>
-      <td><strong>${esc(c.nome)}</strong>${dadosBanc?`<div style="font-size:11px;color:var(--text-dim);margin-top:2px">🏦 ${dadosBanc}</div>`:''}</td>
-      <td><span class="badge ${CLI_TIPO_BADGE[tipo]||'badge-gray'}">${CLI_TIPO_LBL[tipo]||tipo}</span></td>
-      <td>${esc(c.cpfCnpj||'—')}</td><td>${esc(c.telefone||'—')}</td>
-      <td>${c.pix?`<span title="${esc(c.pix)}" style="cursor:default">${esc(c.pix.length>20?c.pix.slice(0,20)+'…':c.pix)}</span>`:'—'}</td>
-      <td>${esc(c.cidade?(c.cidade+(c.uf?'/'+c.uf:'')):'—')}</td>
-      <td><span class="badge badge-blue">${n} locação${n!==1?'s':''}</span></td>
-      <td><div class="td-actions"><button class="btn btn-ghost btn-xs" onclick="openModalCliente('${c.id}')">✏</button><button class="btn btn-danger btn-xs" onclick="delCliente('${c.id}')">✕</button></div></td></tr>`;
+      <td data-label="Nome"><strong>${esc(c.nome)}</strong>${dadosBanc?`<div style="font-size:11px;color:var(--text-dim);margin-top:2px">🏦 ${dadosBanc}</div>`:''}</td>
+      <td data-label="Tipo"><span class="badge ${CLI_TIPO_BADGE[tipo]||'badge-gray'}">${CLI_TIPO_LBL[tipo]||tipo}</span></td>
+      <td data-label="CPF/CNPJ">${esc(c.cpfCnpj||'—')}</td><td data-label="Telefone">${esc(c.telefone||'—')}</td>
+      <td data-label="Chave PIX">${c.pix?`<span title="${esc(c.pix)}" style="cursor:default">${esc(c.pix.length>20?c.pix.slice(0,20)+'…':c.pix)}</span>`:'—'}</td>
+      <td data-label="Cidade">${esc(c.cidade?(c.cidade+(c.uf?'/'+c.uf:'')):'—')}</td>
+      <td data-label="Locações"><span class="badge badge-blue">${n} locação${n!==1?'s':''}</span></td>
+      <td class="td-actions-cell"><div class="td-actions"><button class="btn btn-ghost btn-xs" onclick="openModalCliente('${c.id}')">✏</button><button class="btn btn-danger btn-xs" onclick="delCliente('${c.id}')">✕</button></div></td></tr>`;
   }).join(''):`<tr><td colspan="8"><div class="empty"><div class="empty-icon">👥</div><h3>Nenhum cadastro encontrado</h3></div></td></tr>`;
 }
 function openModalCliente(id){
@@ -2134,8 +2150,8 @@ function renderFuncionarios(){
   const q=(document.getElementById('search-funcionarios')?.value||'').toLowerCase();
   const rows=DB.get('funcionarios').filter(f=>!q||f.nome?.toLowerCase().includes(q)||f.cargo?.toLowerCase().includes(q));
   document.getElementById('tb-funcionarios').innerHTML=rows.length?rows.map(f=>`
-    <tr><td><strong>${esc(f.nome)}</strong></td><td>${esc(f.cargo||'—')}</td><td>${fmtR(f.salario)}</td><td>${esc(f.telefone||'—')}</td><td>${fmtD(f.admissao)}</td>
-    <td><div class="td-actions"><button class="btn btn-ghost btn-xs" onclick="openModalFuncionario('${f.id}')">✏</button><button class="btn btn-danger btn-xs" onclick="delFuncionario('${f.id}')">✕</button></div></td></tr>`)
+    <tr><td data-label="Nome"><strong>${esc(f.nome)}</strong></td><td data-label="Cargo">${esc(f.cargo||'—')}</td><td data-label="Salário">${fmtR(f.salario)}</td><td data-label="Telefone">${esc(f.telefone||'—')}</td><td data-label="Admissão">${fmtD(f.admissao)}</td>
+    <td class="td-actions-cell"><div class="td-actions"><button class="btn btn-ghost btn-xs" onclick="openModalFuncionario('${f.id}')">✏</button><button class="btn btn-danger btn-xs" onclick="delFuncionario('${f.id}')">✕</button></div></td></tr>`)
     .join(''):`<tr><td colspan="6"><div class="empty"><div class="empty-icon">👤</div><h3>Nenhum funcionário cadastrado</h3></div></td></tr>`;
 }
 function openModalFuncionario(id){
@@ -2166,12 +2182,12 @@ function renderEquipamentos(){
     return !q||[e.tipo,e.marca,e.modelo,e.numSerie].some(v=>v?.toLowerCase().includes(q));
   });
   document.getElementById('tb-equipamentos').innerHTML=rows.length?rows.map(e=>`
-    <tr><td>${esc(e.tipo||'—')}</td>
-    <td><strong>${esc(e.marca||'')} ${esc(e.modelo||'')}</strong>${e.desc?`<br><span style="font-size:11px;color:var(--text-dim)">${esc(e.desc)}</span>`:''}</td>
-    <td style="font-size:12px;color:var(--text-mid)">${esc(e.numSerie||'—')}</td>
-    <td>${fmtR(e.valorDia)}/dia</td>
-    <td><span class="badge ${EQUIP_BADGE[e.status]||'badge-gray'}">${EQUIP_LBL[e.status]||e.status}</span></td>
-    <td><div class="td-actions"><button class="btn btn-ghost btn-xs" onclick="openModalEquipamento('${e.id}')">✏</button><button class="btn btn-danger btn-xs" onclick="delEquipamento('${e.id}')">✕</button></div></td></tr>`)
+    <tr><td data-label="Tipo">${esc(e.tipo||'—')}</td>
+    <td data-label="Marca / Modelo"><strong>${esc(e.marca||'')} ${esc(e.modelo||'')}</strong>${e.desc?`<br><span style="font-size:11px;color:var(--text-dim)">${esc(e.desc)}</span>`:''}</td>
+    <td data-label="Nº Série" style="font-size:12px;color:var(--text-mid)">${esc(e.numSerie||'—')}</td>
+    <td data-label="Val./Dia">${fmtR(e.valorDia)}/dia</td>
+    <td data-label="Status"><span class="badge ${EQUIP_BADGE[e.status]||'badge-gray'}">${EQUIP_LBL[e.status]||e.status}</span></td>
+    <td class="td-actions-cell"><div class="td-actions"><button class="btn btn-ghost btn-xs" onclick="openModalEquipamento('${e.id}')">✏</button><button class="btn btn-danger btn-xs" onclick="delEquipamento('${e.id}')">✕</button></div></td></tr>`)
     .join(''):`<tr><td colspan="6"><div class="empty"><div class="empty-icon">💻</div><h3>Nenhum equipamento cadastrado</h3></div></td></tr>`;
 }
 const EQUIP_TIPOS_FIXOS=['Tablet','Celular','Notebook','Monitor','TV','Computador','Impressora','Roteador','Projetor','Scanner','Acessório'];
@@ -2216,12 +2232,12 @@ function renderEstoque(){
   const rows=DB.get('estoque').filter(e=>!q||e.nome?.toLowerCase().includes(q)||e.categoria?.toLowerCase().includes(q));
   document.getElementById('tb-estoque').innerHTML=rows.length?rows.map(e=>{
     const baixo=Number(e.quantidade||0)<=Number(e.qtdMinima||0);
-    return`<tr><td><strong>${esc(e.nome)}</strong></td><td>${esc(e.categoria||'—')}</td>
-      <td style="font-weight:600;color:${baixo?'var(--red)':'inherit'}">${e.quantidade||0}</td>
-      <td>${e.qtdMinima||0}</td><td>${fmtR(e.valorUnit)}</td>
-      <td>${fmtR(Number(e.valorUnit||0)*Number(e.quantidade||0))}</td>
-      <td><span class="badge ${baixo?'badge-red':'badge-green'}">${baixo?'Baixo':'OK'}</span></td>
-      <td><div class="td-actions"><button class="btn btn-ghost btn-xs" onclick="openModalEstoque('${e.id}')">✏</button><button class="btn btn-danger btn-xs" onclick="delEstoque('${e.id}')">✕</button></div></td></tr>`;
+    return`<tr><td data-label="Item"><strong>${esc(e.nome)}</strong></td><td data-label="Categoria">${esc(e.categoria||'—')}</td>
+      <td data-label="Qtd" style="font-weight:600;color:${baixo?'var(--red)':'inherit'}">${e.quantidade||0}</td>
+      <td data-label="Qtd Mín.">${e.qtdMinima||0}</td><td data-label="Val. Unit.">${fmtR(e.valorUnit)}</td>
+      <td data-label="Total">${fmtR(Number(e.valorUnit||0)*Number(e.quantidade||0))}</td>
+      <td data-label="Status"><span class="badge ${baixo?'badge-red':'badge-green'}">${baixo?'Baixo':'OK'}</span></td>
+      <td class="td-actions-cell"><div class="td-actions"><button class="btn btn-ghost btn-xs" onclick="openModalEstoque('${e.id}')">✏</button><button class="btn btn-danger btn-xs" onclick="delEstoque('${e.id}')">✕</button></div></td></tr>`;
   }).join(''):`<tr><td colspan="8"><div class="empty"><div class="empty-icon">📦</div><h3>Nenhum item no estoque</h3></div></td></tr>`;
 }
 function openModalEstoque(id){
@@ -2257,11 +2273,11 @@ function renderEstruturas(){
   document.getElementById('tb-estruturas').innerHTML=rows.length?rows.map(e=>{
     const disp=Number(e.qtdDisponivel||0),tot=Number(e.qtdTotal||0);
     const indisp=disp<=0&&tot>0;
-    return`<tr><td><strong>${esc(e.nome)}</strong></td><td>${esc(e.categoria||'—')}</td>
-      <td style="font-weight:600;color:${indisp?'var(--red)':'inherit'}">${disp}/${tot}</td>
-      <td>${fmtR(e.valorDia)}</td>
-      <td><span class="badge ${indisp?'badge-red':'badge-green'}">${indisp?'Indisponível':'Disponível'}</span></td>
-      <td><div class="td-actions"><button class="btn btn-ghost btn-xs" onclick="openModalEstrutura('${e.id}')">✏</button><button class="btn btn-danger btn-xs" onclick="delEstrutura('${e.id}')">✕</button></div></td></tr>`;
+    return`<tr><td data-label="Item"><strong>${esc(e.nome)}</strong></td><td data-label="Categoria">${esc(e.categoria||'—')}</td>
+      <td data-label="Disponível/Total" style="font-weight:600;color:${indisp?'var(--red)':'inherit'}">${disp}/${tot}</td>
+      <td data-label="Val./Dia">${fmtR(e.valorDia)}</td>
+      <td data-label="Status"><span class="badge ${indisp?'badge-red':'badge-green'}">${indisp?'Indisponível':'Disponível'}</span></td>
+      <td class="td-actions-cell"><div class="td-actions"><button class="btn btn-ghost btn-xs" onclick="openModalEstrutura('${e.id}')">✏</button><button class="btn btn-danger btn-xs" onclick="delEstrutura('${e.id}')">✕</button></div></td></tr>`;
   }).join(''):`<tr><td colspan="6"><div class="empty"><div class="empty-icon">🏗️</div><h3>Nenhuma estrutura cadastrada</h3></div></td></tr>`;
 }
 function openModalEstrutura(id){
@@ -2294,8 +2310,8 @@ function renderServicos(){
   const q=(document.getElementById('search-servicos')?.value||'').toLowerCase();
   const rows=DB.get('servicos').filter(s=>!q||s.nome?.toLowerCase().includes(q)||s.categoria?.toLowerCase().includes(q));
   document.getElementById('tb-servicos').innerHTML=rows.length?rows.map(s=>
-    `<tr><td><strong>${esc(s.nome)}</strong></td><td>${esc(s.categoria||'—')}</td><td>${fmtR(s.valorPadrao)}</td>
-      <td><div class="td-actions"><button class="btn btn-ghost btn-xs" onclick="openModalServico('${s.id}')">✏</button><button class="btn btn-danger btn-xs" onclick="delServico('${s.id}')">✕</button></div></td></tr>`
+    `<tr><td data-label="Serviço"><strong>${esc(s.nome)}</strong></td><td data-label="Categoria">${esc(s.categoria||'—')}</td><td data-label="Valor Padrão">${fmtR(s.valorPadrao)}</td>
+      <td class="td-actions-cell"><div class="td-actions"><button class="btn btn-ghost btn-xs" onclick="openModalServico('${s.id}')">✏</button><button class="btn btn-danger btn-xs" onclick="delServico('${s.id}')">✕</button></div></td></tr>`
   ).join(''):`<tr><td colspan="4"><div class="empty"><div class="empty-icon">🔧</div><h3>Nenhum serviço cadastrado</h3></div></td></tr>`;
 }
 function openModalServico(id){
@@ -2345,13 +2361,13 @@ function renderLocacoes(){
   document.getElementById('tb-locacoes').innerHTML=rows.length?rows.map(l=>{
     const c=clis.find(x=>x.id===l.clienteId);
     const eqs=l.equipamentos?.map(le=>{const e=equips.find(x=>x.id===le.equipId);return e?`${e.tipo} ${e.marca} ${e.modelo}`.trim():'?'}).join(', ')||'—';
-    return`<tr><td><strong>${esc(c?.nome||'—')}</strong></td>
-      <td style="max-width:180px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:12px">${esc(eqs)}</td>
-      <td>${fmtD(l.inicio)}</td><td>${fmtD(l.fim)}</td>
-      <td><strong style="color:var(--green)">${fmtR(l.valor)}</strong></td>
-      <td><span class="badge badge-gray">${l.pagamento==='parcelado'?`${l.numParcelas}x`:'À Vista'}</span></td>
-      <td><span class="badge ${LOC_BADGE[l.status]||'badge-gray'}">${l.status}</span></td>
-      <td><div class="td-actions"><button class="btn btn-ghost btn-xs" onclick="openModalLocacao('${l.id}')">✏</button><button class="btn btn-danger btn-xs" onclick="delLocacao('${l.id}')">✕</button></div></td></tr>`;
+    return`<tr><td data-label="Cliente"><strong>${esc(c?.nome||'—')}</strong></td>
+      <td data-label="Equipamentos" style="max-width:180px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:12px">${esc(eqs)}</td>
+      <td data-label="Início">${fmtD(l.inicio)}</td><td data-label="Fim">${fmtD(l.fim)}</td>
+      <td data-label="Valor"><strong style="color:var(--green)">${fmtR(l.valor)}</strong></td>
+      <td data-label="Pagamento"><span class="badge badge-gray">${l.pagamento==='parcelado'?`${l.numParcelas}x`:'À Vista'}</span></td>
+      <td data-label="Status"><span class="badge ${LOC_BADGE[l.status]||'badge-gray'}">${l.status}</span></td>
+      <td class="td-actions-cell"><div class="td-actions"><button class="btn btn-ghost btn-xs" onclick="openModalLocacao('${l.id}')">✏</button><button class="btn btn-danger btn-xs" onclick="delLocacao('${l.id}')">✕</button></div></td></tr>`;
   }).join(''):`<tr><td colspan="8"><div class="empty"><div class="empty-icon">📋</div><h3>Nenhuma locação encontrada</h3></div></td></tr>`;
 }
 function openModalLocacao(id){
@@ -2568,7 +2584,7 @@ function renderFinanceiro(){
     <div class="card green">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
         <div class="card-label" style="margin:0">Entradas</div>
-        <div style="width:32px;height:32px;border-radius:8px;background:#d1fae5;display:flex;align-items:center;justify-content:center;font-size:15px">↑</div>
+        <div style="width:32px;height:32px;border-radius:8px;background:var(--emerald-bg);display:flex;align-items:center;justify-content:center;font-size:15px">↑</div>
       </div>
       <div class="card-value">${fmtR(totE)}</div>
       <div class="card-sub">${cardLabel}</div>
@@ -2576,7 +2592,7 @@ function renderFinanceiro(){
     <div class="card red">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
         <div class="card-label" style="margin:0">Saídas</div>
-        <div style="width:32px;height:32px;border-radius:8px;background:#fee2e2;display:flex;align-items:center;justify-content:center;font-size:15px">↓</div>
+        <div style="width:32px;height:32px;border-radius:8px;background:var(--red-bg);display:flex;align-items:center;justify-content:center;font-size:15px">↓</div>
       </div>
       <div class="card-value">${fmtR(totS)}</div>
       <div class="card-sub">${cardLabel}</div>
@@ -2584,7 +2600,7 @@ function renderFinanceiro(){
     <div class="card ${saldo>=0?'blue':'red'}">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
         <div class="card-label" style="margin:0">Saldo Líquido</div>
-        <div style="width:32px;height:32px;border-radius:8px;background:${saldo>=0?'#eef2ff':'#fee2e2'};display:flex;align-items:center;justify-content:center;font-size:15px">${saldo>=0?'↗':'↘'}</div>
+        <div style="width:32px;height:32px;border-radius:8px;background:${saldo>=0?'var(--blue-bg)':'var(--red-bg)'};display:flex;align-items:center;justify-content:center;font-size:15px">${saldo>=0?'↗':'↘'}</div>
       </div>
       <div class="card-value">${fmtR(saldo)}</div>
       <div class="card-sub">${saldo>=0?'Positivo':'Negativo'}</div>
@@ -2592,7 +2608,7 @@ function renderFinanceiro(){
     <div class="card orange">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
         <div class="card-label" style="margin:0">Pendentes</div>
-        <div style="width:32px;height:32px;border-radius:8px;background:#fef3c7;display:flex;align-items:center;justify-content:center;font-size:15px">⏳</div>
+        <div style="width:32px;height:32px;border-radius:8px;background:var(--amber-bg);display:flex;align-items:center;justify-content:center;font-size:15px">⏳</div>
       </div>
       <div class="card-value">${fmtR(totPend)}</div>
       <div class="card-sub">aguardando</div>
@@ -3302,9 +3318,9 @@ function calcParcPreview(){
     prevWrap.style.display='block';
     const rows=[];
     if(entrada>0){
-      rows.push(`<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 12px;background:#f0fdf4;border-bottom:1px solid var(--border)">
-        <div style="display:flex;align-items:center;gap:8px"><span style="font-size:11px;font-weight:700;background:#16a34a;color:#fff;padding:2px 7px;border-radius:4px">ENTRADA</span><span style="font-size:12px;color:var(--text-mid)">Hoje</span></div>
-        <strong style="color:#16a34a">${fmtR(entrada)}</strong></div>`);
+      rows.push(`<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 12px;background:var(--emerald-bg);border-bottom:1px solid var(--border)">
+        <div style="display:flex;align-items:center;gap:8px"><span style="font-size:11px;font-weight:700;background:var(--emerald);color:#0a0a0f;padding:2px 7px;border-radius:4px">ENTRADA</span><span style="font-size:12px;color:var(--text-mid)">Hoje</span></div>
+        <strong style="color:var(--emerald-text)">${fmtR(entrada)}</strong></div>`);
     }
     for(let i=0;i<Math.min(n,12);i++){
       const d=new Date(inicio+'T12:00:00');d.setMonth(d.getMonth()+i);
@@ -3368,7 +3384,7 @@ function renderParcelamentos(){
       <details style="margin-top:4px">
         <summary style="font-size:12px;color:var(--text-mid);cursor:pointer;user-select:none;padding:4px 0">Ver parcelas (${tot})</summary>
         <div style="margin-top:8px;border:1px solid var(--border);border-radius:8px;overflow:hidden">
-          ${p.entrada?`<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 12px;background:#f0fdf4;border-bottom:1px solid var(--border)">
+          ${p.entrada?`<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 12px;background:var(--emerald-bg);border-bottom:1px solid var(--border)">
             <div style="display:flex;align-items:center;gap:8px"><span class="badge badge-green">Entrada</span></div>
             <strong style="color:var(--emerald)">${fmtR(p.entrada)}</strong></div>`:''}
           ${parcsTot.map((par,i)=>`<div style="display:flex;align-items:center;justify-content:space-between;padding:9px 12px;${i<tot-1?'border-bottom:1px solid var(--border)':''}${par.status==='pago'?';background:var(--surface-2)':''}">
@@ -3451,14 +3467,14 @@ function renderOrcamentosCli(){
     const c=clis.find(x=>x.id===o.clienteId);
     const pagLabel=o.pagamento==='parcelado'?`Parcelado ${o.numParcelas}x`:'À Vista';
     return`<tr>
-      <td>${o.numero?'Nº '+o.numero:'—'}</td>
-      <td><strong>${esc(c?.nome||'—')}</strong></td>
-      <td>${esc(o.descricao||'—')}</td>
-      <td style="white-space:nowrap;font-size:12px;color:var(--text-mid)">${fmtD(o.inicio)} – ${fmtD(o.fim)}</td>
-      <td><strong style="color:var(--blue)">${fmtR(o.valorTotal)}</strong></td>
-      <td><span class="badge badge-gray">${pagLabel}</span></td>
-      <td><span class="badge ${ORC_BADGE[o.status]||'badge-gray'}">${o.status}</span></td>
-      <td><div class="td-actions">
+      <td data-label="Nº">${o.numero?'Nº '+o.numero:'—'}</td>
+      <td data-label="Cliente"><strong>${esc(c?.nome||'—')}</strong></td>
+      <td data-label="Descrição">${esc(o.descricao||'—')}</td>
+      <td data-label="Período" style="white-space:nowrap;font-size:12px;color:var(--text-mid)">${fmtD(o.inicio)} – ${fmtD(o.fim)}</td>
+      <td data-label="Valor Total"><strong style="color:var(--blue)">${fmtR(o.valorTotal)}</strong></td>
+      <td data-label="Pagamento"><span class="badge badge-gray">${pagLabel}</span></td>
+      <td data-label="Status"><span class="badge ${ORC_BADGE[o.status]||'badge-gray'}">${o.status}</span></td>
+      <td class="td-actions-cell"><div class="td-actions">
         ${o.status==='pendente'?`<button class="btn btn-success btn-xs" onclick="aprovarOrc('${o.id}')" title="Aprovar">✓</button><button class="btn btn-danger btn-xs" onclick="recusarOrc('${o.id}')" title="Recusar">✕</button>`:''}
         ${o.status==='aprovado'?`<button class="btn btn-primary btn-sm" onclick="gerarContratoDeOrcamento('${o.id}')" title="Gerar Contrato">→ Contrato</button><button class="btn btn-ghost btn-sm" onclick="converterLocacao('${o.id}')" title="Converter em Locação (equipamentos)">→ Locação</button>`:''}
         <button class="btn btn-ghost btn-xs" onclick="linkAprovacaoOrcamento('${o.id}')" title="Link para o cliente aprovar/assinar online">🔗</button>
@@ -4305,13 +4321,13 @@ function renderContratos(){
   document.getElementById('tb-contratos').innerHTML=lista.length?lista.map(c=>{
     const cl=clis.find(x=>x.id===c.clienteId);
     return`<tr>
-      <td>${c.numero||'—'}</td>
-      <td><strong>${esc(cl?.nome||'—')}</strong></td>
-      <td>${esc(c.job||'—')}</td>
-      <td style="white-space:nowrap;font-size:12px;color:var(--text-mid)">${fmtD(c.inicio)} – ${fmtD(c.fim)}</td>
-      <td><strong style="color:var(--blue)">${fmtR(c.valorTotal)}</strong></td>
-      <td><span class="badge ${CTR_BADGE[c.status]||'badge-gray'}">${c.status}</span></td>
-      <td><div class="td-actions">
+      <td data-label="Nº">${c.numero||'—'}</td>
+      <td data-label="Cliente"><strong>${esc(cl?.nome||'—')}</strong></td>
+      <td data-label="Job">${esc(c.job||'—')}</td>
+      <td data-label="Período" style="white-space:nowrap;font-size:12px;color:var(--text-mid)">${fmtD(c.inicio)} – ${fmtD(c.fim)}</td>
+      <td data-label="Valor"><strong style="color:var(--blue)">${fmtR(c.valorTotal)}</strong></td>
+      <td data-label="Status"><span class="badge ${CTR_BADGE[c.status]||'badge-gray'}">${c.status}</span></td>
+      <td class="td-actions-cell"><div class="td-actions">
         <button class="btn btn-success btn-xs" onclick="gerarFaturasDoContrato('${c.id}')" title="Gerar faturas das parcelas">🧾</button>
         <button class="btn btn-ghost btn-xs" onclick="imprimirContrato('${c.id}')" title="Imprimir">🖨</button>
         <button class="btn btn-ghost btn-xs" onclick="openModalContrato('${c.id}')">✏</button>
@@ -4479,12 +4495,12 @@ function renderFaturas(){
   document.getElementById('tb-faturas').innerHTML=lista.length?lista.map(f=>{
     const cl=clis.find(x=>x.id===f.clienteId);
     return`<tr>
-      <td>${f.numero||'—'}</td>
-      <td><strong>${esc(cl?.nome||'—')}</strong></td>
-      <td style="font-size:12px">${esc(f.descricao||'—')}</td>
-      <td>${fmtD(f.vencimento)}</td>
-      <td><strong style="color:var(--green)">${fmtR(f.valor)}</strong></td>
-      <td><div class="td-actions">
+      <td data-label="Nº">${f.numero||'—'}</td>
+      <td data-label="Cliente"><strong>${esc(cl?.nome||'—')}</strong></td>
+      <td data-label="Descrição" style="font-size:12px">${esc(f.descricao||'—')}</td>
+      <td data-label="Vencimento">${fmtD(f.vencimento)}</td>
+      <td data-label="Valor"><strong style="color:var(--green)">${fmtR(f.valor)}</strong></td>
+      <td class="td-actions-cell"><div class="td-actions">
         <button class="btn btn-ghost btn-xs" onclick="openModalFatura('${f.id}')" title="Editar">✏️</button>
         <button class="btn btn-ghost btn-xs" onclick="imprimirFatura('${f.id}')" title="Imprimir">🖨</button>
         <button class="btn btn-ghost btn-xs" onclick="linkFatura('${f.id}')" title="Enviar para o cliente">📤</button>
