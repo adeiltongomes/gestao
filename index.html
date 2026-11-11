@@ -4643,13 +4643,15 @@ function saveFatura(){
   if(!valor){toast('Informe o valor','error');return;}
   const vencimento=document.getElementById('fat-vencimento').value;
   if(!vencimento){toast('Informe o vencimento','error');return;}
+  const isNew=!document.getElementById('fat-id').value;
   const numero=document.getElementById('fat-numero').value?Number(document.getElementById('fat-numero').value):nextNumero('proxFatura');
   const itensRaw=_coletarItensFatura().filter(it=>it.produto&&it.quantidade&&it.valor&&it.inicio&&it.termino);
   const itens=itensRaw.map(_itemFaturaCalc);
+  const contratoId=document.getElementById('fat-contrato').value||null;
   const item={
     id:document.getElementById('fat-id').value||uid(),
     numero,
-    contratoId:document.getElementById('fat-contrato').value||null,
+    contratoId,
     clienteId,descricao,valor,vencimento,
     parcela:document.getElementById('fat-parcela').value,
     forma:document.getElementById('fat-forma').value||'PIX',
@@ -4658,30 +4660,56 @@ function saveFatura(){
     criado:new Date().toISOString(),
   };
   DB.save('faturas',item);
+  // Toda fatura nova também vira um lançamento a receber no Financeiro — antes só
+  // acontecia pra faturas geradas junto com um Contrato novo; uma fatura avulsa
+  // (botão "+ Nova Fatura", sem contrato) nunca aparecia no Financeiro. Só na
+  // criação (não na edição) e com checagem prévia pra nunca duplicar.
+  if(isNew){
+    const jaExisteTrans=DB.get('transacoes').some(t=>t.faturaId===item.id||(contratoId&&t.contratoId===contratoId&&t.data===vencimento&&Number(t.valor)===Number(valor)));
+    if(!jaExisteTrans){
+      const cli=DB.one('clientes',clienteId);
+      DB.save('transacoes',{id:uid(),tipo:'entrada',categoria:'Serviços',descricao:`Fatura Nº ${numero} — ${cli?.nome||''}`,valor,data:vencimento,status:'pendente',pessoa:cli?.nome||'',contratoId,faturaId:item.id});
+    }
+  }
   closeModal('modal-fatura');renderFaturas();toast('Fatura salva!','success');
 }
 function delFatura(id){if(!confirm('Excluir esta fatura?'))return;DB.del('faturas',id);renderFaturas();toast('Excluído.','info');}
 function gerarFaturasDoContrato(id){
   const c=DB.one('contratos',id);if(!c)return;
   if(!c.parcelas?.length){toast('Este contrato não tem parcelas definidas.','error');return;}
+  const cli=DB.one('clientes',c.clienteId);
   const existentes=DB.get('faturas').filter(f=>f.contratoId===id);
-  let criadas=0;
+  const transExistentes=DB.get('transacoes').filter(t=>t.contratoId===id);
+  let criadas=0,lancadas=0;
   c.parcelas.forEach((p,i)=>{
-    const jaExiste=existentes.some(f=>f.vencimento===p.vencimento&&f.valor===p.valor);
-    if(jaExiste)return;
-    const numero=nextNumero('proxFatura');
-    DB.save('faturas',{
-      id:uid(),numero,contratoId:id,clienteId:c.clienteId,
-      descricao:(c.itens||[]).map(it=>it.nome).join(', '),
-      valor:p.valor,vencimento:p.vencimento,
-      parcela:`Parcela ${String(i+1).padStart(2,'0')}`,
-      forma:p.forma||'PIX',obsPag:p.obs||'',
-      criado:new Date().toISOString(),
-    });
-    criadas++;
+    const jaExisteFatura=existentes.some(f=>f.vencimento===p.vencimento&&f.valor===p.valor);
+    if(!jaExisteFatura){
+      const numero=nextNumero('proxFatura');
+      DB.save('faturas',{
+        id:uid(),numero,contratoId:id,clienteId:c.clienteId,
+        descricao:(c.itens||[]).map(it=>it.nome).join(', '),
+        valor:p.valor,vencimento:p.vencimento,
+        parcela:`Parcela ${String(i+1).padStart(2,'0')}`,
+        forma:p.forma||'PIX',obsPag:p.obs||'',
+        criado:new Date().toISOString(),
+      });
+      criadas++;
+    }
+    // Garante que toda fatura também vire um lançamento no Financeiro (a receber) —
+    // antes só o fluxo automático de saveContrato fazia isso; gerar fatura por este
+    // botão manual deixava a parcela invisível no Financeiro pra sempre. Verifica
+    // antes de criar pra não duplicar se a transação já existir por outro caminho.
+    const jaExisteTrans=transExistentes.some(t=>t.data===p.vencimento&&Number(t.valor)===Number(p.valor));
+    if(!jaExisteTrans){
+      DB.save('transacoes',{id:uid(),tipo:'entrada',categoria:'Locação de Equipamento',descricao:`Contrato ${c.numero} — ${cli?.nome||''} (${i+1}/${c.parcelas.length})`,valor:p.valor,data:p.vencimento,status:'pendente',observacoes:p.obs,contratoId:id});
+      lancadas++;
+    }
   });
   renderFaturas();
-  toast(criadas?`${criadas} fatura(s) gerada(s)!`:'Todas as parcelas já possuem fatura.','success');
+  const msgs=[];
+  if(criadas)msgs.push(`${criadas} fatura(s) gerada(s)`);
+  if(lancadas)msgs.push(`${lancadas} lançamento(s) no Financeiro`);
+  toast(msgs.length?msgs.join(' + ')+'!':'Todas as parcelas já possuem fatura e lançamento.','success');
 }
 function imprimirFaturaDeTransacao(transId){
   const t=DB.one('transacoes',transId);
