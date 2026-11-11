@@ -2100,7 +2100,7 @@ function renderClientes(){
       <td data-label="Chave PIX">${c.pix?`<span title="${esc(c.pix)}" style="cursor:default">${esc(c.pix.length>20?c.pix.slice(0,20)+'…':c.pix)}</span>`:'—'}</td>
       <td data-label="Cidade">${esc(c.cidade?(c.cidade+(c.uf?'/'+c.uf:'')):'—')}</td>
       <td data-label="Locações"><span class="badge badge-blue">${n} locação${n!==1?'s':''}</span></td>
-      <td class="td-actions-cell"><div class="td-actions"><button class="btn btn-ghost btn-xs" onclick="openModalCliente('${c.id}')" title="Editar">✏</button><button class="btn btn-danger btn-xs" onclick="delCliente('${c.id}')" title="Excluir">🗑️</button></div></td></tr>`;
+      <td class="td-actions-cell"><div class="td-actions"><button class="btn btn-ghost btn-sm" onclick="openModalCliente('${c.id}')" title="Editar">✏ Editar</button><button class="btn btn-danger btn-sm" onclick="delCliente('${c.id}')" title="Excluir">🗑️ Excluir</button></div></td></tr>`;
   }).join(''):`<tr><td colspan="8"><div class="empty"><div class="empty-icon">👥</div><h3>Nenhum cadastro encontrado</h3></div></td></tr>`;
 }
 function openModalCliente(id){
@@ -2166,7 +2166,7 @@ function renderFuncionarios(){
   const rows=DB.get('funcionarios').filter(f=>!q||f.nome?.toLowerCase().includes(q)||f.cargo?.toLowerCase().includes(q));
   document.getElementById('tb-funcionarios').innerHTML=rows.length?rows.map(f=>`
     <tr><td data-label="Nome"><strong>${esc(f.nome)}</strong></td><td data-label="Cargo">${esc(f.cargo||'—')}</td><td data-label="Salário">${fmtR(f.salario)}</td><td data-label="Telefone">${esc(f.telefone||'—')}</td><td data-label="Admissão">${fmtD(f.admissao)}</td>
-    <td class="td-actions-cell"><div class="td-actions"><button class="btn btn-ghost btn-xs" onclick="openModalFuncionario('${f.id}')" title="Editar">✏</button><button class="btn btn-danger btn-xs" onclick="delFuncionario('${f.id}')" title="Excluir">🗑️</button></div></td></tr>`)
+    <td class="td-actions-cell"><div class="td-actions"><button class="btn btn-ghost btn-sm" onclick="openModalFuncionario('${f.id}')" title="Editar">✏ Editar</button><button class="btn btn-danger btn-sm" onclick="delFuncionario('${f.id}')" title="Excluir">🗑️ Excluir</button></div></td></tr>`)
     .join(''):`<tr><td colspan="6"><div class="empty"><div class="empty-icon">👤</div><h3>Nenhum funcionário cadastrado</h3></div></td></tr>`;
 }
 function openModalFuncionario(id){
@@ -2202,7 +2202,7 @@ function renderEquipamentos(){
     <td data-label="Nº Série" style="font-size:12px;color:var(--text-mid)">${esc(e.numSerie||'—')}</td>
     <td data-label="Val./Dia">${fmtR(e.valorDia)}/dia</td>
     <td data-label="Status"><span class="badge ${EQUIP_BADGE[e.status]||'badge-gray'}">${EQUIP_LBL[e.status]||e.status}</span></td>
-    <td class="td-actions-cell"><div class="td-actions"><button class="btn btn-ghost btn-xs" onclick="openModalEquipamento('${e.id}')" title="Editar">✏</button><button class="btn btn-danger btn-xs" onclick="delEquipamento('${e.id}')" title="Excluir">🗑️</button></div></td></tr>`)
+    <td class="td-actions-cell"><div class="td-actions"><button class="btn btn-ghost btn-sm" onclick="openModalEquipamento('${e.id}')" title="Editar">✏ Editar</button><button class="btn btn-danger btn-sm" onclick="delEquipamento('${e.id}')" title="Excluir">🗑️ Excluir</button></div></td></tr>`)
     .join(''):`<tr><td colspan="6"><div class="empty"><div class="empty-icon">💻</div><h3>Nenhum equipamento cadastrado</h3></div></td></tr>`;
 }
 const EQUIP_TIPOS_FIXOS=['Tablet','Celular','Notebook','Monitor','TV','Computador','Impressora','Roteador','Projetor','Scanner','Acessório'];
@@ -2252,7 +2252,7 @@ function renderEstoque(){
       <td data-label="Qtd Mín.">${e.qtdMinima||0}</td><td data-label="Val. Unit.">${fmtR(e.valorUnit)}</td>
       <td data-label="Total">${fmtR(Number(e.valorUnit||0)*Number(e.quantidade||0))}</td>
       <td data-label="Status"><span class="badge ${baixo?'badge-red':'badge-green'}">${baixo?'Baixo':'OK'}</span></td>
-      <td class="td-actions-cell"><div class="td-actions"><button class="btn btn-ghost btn-xs" onclick="openModalEstoque('${e.id}')" title="Editar">✏</button><button class="btn btn-danger btn-xs" onclick="delEstoque('${e.id}')" title="Excluir">🗑️</button></div></td></tr>`;
+      <td class="td-actions-cell"><div class="td-actions"><button class="btn btn-ghost btn-sm" onclick="openModalEstoque('${e.id}')" title="Editar">✏ Editar</button><button class="btn btn-danger btn-sm" onclick="delEstoque('${e.id}')" title="Excluir">🗑️ Excluir</button></div></td></tr>`;
   }).join(''):`<tr><td colspan="8"><div class="empty"><div class="empty-icon">📦</div><h3>Nenhum item no estoque</h3></div></td></tr>`;
 }
 function openModalEstoque(id){
@@ -2292,7 +2292,7 @@ function renderEstruturas(){
       <td data-label="Disponível/Total" style="font-weight:600;color:${indisp?'var(--red)':'inherit'}">${disp}/${tot}</td>
       <td data-label="Val./Dia">${fmtR(e.valorDia)}</td>
       <td data-label="Status"><span class="badge ${indisp?'badge-red':'badge-green'}">${indisp?'Indisponível':'Disponível'}</span></td>
-      <td class="td-actions-cell"><div class="td-actions"><button class="btn btn-ghost btn-xs" onclick="openModalEstrutura('${e.id}')" title="Editar">✏</button><button class="btn btn-danger btn-xs" onclick="delEstrutura('${e.id}')" title="Excluir">🗑️</button></div></td></tr>`;
+      <td class="td-actions-cell"><div class="td-actions"><button class="btn btn-ghost btn-sm" onclick="openModalEstrutura('${e.id}')" title="Editar">✏ Editar</button><button class="btn btn-danger btn-sm" onclick="delEstrutura('${e.id}')" title="Excluir">🗑️ Excluir</button></div></td></tr>`;
   }).join(''):`<tr><td colspan="6"><div class="empty"><div class="empty-icon">🏗️</div><h3>Nenhuma estrutura cadastrada</h3></div></td></tr>`;
 }
 function openModalEstrutura(id){
@@ -2326,7 +2326,7 @@ function renderServicos(){
   const rows=DB.get('servicos').filter(s=>!q||s.nome?.toLowerCase().includes(q)||s.categoria?.toLowerCase().includes(q));
   document.getElementById('tb-servicos').innerHTML=rows.length?rows.map(s=>
     `<tr><td data-label="Serviço"><strong>${esc(s.nome)}</strong></td><td data-label="Categoria">${esc(s.categoria||'—')}</td><td data-label="Valor Padrão">${fmtR(s.valorPadrao)}</td>
-      <td class="td-actions-cell"><div class="td-actions"><button class="btn btn-ghost btn-xs" onclick="openModalServico('${s.id}')" title="Editar">✏</button><button class="btn btn-danger btn-xs" onclick="delServico('${s.id}')" title="Excluir">🗑️</button></div></td></tr>`
+      <td class="td-actions-cell"><div class="td-actions"><button class="btn btn-ghost btn-sm" onclick="openModalServico('${s.id}')" title="Editar">✏ Editar</button><button class="btn btn-danger btn-sm" onclick="delServico('${s.id}')" title="Excluir">🗑️ Excluir</button></div></td></tr>`
   ).join(''):`<tr><td colspan="4"><div class="empty"><div class="empty-icon">🔧</div><h3>Nenhum serviço cadastrado</h3></div></td></tr>`;
 }
 function openModalServico(id){
@@ -2382,7 +2382,7 @@ function renderLocacoes(){
       <td data-label="Valor"><strong style="color:var(--green)">${fmtR(l.valor)}</strong></td>
       <td data-label="Pagamento"><span class="badge badge-gray">${l.pagamento==='parcelado'?`${l.numParcelas}x`:'À Vista'}</span></td>
       <td data-label="Status"><span class="badge ${LOC_BADGE[l.status]||'badge-gray'}">${l.status}</span></td>
-      <td class="td-actions-cell"><div class="td-actions"><button class="btn btn-ghost btn-xs" onclick="openModalLocacao('${l.id}')" title="Editar">✏</button><button class="btn btn-danger btn-xs" onclick="delLocacao('${l.id}')" title="Excluir">🗑️</button></div></td></tr>`;
+      <td class="td-actions-cell"><div class="td-actions"><button class="btn btn-ghost btn-sm" onclick="openModalLocacao('${l.id}')" title="Editar">✏ Editar</button><button class="btn btn-danger btn-sm" onclick="delLocacao('${l.id}')" title="Excluir">🗑️ Excluir</button></div></td></tr>`;
   }).join(''):`<tr><td colspan="8"><div class="empty"><div class="empty-icon">📋</div><h3>Nenhuma locação encontrada</h3></div></td></tr>`;
 }
 function openModalLocacao(id){
@@ -3492,10 +3492,10 @@ function renderOrcamentosCli(){
       <td class="td-actions-cell"><div class="td-actions">
         ${o.status==='pendente'?`<button class="btn btn-success btn-sm" onclick="aprovarOrc('${o.id}')" title="Aprovar">✓ Aprovar</button><button class="btn btn-danger btn-sm" onclick="recusarOrc('${o.id}')" title="Recusar">✕ Recusar</button>`:''}
         ${o.status==='aprovado'?`<button class="btn btn-primary btn-sm" onclick="gerarContratoDeOrcamento('${o.id}')" title="Gerar Contrato">→ Contrato</button><button class="btn btn-ghost btn-sm" onclick="converterLocacao('${o.id}')" title="Converter em Locação (equipamentos)">→ Locação</button>`:''}
-        <button class="btn btn-ghost btn-xs" onclick="linkAprovacaoOrcamento('${o.id}')" title="Link para o cliente aprovar/assinar online">🔗</button>
-        <button class="btn btn-ghost btn-xs" onclick="imprimirOrcamentoCli('${o.id}')" title="Imprimir">🖨</button>
-        <button class="btn btn-ghost btn-xs" onclick="openModalOrcamentoCli('${o.id}')">✏</button>
-        <button class="btn btn-danger btn-xs" onclick="delOrcamentoCli('${o.id}')" title="Excluir">🗑️</button>
+        <button class="btn btn-ghost btn-sm" onclick="linkAprovacaoOrcamento('${o.id}')" title="Link para o cliente aprovar/assinar online">🔗 Link</button>
+        <button class="btn btn-ghost btn-sm" onclick="imprimirOrcamentoCli('${o.id}')" title="Imprimir">🖨 Imprimir</button>
+        <button class="btn btn-ghost btn-sm" onclick="openModalOrcamentoCli('${o.id}')" title="Editar">✏ Editar</button>
+        <button class="btn btn-danger btn-sm" onclick="delOrcamentoCli('${o.id}')" title="Excluir">🗑️ Excluir</button>
       </div></td></tr>`;
   }).join(''):`<tr><td colspan="8"><div class="empty"><div class="empty-icon">📄</div><h3>Nenhum orçamento encontrado</h3></div></td></tr>`;
 }
@@ -4343,10 +4343,10 @@ function renderContratos(){
       <td data-label="Valor"><strong style="color:var(--blue)">${fmtR(c.valorTotal)}</strong></td>
       <td data-label="Status"><span class="badge ${CTR_BADGE[c.status]||'badge-gray'}">${c.status}</span></td>
       <td class="td-actions-cell"><div class="td-actions">
-        <button class="btn btn-success btn-xs" onclick="gerarFaturasDoContrato('${c.id}')" title="Gerar faturas das parcelas">🧾</button>
-        <button class="btn btn-ghost btn-xs" onclick="imprimirContrato('${c.id}')" title="Imprimir">🖨</button>
-        <button class="btn btn-ghost btn-xs" onclick="openModalContrato('${c.id}')">✏</button>
-        <button class="btn btn-danger btn-xs" onclick="delContrato('${c.id}')" title="Excluir">🗑️</button>
+        <button class="btn btn-success btn-sm" onclick="gerarFaturasDoContrato('${c.id}')" title="Gerar faturas das parcelas">🧾 Gerar Faturas</button>
+        <button class="btn btn-ghost btn-sm" onclick="imprimirContrato('${c.id}')" title="Imprimir">🖨 Imprimir</button>
+        <button class="btn btn-ghost btn-sm" onclick="openModalContrato('${c.id}')" title="Editar">✏ Editar</button>
+        <button class="btn btn-danger btn-sm" onclick="delContrato('${c.id}')" title="Excluir">🗑️ Excluir</button>
       </div></td></tr>`;
   }).join(''):`<tr><td colspan="7"><div class="empty"><div class="empty-icon">📑</div><h3>Nenhum contrato encontrado</h3></div></td></tr>`;
 }
@@ -4516,10 +4516,10 @@ function renderFaturas(){
       <td data-label="Vencimento">${fmtD(f.vencimento)}</td>
       <td data-label="Valor"><strong style="color:var(--green)">${fmtR(f.valor)}</strong></td>
       <td class="td-actions-cell"><div class="td-actions">
-        <button class="btn btn-ghost btn-xs" onclick="openModalFatura('${f.id}')" title="Editar">✏️</button>
-        <button class="btn btn-ghost btn-xs" onclick="imprimirFatura('${f.id}')" title="Imprimir">🖨</button>
-        <button class="btn btn-ghost btn-xs" onclick="linkFatura('${f.id}')" title="Enviar para o cliente">📤</button>
-        <button class="btn btn-danger btn-xs" onclick="delFatura('${f.id}')" title="Excluir">🗑️</button>
+        <button class="btn btn-ghost btn-sm" onclick="openModalFatura('${f.id}')" title="Editar">✏️ Editar</button>
+        <button class="btn btn-ghost btn-sm" onclick="imprimirFatura('${f.id}')" title="Imprimir">🖨 Imprimir</button>
+        <button class="btn btn-ghost btn-sm" onclick="linkFatura('${f.id}')" title="Enviar para o cliente">📤 Enviar</button>
+        <button class="btn btn-danger btn-sm" onclick="delFatura('${f.id}')" title="Excluir">🗑️ Excluir</button>
       </div></td></tr>`;
   }).join(''):`<tr><td colspan="6"><div class="empty"><div class="empty-icon">🧾</div><h3>Nenhuma fatura encontrada</h3></div></td></tr>`;
 }
