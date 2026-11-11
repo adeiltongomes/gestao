@@ -2594,7 +2594,15 @@ function renderFinanceiro(){
   const sortedDates=Object.keys(byDate).sort((a,b)=>b.localeCompare(a));
   const _dias=['Domingo','Segunda-feira','Terça-feira','Quarta-feira','Quinta-feira','Sexta-feira','Sábado'];
   const _meses=['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];
-  const fmtDLong=d=>{try{const dt=new Date(d+'T12:00:00');return`${_dias[dt.getDay()]}, ${dt.getDate()} de ${_meses[dt.getMonth()]}`;} catch{return d;}};
+  // Cabeçalho de data só mostra o ano quando a lista exibida realmente cobre
+  // mais de um ano (filtro Ano/Todos ou intervalo manual cruzando virada de
+  // ano) — na visão por Mês, todas as datas já são do mesmo ano, então omitir
+  // mantém o cabeçalho enxuto como sempre foi. Sem isso, "Todos"/"Ano" misturava
+  // datas de anos diferentes com o mesmíssimo rótulo (ex: "9 de fevereiro" sem
+  // dizer de qual ano), parecendo lançamento duplicado — achado real 2026-11-11.
+  const _anosNaLista=new Set(lista.map(t=>(t.data||'').slice(0,4)).filter(Boolean));
+  const _multiAno=_anosNaLista.size>1;
+  const fmtDLong=d=>{try{const dt=new Date(d+'T12:00:00');return`${_dias[dt.getDay()]}, ${dt.getDate()} de ${_meses[dt.getMonth()]}${_multiAno?' de '+dt.getFullYear():''}`;} catch{return d;}};
   const _catPalette=['#4f46e5','#059669','#0891b2','#d97706','#7c3aed','#db2777','#0f766e','#c2410c','#1d4ed8','#b45309'];
   const _catColor=cat=>{let h=0;for(const c of(cat||''))h=(h*31+c.charCodeAt(0))&0xffff;return _catPalette[h%_catPalette.length];};
   const _svgCheck=`<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>`;
