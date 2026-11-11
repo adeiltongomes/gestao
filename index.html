@@ -2100,7 +2100,7 @@ function renderClientes(){
       <td data-label="Chave PIX">${c.pix?`<span title="${esc(c.pix)}" style="cursor:default">${esc(c.pix.length>20?c.pix.slice(0,20)+'…':c.pix)}</span>`:'—'}</td>
       <td data-label="Cidade">${esc(c.cidade?(c.cidade+(c.uf?'/'+c.uf:'')):'—')}</td>
       <td data-label="Locações"><span class="badge badge-blue">${n} locação${n!==1?'s':''}</span></td>
-      <td class="td-actions-cell"><div class="td-actions"><button class="btn btn-ghost btn-xs" onclick="openModalCliente('${c.id}')">✏</button><button class="btn btn-danger btn-xs" onclick="delCliente('${c.id}')">✕</button></div></td></tr>`;
+      <td class="td-actions-cell"><div class="td-actions"><button class="btn btn-ghost btn-xs" onclick="openModalCliente('${c.id}')" title="Editar">✏</button><button class="btn btn-danger btn-xs" onclick="delCliente('${c.id}')" title="Excluir">🗑️</button></div></td></tr>`;
   }).join(''):`<tr><td colspan="8"><div class="empty"><div class="empty-icon">👥</div><h3>Nenhum cadastro encontrado</h3></div></td></tr>`;
 }
 function openModalCliente(id){
@@ -2166,7 +2166,7 @@ function renderFuncionarios(){
   const rows=DB.get('funcionarios').filter(f=>!q||f.nome?.toLowerCase().includes(q)||f.cargo?.toLowerCase().includes(q));
   document.getElementById('tb-funcionarios').innerHTML=rows.length?rows.map(f=>`
     <tr><td data-label="Nome"><strong>${esc(f.nome)}</strong></td><td data-label="Cargo">${esc(f.cargo||'—')}</td><td data-label="Salário">${fmtR(f.salario)}</td><td data-label="Telefone">${esc(f.telefone||'—')}</td><td data-label="Admissão">${fmtD(f.admissao)}</td>
-    <td class="td-actions-cell"><div class="td-actions"><button class="btn btn-ghost btn-xs" onclick="openModalFuncionario('${f.id}')">✏</button><button class="btn btn-danger btn-xs" onclick="delFuncionario('${f.id}')">✕</button></div></td></tr>`)
+    <td class="td-actions-cell"><div class="td-actions"><button class="btn btn-ghost btn-xs" onclick="openModalFuncionario('${f.id}')" title="Editar">✏</button><button class="btn btn-danger btn-xs" onclick="delFuncionario('${f.id}')" title="Excluir">🗑️</button></div></td></tr>`)
     .join(''):`<tr><td colspan="6"><div class="empty"><div class="empty-icon">👤</div><h3>Nenhum funcionário cadastrado</h3></div></td></tr>`;
 }
 function openModalFuncionario(id){
@@ -2202,7 +2202,7 @@ function renderEquipamentos(){
     <td data-label="Nº Série" style="font-size:12px;color:var(--text-mid)">${esc(e.numSerie||'—')}</td>
     <td data-label="Val./Dia">${fmtR(e.valorDia)}/dia</td>
     <td data-label="Status"><span class="badge ${EQUIP_BADGE[e.status]||'badge-gray'}">${EQUIP_LBL[e.status]||e.status}</span></td>
-    <td class="td-actions-cell"><div class="td-actions"><button class="btn btn-ghost btn-xs" onclick="openModalEquipamento('${e.id}')">✏</button><button class="btn btn-danger btn-xs" onclick="delEquipamento('${e.id}')">✕</button></div></td></tr>`)
+    <td class="td-actions-cell"><div class="td-actions"><button class="btn btn-ghost btn-xs" onclick="openModalEquipamento('${e.id}')" title="Editar">✏</button><button class="btn btn-danger btn-xs" onclick="delEquipamento('${e.id}')" title="Excluir">🗑️</button></div></td></tr>`)
     .join(''):`<tr><td colspan="6"><div class="empty"><div class="empty-icon">💻</div><h3>Nenhum equipamento cadastrado</h3></div></td></tr>`;
 }
 const EQUIP_TIPOS_FIXOS=['Tablet','Celular','Notebook','Monitor','TV','Computador','Impressora','Roteador','Projetor','Scanner','Acessório'];
@@ -2252,7 +2252,7 @@ function renderEstoque(){
       <td data-label="Qtd Mín.">${e.qtdMinima||0}</td><td data-label="Val. Unit.">${fmtR(e.valorUnit)}</td>
       <td data-label="Total">${fmtR(Number(e.valorUnit||0)*Number(e.quantidade||0))}</td>
       <td data-label="Status"><span class="badge ${baixo?'badge-red':'badge-green'}">${baixo?'Baixo':'OK'}</span></td>
-      <td class="td-actions-cell"><div class="td-actions"><button class="btn btn-ghost btn-xs" onclick="openModalEstoque('${e.id}')">✏</button><button class="btn btn-danger btn-xs" onclick="delEstoque('${e.id}')">✕</button></div></td></tr>`;
+      <td class="td-actions-cell"><div class="td-actions"><button class="btn btn-ghost btn-xs" onclick="openModalEstoque('${e.id}')" title="Editar">✏</button><button class="btn btn-danger btn-xs" onclick="delEstoque('${e.id}')" title="Excluir">🗑️</button></div></td></tr>`;
   }).join(''):`<tr><td colspan="8"><div class="empty"><div class="empty-icon">📦</div><h3>Nenhum item no estoque</h3></div></td></tr>`;
 }
 function openModalEstoque(id){
@@ -2292,7 +2292,7 @@ function renderEstruturas(){
       <td data-label="Disponível/Total" style="font-weight:600;color:${indisp?'var(--red)':'inherit'}">${disp}/${tot}</td>
       <td data-label="Val./Dia">${fmtR(e.valorDia)}</td>
       <td data-label="Status"><span class="badge ${indisp?'badge-red':'badge-green'}">${indisp?'Indisponível':'Disponível'}</span></td>
-      <td class="td-actions-cell"><div class="td-actions"><button class="btn btn-ghost btn-xs" onclick="openModalEstrutura('${e.id}')">✏</button><button class="btn btn-danger btn-xs" onclick="delEstrutura('${e.id}')">✕</button></div></td></tr>`;
+      <td class="td-actions-cell"><div class="td-actions"><button class="btn btn-ghost btn-xs" onclick="openModalEstrutura('${e.id}')" title="Editar">✏</button><button class="btn btn-danger btn-xs" onclick="delEstrutura('${e.id}')" title="Excluir">🗑️</button></div></td></tr>`;
   }).join(''):`<tr><td colspan="6"><div class="empty"><div class="empty-icon">🏗️</div><h3>Nenhuma estrutura cadastrada</h3></div></td></tr>`;
 }
 function openModalEstrutura(id){
@@ -2326,7 +2326,7 @@ function renderServicos(){
   const rows=DB.get('servicos').filter(s=>!q||s.nome?.toLowerCase().includes(q)||s.categoria?.toLowerCase().includes(q));
   document.getElementById('tb-servicos').innerHTML=rows.length?rows.map(s=>
     `<tr><td data-label="Serviço"><strong>${esc(s.nome)}</strong></td><td data-label="Categoria">${esc(s.categoria||'—')}</td><td data-label="Valor Padrão">${fmtR(s.valorPadrao)}</td>
-      <td class="td-actions-cell"><div class="td-actions"><button class="btn btn-ghost btn-xs" onclick="openModalServico('${s.id}')">✏</button><button class="btn btn-danger btn-xs" onclick="delServico('${s.id}')">✕</button></div></td></tr>`
+      <td class="td-actions-cell"><div class="td-actions"><button class="btn btn-ghost btn-xs" onclick="openModalServico('${s.id}')" title="Editar">✏</button><button class="btn btn-danger btn-xs" onclick="delServico('${s.id}')" title="Excluir">🗑️</button></div></td></tr>`
   ).join(''):`<tr><td colspan="4"><div class="empty"><div class="empty-icon">🔧</div><h3>Nenhum serviço cadastrado</h3></div></td></tr>`;
 }
 function openModalServico(id){
@@ -2382,7 +2382,7 @@ function renderLocacoes(){
       <td data-label="Valor"><strong style="color:var(--green)">${fmtR(l.valor)}</strong></td>
       <td data-label="Pagamento"><span class="badge badge-gray">${l.pagamento==='parcelado'?`${l.numParcelas}x`:'À Vista'}</span></td>
       <td data-label="Status"><span class="badge ${LOC_BADGE[l.status]||'badge-gray'}">${l.status}</span></td>
-      <td class="td-actions-cell"><div class="td-actions"><button class="btn btn-ghost btn-xs" onclick="openModalLocacao('${l.id}')">✏</button><button class="btn btn-danger btn-xs" onclick="delLocacao('${l.id}')">✕</button></div></td></tr>`;
+      <td class="td-actions-cell"><div class="td-actions"><button class="btn btn-ghost btn-xs" onclick="openModalLocacao('${l.id}')" title="Editar">✏</button><button class="btn btn-danger btn-xs" onclick="delLocacao('${l.id}')" title="Excluir">🗑️</button></div></td></tr>`;
   }).join(''):`<tr><td colspan="8"><div class="empty"><div class="empty-icon">📋</div><h3>Nenhuma locação encontrada</h3></div></td></tr>`;
 }
 function openModalLocacao(id){
@@ -3154,7 +3154,7 @@ function renderContasBancarias(){
         </div>
         <div style="display:flex;gap:4px;margin-top:-2px">
           <button class="action-btn" style="width:24px;height:24px;font-size:11px" onclick="openModalConta('${c.id}')" title="Editar">✏</button>
-          <button class="action-btn del" style="width:24px;height:24px;font-size:11px" onclick="delConta('${c.id}')" title="Excluir">✕</button>
+          <button class="action-btn del" style="width:24px;height:24px;font-size:11px" onclick="delConta('${c.id}')" title="Excluir">🗑️</button>
         </div>
       </div>
       <div style="font-family:var(--font-mono);font-size:20px;font-weight:700;color:${Number(c.saldo||0)>=0?'#059669':'#dc2626'};letter-spacing:-.02em">${fmtR(Number(c.saldo||0))}</div>
@@ -3415,7 +3415,7 @@ function renderParcelamentos(){
           </div>`).join('')}
         </div>
       </details>
-      <div style="margin-top:10px;display:flex;justify-content:flex-end"><button class="btn btn-danger btn-xs" onclick="delParcelamento('${p.id}')">✕ Excluir</button></div>
+      <div style="margin-top:10px;display:flex;justify-content:flex-end"><button class="btn btn-danger btn-xs" onclick="delParcelamento('${p.id}')">🗑️ Excluir</button></div>
     </div>`;
   }).join('');
 }
@@ -3495,7 +3495,7 @@ function renderOrcamentosCli(){
         <button class="btn btn-ghost btn-xs" onclick="linkAprovacaoOrcamento('${o.id}')" title="Link para o cliente aprovar/assinar online">🔗</button>
         <button class="btn btn-ghost btn-xs" onclick="imprimirOrcamentoCli('${o.id}')" title="Imprimir">🖨</button>
         <button class="btn btn-ghost btn-xs" onclick="openModalOrcamentoCli('${o.id}')">✏</button>
-        <button class="btn btn-danger btn-xs" onclick="delOrcamentoCli('${o.id}')">✕</button>
+        <button class="btn btn-danger btn-xs" onclick="delOrcamentoCli('${o.id}')" title="Excluir">🗑️</button>
       </div></td></tr>`;
   }).join(''):`<tr><td colspan="8"><div class="empty"><div class="empty-icon">📄</div><h3>Nenhum orçamento encontrado</h3></div></td></tr>`;
 }
@@ -4346,7 +4346,7 @@ function renderContratos(){
         <button class="btn btn-success btn-xs" onclick="gerarFaturasDoContrato('${c.id}')" title="Gerar faturas das parcelas">🧾</button>
         <button class="btn btn-ghost btn-xs" onclick="imprimirContrato('${c.id}')" title="Imprimir">🖨</button>
         <button class="btn btn-ghost btn-xs" onclick="openModalContrato('${c.id}')">✏</button>
-        <button class="btn btn-danger btn-xs" onclick="delContrato('${c.id}')">✕</button>
+        <button class="btn btn-danger btn-xs" onclick="delContrato('${c.id}')" title="Excluir">🗑️</button>
       </div></td></tr>`;
   }).join(''):`<tr><td colspan="7"><div class="empty"><div class="empty-icon">📑</div><h3>Nenhum contrato encontrado</h3></div></td></tr>`;
 }
@@ -4519,7 +4519,7 @@ function renderFaturas(){
         <button class="btn btn-ghost btn-xs" onclick="openModalFatura('${f.id}')" title="Editar">✏️</button>
         <button class="btn btn-ghost btn-xs" onclick="imprimirFatura('${f.id}')" title="Imprimir">🖨</button>
         <button class="btn btn-ghost btn-xs" onclick="linkFatura('${f.id}')" title="Enviar para o cliente">📤</button>
-        <button class="btn btn-danger btn-xs" onclick="delFatura('${f.id}')">✕</button>
+        <button class="btn btn-danger btn-xs" onclick="delFatura('${f.id}')" title="Excluir">🗑️</button>
       </div></td></tr>`;
   }).join(''):`<tr><td colspan="6"><div class="empty"><div class="empty-icon">🧾</div><h3>Nenhuma fatura encontrada</h3></div></td></tr>`;
 }
@@ -4771,7 +4771,7 @@ function renderOrcamento(){
     return`<div class="card"><div style="display:flex;justify-content:space-between;margin-bottom:8px"><strong>${esc(o.categoria==='receita_total'?'Receita Total':o.categoria)}</strong><span style="font-size:12px;color:var(--text-mid)">${fmtR(realizado)} / ${fmtR(o.valorOrcado)}</span></div>
       <div class="progress-bar"><div class="progress-fill" style="width:${perc}%;background:${ok?'var(--green)':'var(--red)'}"></div></div>
       <div style="display:flex;justify-content:space-between;margin-top:6px"><span style="font-size:12px;color:var(--text-mid)">${perc}% realizado</span><span style="font-size:12px;color:${ok?'var(--green)':'var(--red)'}">${ok?`Sobra ${fmtR(Number(o.valorOrcado)-realizado)}`:`Excedeu ${fmtR(realizado-Number(o.valorOrcado))}`}</span></div>
-      <div style="margin-top:8px;text-align:right"><button class="btn btn-danger btn-xs" onclick="delOrcamento('${o.id}')">✕ Remover</button></div>
+      <div style="margin-top:8px;text-align:right"><button class="btn btn-danger btn-xs" onclick="delOrcamento('${o.id}')">🗑️ Remover</button></div>
     </div>`;
   }).join('')+`</div>`;
 }
