@@ -474,6 +474,21 @@ thead th.r{text-align:right}
   .mob-nav-btn{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;border:none;background:none;color:var(--text-mid);font-size:9.5px;cursor:pointer;padding:6px 0;font-family:inherit;transition:color .15s;font-weight:500}
   .mob-nav-btn.active{color:var(--blue)}
   .mob-nav-btn span:first-child{font-size:19px}
+  /* Financeiro: a linha de lançamento era uma tabela de 4 colunas com
+     larguras mínimas (240px+175px+145px) que NUNCA cabem numa tela de
+     celular (~350-400px úteis) — Lançamento/Categoria/Valor/Ações ficavam
+     espremidos e quebrando tudo junto, "misturado". No celular, cada <tr>
+     vira um cartão empilhado: título em cima (linha cheia), categoria+valor
+     lado a lado numa segunda linha, ações numa terceira linha cheia.
+     Achado real do usuário 2026-11-11, 3ª rodada do mesmo print. */
+  #view-financeiro .table-wrap thead{display:none}
+  #view-financeiro tr.fin-row{display:flex;flex-wrap:wrap;align-items:flex-start;gap:8px 12px;padding:14px 16px!important}
+  #view-financeiro tr.fin-row>td{padding:0!important;border:none!important}
+  #view-financeiro .fin-row-main{flex:1 1 100%;min-width:0}
+  #view-financeiro .fin-row-cat{flex:1 1 auto;width:auto;min-width:0}
+  #view-financeiro .fin-row-amount{flex:0 0 auto;min-width:0}
+  #view-financeiro tr.fin-row>td.fin-row-amount+td{flex:1 1 100%}
+  #view-financeiro .td-actions{justify-content:flex-start}
 }
 @media(max-width:480px){
   .cards-row{grid-template-columns:1fr}
