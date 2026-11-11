@@ -850,7 +850,13 @@ thead th.r{text-align:right}
     <div id="view-financeiro" class="view-section hidden">
       <div class="sec-hdr">
         <div class="sec-title">Financeiro</div>
+        <select class="form-control" id="fin-periodo-tipo" style="width:95px" onchange="onFinPeriodoTipoChange()">
+          <option value="mes">Mês</option>
+          <option value="ano">Ano</option>
+          <option value="todos">Todos</option>
+        </select>
         <input type="month" class="form-control" id="fin-mes" style="width:150px" onchange="renderFinanceiro()">
+        <select class="form-control" id="fin-ano" style="width:90px;display:none" onchange="renderFinanceiro()"></select>
         <button class="btn btn-success" onclick="openModalTransacao('entrada')">+ Entrada</button>
         <button class="btn btn-danger" onclick="openModalTransacao('saida')">+ Saída</button>
         <button class="btn btn-ghost" style="border-color:#818cf8;color:#4f46e5" onclick="openModalConta()">🏦 + Conta</button>
@@ -2440,11 +2446,35 @@ function limparFiltrosFinanceiro(){
   const df=document.getElementById('fin-data-fim');if(df)df.value='';
   renderFinanceiro();
 }
+function onFinPeriodoTipoChange(){
+  const tipo=document.getElementById('fin-periodo-tipo')?.value||'mes';
+  const mesEl=document.getElementById('fin-mes');
+  const anoEl=document.getElementById('fin-ano');
+  if(mesEl)mesEl.style.display=tipo==='mes'?'':'none';
+  if(anoEl)anoEl.style.display=tipo==='ano'?'':'none';
+  renderFinanceiro();
+}
 function renderFinanceiro(){
   renderContasBancarias();
+  const periodoTipo=document.getElementById('fin-periodo-tipo')?.value||'mes';
   const mes=document.getElementById('fin-mes')?.value||thisMonth();
   const allTrans=DB.get('transacoes');
-  const transMes=allTrans.filter(t=>t.data?.startsWith(mes));
+  // popular select de Ano a partir dos dados reais (nunca hardcoded), sempre
+  // incluindo o ano atual mesmo sem nenhum lançamento nele ainda
+  const anoSel=document.getElementById('fin-ano');
+  if(anoSel){
+    const anoAtual=anoSel.value;
+    const anoHoje=String(new Date().getFullYear());
+    const anosData=[...new Set(allTrans.map(t=>(t.data||'').slice(0,4)).filter(Boolean))];
+    if(!anosData.includes(anoHoje))anosData.push(anoHoje);
+    anosData.sort((a,b)=>b.localeCompare(a));
+    anoSel.innerHTML=anosData.map(a=>`<option value="${a}"${a===(anoAtual||anoHoje)?' selected':''}>${a}</option>`).join('');
+  }
+  const ano=document.getElementById('fin-ano')?.value||String(new Date().getFullYear());
+  // Mês/Ano/Todos — o filtro de período principal da tela, pedido do usuário
+  // 2026-11-11 (antes só dava pra escolher um mês específico, sem jeito de
+  // ver o ano inteiro ou tudo de uma vez pra acompanhar recebido/a receber/a pagar)
+  const transMes=periodoTipo==='todos'?allTrans:periodoTipo==='ano'?allTrans.filter(t=>t.data?.startsWith(ano)):allTrans.filter(t=>t.data?.startsWith(mes));
   // ler filtros antes para calcular totais e escopo corretos
   const busca=(document.getElementById('fin-busca')?.value||'').toLowerCase().trim();
   const catF=document.getElementById('fin-cat')?.value||'';
@@ -2461,7 +2491,11 @@ function renderFinanceiro(){
     const contas=DB.get('contas_bancarias')||[];
     contaSel.innerHTML='<option value="">Todas as contas</option>'+contas.map(c=>`<option value="${c.id}"${c.id===contaAtual?' selected':''}>${esc(c.nome)}${c.banco?' — '+esc(c.banco):''}</option>`).join('');
   }
-  // definir escopo de busca
+  // definir escopo de busca — intervalo de data manual (quando preenchido) tem
+  // prioridade sobre o período (Mês/Ano/Todos); caso contrário busca/categoria/
+  // status filtram DENTRO do período escolhido, não mais ignorando-o (antes
+  // digitar uma busca ou marcar um status saltava pra "todas as transações",
+  // o que escondia o filtro de período sem avisar — corrigido 2026-11-11)
   let base;
   if(hasDateRange){
     base=allTrans.filter(t=>{
@@ -2470,8 +2504,6 @@ function renderFinanceiro(){
       if(dataFim&&t.data>dataFim)return false;
       return true;
     });
-  }else if(busca||catF||statusF){
-    base=allTrans;
   }else{
     base=transMes;
   }
@@ -2510,7 +2542,8 @@ function renderFinanceiro(){
   const totE=base4cards.filter(t=>t.tipo==='entrada'&&isPago(t.status)).reduce((s,t)=>s+Number(t.valor||0),0);
   const totS=base4cards.filter(t=>t.tipo==='saida'&&isPago(t.status)).reduce((s,t)=>s+Number(t.valor||0),0);
   const totPend=base4cards.filter(t=>!isPago(t.status)).reduce((s,t)=>s+Number(t.valor||0),0);
-  const cardLabel=hasFilter?'filtrado':'do mês';
+  const periodoLabel=periodoTipo==='todos'?'geral':periodoTipo==='ano'?'do ano':'do mês';
+  const cardLabel=hasFilter?'filtrado':periodoLabel;
   const saldo=totE-totS;
   document.getElementById('fin-cards').innerHTML=`
     <div class="card green">
