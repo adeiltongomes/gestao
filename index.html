@@ -10,7 +10,7 @@
 // navegador carregou uma cópia antiga guardada), recarrega sozinho com um link
 // novo que o cache nunca viu. Resolve de vez o "cache do celular travado numa
 // versão antiga" que se repetiu várias vezes 2026-11-11.
-window.__BUILD_ID='2026-11-11-23-20';
+window.__BUILD_ID='2026-11-11-23-40';
 (function(){
   if(sessionStorage.getItem('_reloadedForFreshBuild'))return;
   fetch(location.pathname,{cache:'no-store'}).then(r=>r.text()).then(html=>{
@@ -2018,18 +2018,22 @@ document.querySelectorAll('[data-view]').forEach(el=>el.addEventListener('click'
 
 // ── DASHBOARD ─────────────────────────────────────────────────────────────────
 function renderDashboard(){
-  const mes=thisMonth();
+  // Antes só contava o mês atual — numa conta com poucos lançamentos (típico
+  // deste sistema) isso ficava zerado o mês inteiro sempre que não houvesse
+  // nada pago justo neste mês, mesmo com dinheiro real recebido/pago noutros
+  // meses. Igual ao fix do Financeiro (período padrão "Todos"), o Dashboard
+  // agora soma tudo que já foi efetivamente recebido/pago, sem recorte de mês.
   const trans=DB.get('transacoes');
-  const ents=trans.filter(t=>t.tipo==='entrada'&&t.data?.startsWith(mes)&&isPago(t.status));
-  const sais=trans.filter(t=>t.tipo==='saida'&&t.data?.startsWith(mes)&&isPago(t.status));
+  const ents=trans.filter(t=>t.tipo==='entrada'&&isPago(t.status));
+  const sais=trans.filter(t=>t.tipo==='saida'&&isPago(t.status));
   const totE=ents.reduce((s,t)=>s+Number(t.valor||0),0);
   const totS=sais.reduce((s,t)=>s+Number(t.valor||0),0);
   const locAtivas=DB.get('locacoes').filter(l=>l.status==='ativa');
   const equipDisp=DB.get('equipamentos').filter(e=>e.status==='disponivel').length;
   document.getElementById('dash-cards').innerHTML=`
-    <div class="card green"><div class="card-label">Receitas do Mês</div><div class="card-value">${fmtR(totE)}</div><div class="card-sub">Recebido este mês</div></div>
-    <div class="card red"><div class="card-label">Despesas do Mês</div><div class="card-value">${fmtR(totS)}</div><div class="card-sub">Pago este mês</div></div>
-    <div class="card blue"><div class="card-label">Saldo do Mês</div><div class="card-value">${fmtR(totE-totS)}</div><div class="card-sub">Receitas − Despesas</div></div>
+    <div class="card green"><div class="card-label">Receitas</div><div class="card-value">${fmtR(totE)}</div><div class="card-sub">Total recebido</div></div>
+    <div class="card red"><div class="card-label">Despesas</div><div class="card-value">${fmtR(totS)}</div><div class="card-sub">Total pago</div></div>
+    <div class="card blue"><div class="card-label">Saldo</div><div class="card-value">${fmtR(totE-totS)}</div><div class="card-sub">Receitas − Despesas</div></div>
     <div class="card orange"><div class="card-label">Locações Ativas</div><div class="card-value">${locAtivas.length}</div><div class="card-sub">${equipDisp} equip. disponíveis</div></div>`;
   const clis=DB.get('clientes');
   document.getElementById('dash-locacoes').innerHTML=locAtivas.length
