@@ -501,7 +501,9 @@ thead th.r{text-align:right}
      lado a lado numa segunda linha, ações numa terceira linha cheia.
      Achado real do usuário 2026-11-11, 3ª rodada do mesmo print. */
   #view-financeiro .table-wrap thead{display:none}
-  #view-financeiro tr.fin-row{display:flex;flex-wrap:wrap;align-items:flex-start;gap:8px 12px;padding:14px 16px!important}
+  #view-financeiro .table-wrap,#view-financeiro .table-wrap table,#view-financeiro .table-wrap tbody{background:transparent;border:none;box-shadow:none}
+  #view-financeiro tr.fin-row{display:flex;flex-wrap:wrap;align-items:flex-start;gap:8px 12px;padding:14px 16px!important;background:var(--surface-2);border:1.5px solid var(--border-2)!important;border-radius:12px;margin-bottom:12px;box-shadow:var(--shadow),inset 0 1px 0 rgba(255,255,255,.05)}
+  #view-financeiro tr.fin-row:last-child{margin-bottom:0}
   #view-financeiro tr.fin-row>td{padding:0!important;border:none!important}
   #view-financeiro .fin-row-main{flex:1 1 100%;min-width:0}
   #view-financeiro .fin-row-cat{flex:1 1 auto;width:auto;min-width:0}
@@ -514,13 +516,13 @@ thead th.r{text-align:right}
      ações (sem data-label) vira uma faixa cheia separada por uma linha. */
   .resp-table table,.resp-table tbody{display:block;width:100%}
   .resp-table thead{display:none}
-  .resp-table tr{display:block;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:4px 14px;margin-bottom:10px;box-shadow:var(--shadow-sm),inset 0 1px 0 rgba(255,255,255,.03)}
+  .resp-table tr{display:block;background:var(--surface-2);border:1.5px solid var(--border-2);border-radius:12px;padding:6px 16px;margin-bottom:16px;box-shadow:var(--shadow),inset 0 1px 0 rgba(255,255,255,.05)}
   .resp-table tr:last-child{margin-bottom:0}
-  .resp-table td{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;padding:8px 0!important;border:none!important;border-bottom:1px solid var(--border)!important;text-align:right}
+  .resp-table td{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;padding:9px 0!important;border:none!important;border-bottom:1px solid var(--border-2)!important;text-align:right}
   .resp-table td::before{content:attr(data-label);font-size:10px;font-weight:700;color:var(--text-dim);text-align:left;flex:0 0 auto;margin-right:8px;white-space:nowrap;text-transform:uppercase;letter-spacing:.06em}
   .resp-table td:not([data-label]):not([colspan]):not(.td-actions-cell){display:none}
   .resp-table td[colspan]{display:block;border-bottom:none!important}
-  .resp-table td.td-actions-cell{display:block;padding-top:10px!important;border-top:1px dashed var(--border)!important;border-bottom:none!important}
+  .resp-table td.td-actions-cell{display:block;padding-top:10px!important;border-top:1px dashed var(--border-2)!important;border-bottom:none!important}
   .resp-table td.td-actions-cell::before{content:none}
   .resp-table td.td-actions-cell .td-actions{justify-content:flex-start;flex-wrap:wrap}
 }
