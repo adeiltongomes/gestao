@@ -3490,7 +3490,7 @@ function renderOrcamentosCli(){
       <td data-label="Pagamento"><span class="badge badge-gray">${pagLabel}</span></td>
       <td data-label="Status"><span class="badge ${ORC_BADGE[o.status]||'badge-gray'}">${o.status}</span></td>
       <td class="td-actions-cell"><div class="td-actions">
-        ${o.status==='pendente'?`<button class="btn btn-success btn-xs" onclick="aprovarOrc('${o.id}')" title="Aprovar">✓</button><button class="btn btn-danger btn-xs" onclick="recusarOrc('${o.id}')" title="Recusar">✕</button>`:''}
+        ${o.status==='pendente'?`<button class="btn btn-success btn-sm" onclick="aprovarOrc('${o.id}')" title="Aprovar">✓ Aprovar</button><button class="btn btn-danger btn-sm" onclick="recusarOrc('${o.id}')" title="Recusar">✕ Recusar</button>`:''}
         ${o.status==='aprovado'?`<button class="btn btn-primary btn-sm" onclick="gerarContratoDeOrcamento('${o.id}')" title="Gerar Contrato">→ Contrato</button><button class="btn btn-ghost btn-sm" onclick="converterLocacao('${o.id}')" title="Converter em Locação (equipamentos)">→ Locação</button>`:''}
         <button class="btn btn-ghost btn-xs" onclick="linkAprovacaoOrcamento('${o.id}')" title="Link para o cliente aprovar/assinar online">🔗</button>
         <button class="btn btn-ghost btn-xs" onclick="imprimirOrcamentoCli('${o.id}')" title="Imprimir">🖨</button>
