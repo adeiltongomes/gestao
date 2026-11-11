@@ -2724,7 +2724,7 @@ function renderFinanceiro(){
         <td style="white-space:nowrap"><div class="td-actions">
           ${!pago(t)?`<button class="action-btn pay" onclick="marcarPago('${t.id}')" title="${isE?'Marcar Recebido':'Marcar Pago'}">${_svgCheck}</button>`:''}
           ${pago(t)?`<button class="action-btn" onclick="cancelarPagamento('${t.id}')" title="Cancelar pagamento (volta a pendente)">${_svgUndo}</button>`:''}
-          ${t.contratoId?`<button class="action-btn" onclick="imprimirFaturaDeTransacao('${t.id}')" title="Imprimir Fatura">🖨</button>`:''}
+          ${(t.contratoId||t.faturaId)?`<button class="action-btn" onclick="imprimirFaturaDeTransacao('${t.id}')" title="Imprimir Fatura">🖨</button>`:''}
           ${t.comprovante?`<button class="action-btn" onclick="verComprovante('${t.id}')" title="Ver comprovante">${_svgFile}</button>`:''}
           <button class="action-btn edit" onclick="openModalTransacao('${t.tipo}','${t.id}')" title="Editar">${_svgEdit}</button>
           <button class="action-btn del" onclick="delTransacao('${t.id}')" title="Excluir">${_svgDel}</button>
@@ -4713,7 +4713,13 @@ function gerarFaturasDoContrato(id){
 }
 function imprimirFaturaDeTransacao(transId){
   const t=DB.one('transacoes',transId);
-  if(!t||!t.contratoId){toast('Esta entrada não está vinculada a um contrato.','error');return;}
+  if(!t){toast('Lançamento não encontrado.','error');return;}
+  // Fatura avulsa (sem contrato, ligada só por faturaId — ver saveFatura) imprime direto
+  if(t.faturaId){
+    const fAvulsa=DB.one('faturas',t.faturaId);
+    if(fAvulsa){imprimirFatura(fAvulsa.id);return;}
+  }
+  if(!t.contratoId){toast('Esta entrada não está vinculada a um contrato ou fatura.','error');return;}
   const c=DB.one('contratos',t.contratoId);if(!c){toast('Contrato não encontrado.','error');return;}
   let f=DB.get('faturas').find(x=>x.contratoId===t.contratoId&&x.vencimento===t.data&&Number(x.valor)===Number(t.valor));
   if(!f){
