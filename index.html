@@ -4,6 +4,23 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>AccertTech — Gestão de Locações TI</title>
+<script>
+// Auto-atualização: compara esta página com a que está de verdade publicada no
+// servidor (fetch sem cache) logo ao abrir; se forem diferentes (ou seja, o
+// navegador carregou uma cópia antiga guardada), recarrega sozinho com um link
+// novo que o cache nunca viu. Resolve de vez o "cache do celular travado numa
+// versão antiga" que se repetiu várias vezes 2026-11-11.
+window.__BUILD_ID='2026-11-11-23-20';
+(function(){
+  if(sessionStorage.getItem('_reloadedForFreshBuild'))return;
+  fetch(location.pathname,{cache:'no-store'}).then(r=>r.text()).then(html=>{
+    if(html.indexOf('__BUILD_ID=\''+window.__BUILD_ID+'\'')===-1){
+      sessionStorage.setItem('_reloadedForFreshBuild','1');
+      location.replace(location.pathname+'?v='+Date.now());
+    }
+  }).catch(()=>{});
+})();
+</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Hanken+Grotesk:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet">
