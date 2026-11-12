@@ -10,7 +10,7 @@
 // navegador carregou uma cópia antiga guardada), recarrega sozinho com um link
 // novo que o cache nunca viu. Resolve de vez o "cache do celular travado numa
 // versão antiga" que se repetiu várias vezes 2026-11-11.
-window.__BUILD_ID='2026-11-12-01-30';
+window.__BUILD_ID='2026-11-12-01-50';
 (function(){
   if(sessionStorage.getItem('_reloadedForFreshBuild'))return;
   fetch(location.pathname,{cache:'no-store'}).then(r=>r.text()).then(html=>{
@@ -420,6 +420,7 @@ thead th.r{text-align:right}
   position:fixed;inset:0;background:rgba(5,5,10,.75);z-index:1000;
   display:flex;align-items:center;justify-content:center;padding:16px;
   backdrop-filter:blur(6px);
+  overflow:hidden;overscroll-behavior:contain;touch-action:pan-y;
 }
 .modal{
   background:var(--surface);border-radius:16px;
@@ -3512,11 +3513,11 @@ function addItemRow(containerId,nome,qtd,valorUnit,tipo,refId,dataExecucao,respo
   wrap.id='it-'+lid;
   wrap.dataset.tipo=tipo||'';
   const row=document.createElement('div');
-  row.style.cssText='display:grid;grid-template-columns:24px 2fr 60px 100px 100px 30px;gap:6px;align-items:center';
+  row.style.cssText='display:grid;grid-template-columns:24px minmax(0,2fr) 60px 100px 100px 30px;gap:6px;align-items:center';
   row.innerHTML=`<div style="text-align:center;font-size:13px" title="${esc(tipo||'item avulso')}">${ITEM_TIPO_ICON[tipo]||''}</div>
-    <input class="form-control" id="itn-${lid}" placeholder="Descrição do item/serviço" value="${esc(nome||'')}">
-    <input class="form-control" id="itq-${lid}" type="number" min="0" step="1" value="${qtd||1}" oninput="calcItens()" title="Qtd.">
-    <input class="form-control" id="itv-${lid}" type="number" min="0" step="0.01" placeholder="Vr. unit." value="${valorUnit||''}" oninput="calcItens()">
+    <input class="form-control" style="min-width:0" id="itn-${lid}" placeholder="Descrição do item/serviço" value="${esc(nome||'')}">
+    <input class="form-control" style="min-width:0" id="itq-${lid}" type="number" min="0" step="1" value="${qtd||1}" oninput="calcItens()" title="Qtd.">
+    <input class="form-control" style="min-width:0" id="itv-${lid}" type="number" min="0" step="0.01" placeholder="Vr. unit." value="${valorUnit||''}" oninput="calcItens()">
     <div id="its-${lid}" style="font-weight:700;font-size:12.5px;text-align:right;white-space:nowrap">R$ 0,00</div>
     <button type="button" class="btn btn-danger btn-xs" onclick="removeItemRow('${lid}')">✕</button>
     <input type="hidden" id="itt-${lid}" value="${esc(tipo||'')}">
@@ -3524,10 +3525,10 @@ function addItemRow(containerId,nome,qtd,valorUnit,tipo,refId,dataExecucao,respo
   wrap.appendChild(row);
   if(tipo==='servico'){
     const sub=document.createElement('div');
-    sub.style.cssText='display:grid;grid-template-columns:24px 1fr 1fr;gap:6px;margin-top:4px';
+    sub.style.cssText='display:grid;grid-template-columns:24px minmax(0,1fr) minmax(0,1fr);gap:6px;margin-top:4px';
     sub.innerHTML=`<div></div>
-      <input class="form-control" id="itd-${lid}" type="date" value="${dataExecucao||''}" title="Data de execução" placeholder="Data de execução">
-      <input class="form-control" id="itp-${lid}" placeholder="Equipe / Responsável" value="${esc(responsavel||'')}">`;
+      <input class="form-control" style="min-width:0" id="itd-${lid}" type="date" value="${dataExecucao||''}" title="Data de execução" placeholder="Data de execução">
+      <input class="form-control" style="min-width:0" id="itp-${lid}" placeholder="Equipe / Responsável" value="${esc(responsavel||'')}">`;
     wrap.appendChild(sub);
   }
   document.getElementById(containerId).appendChild(wrap);
@@ -3566,17 +3567,17 @@ function addParcRow(containerId,venc,valor,forma,obs){
   const lid=uid();parcLines.push(lid);
   const row=document.createElement('div');
   row.id='pc-'+lid;
-  row.style.cssText='display:grid;grid-template-columns:130px 100px 90px 1fr 30px;gap:6px;align-items:center';
-  row.innerHTML=`<input class="form-control" id="pcd-${lid}" type="date" value="${venc||''}">
-    <input class="form-control" id="pcv-${lid}" type="number" min="0" step="0.01" placeholder="Valor" value="${valor||''}">
-    <select class="form-control" id="pcf-${lid}">
+  row.style.cssText='display:grid;grid-template-columns:130px 100px 90px minmax(0,1fr) 30px;gap:6px;align-items:center';
+  row.innerHTML=`<input class="form-control" style="min-width:0" id="pcd-${lid}" type="date" value="${venc||''}">
+    <input class="form-control" style="min-width:0" id="pcv-${lid}" type="number" min="0" step="0.01" placeholder="Valor" value="${valor||''}">
+    <select class="form-control" style="min-width:0" id="pcf-${lid}">
       <option value="PIX"${!forma||forma==='PIX'?' selected':''}>PIX</option>
       <option value="Boleto"${forma==='Boleto'?' selected':''}>Boleto</option>
       <option value="Cartão"${forma==='Cartão'?' selected':''}>Cartão</option>
       <option value="Transferência"${forma==='Transferência'?' selected':''}>Transferência</option>
       <option value="Dinheiro"${forma==='Dinheiro'?' selected':''}>Dinheiro</option>
     </select>
-    <input class="form-control" id="pco-${lid}" placeholder="Observação (ex: chave Pix)" value="${esc(obs||'')}">
+    <input class="form-control" style="min-width:0" id="pco-${lid}" placeholder="Observação (ex: chave Pix)" value="${esc(obs||'')}">
     <button type="button" class="btn btn-danger btn-xs" onclick="removeParcRow('${lid}')">✕</button>`;
   document.getElementById(containerId).appendChild(row);
 }
