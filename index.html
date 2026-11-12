@@ -10,7 +10,7 @@
 // navegador carregou uma cópia antiga guardada), recarrega sozinho com um link
 // novo que o cache nunca viu. Resolve de vez o "cache do celular travado numa
 // versão antiga" que se repetiu várias vezes 2026-11-11.
-window.__BUILD_ID='2026-11-12-02-05';
+window.__BUILD_ID='2026-11-12-02-40';
 (function(){
   if(sessionStorage.getItem('_reloadedForFreshBuild'))return;
   fetch(location.pathname,{cache:'no-store'}).then(r=>r.text()).then(html=>{
@@ -814,23 +814,42 @@ thead th.r{text-align:right}
 
     <!-- EQUIPAMENTOS -->
     <div id="view-equipamentos" class="view-section hidden">
-      <div class="sec-hdr">
-        <div class="sec-title">Equipamentos</div>
-        <input class="form-control s-search" id="search-equipamentos" placeholder="Buscar…" oninput="renderEquipamentos()">
-        <select class="form-control" id="filter-equip-status" onchange="renderEquipamentos()" style="width:140px">
-          <option value="">Todos</option>
-          <option value="disponivel">Disponível</option>
-          <option value="locado">Locado</option>
-          <option value="manutencao">Manutenção</option>
-          <option value="inativo">Inativo</option>
-        </select>
-        <button class="btn btn-primary" onclick="openModalEquipamento()">+ Novo Equipamento</button>
+      <div class="tabs">
+        <button class="tab active" id="equiptab-equip" onclick="setEquipTab('equip')">Equipamentos</button>
+        <button class="tab" id="equiptab-interr" onclick="setEquipTab('interruptor')">Interruptores Inteligentes</button>
       </div>
-      <div class="table-wrap resp-table">
-        <table>
-          <thead><tr><th>Tipo</th><th>Marca / Modelo</th><th>Nº Série</th><th>Val./Dia</th><th>Status</th><th></th></tr></thead>
-          <tbody id="tb-equipamentos"></tbody>
-        </table>
+      <div id="equiptab-view-equip">
+        <div class="sec-hdr">
+          <div class="sec-title">Equipamentos</div>
+          <input class="form-control s-search" id="search-equipamentos" placeholder="Buscar…" oninput="renderEquipamentos()">
+          <select class="form-control" id="filter-equip-status" onchange="renderEquipamentos()" style="width:140px">
+            <option value="">Todos</option>
+            <option value="disponivel">Disponível</option>
+            <option value="locado">Locado</option>
+            <option value="manutencao">Manutenção</option>
+            <option value="inativo">Inativo</option>
+          </select>
+          <button class="btn btn-primary" onclick="openModalEquipamento()">+ Novo Equipamento</button>
+        </div>
+        <div class="table-wrap resp-table">
+          <table>
+            <thead><tr><th>Tipo</th><th>Marca / Modelo</th><th>Nº Série</th><th>Val./Dia</th><th>Status</th><th></th></tr></thead>
+            <tbody id="tb-equipamentos"></tbody>
+          </table>
+        </div>
+      </div>
+      <div id="equiptab-view-interr" class="hidden">
+        <div class="sec-hdr">
+          <div class="sec-title">Interruptores Inteligentes</div>
+          <input class="form-control s-search" id="search-interruptores" placeholder="Buscar…" oninput="renderInterruptores()">
+          <button class="btn btn-primary" onclick="openModalInterruptor()">+ Novo Interruptor</button>
+        </div>
+        <div class="table-wrap resp-table">
+          <table>
+            <thead><tr><th>Nome</th><th>Cor</th><th>Botões</th><th>Fabricante</th><th>Sincroniza</th><th>Compra</th><th>Venda</th><th></th></tr></thead>
+            <tbody id="tb-interruptores"></tbody>
+          </table>
+        </div>
       </div>
     </div>
 
@@ -1239,6 +1258,40 @@ thead th.r{text-align:right}
   </div>
 </div>
 
+<!-- Modal Interruptor Inteligente -->
+<div class="modal-overlay hidden" id="modal-interruptor">
+  <div class="modal">
+    <div class="modal-hdr"><div class="modal-title" id="minterr-title">Novo Interruptor Inteligente</div><button class="modal-close" onclick="_quickItemTarget=null;closeModal('modal-interruptor')">×</button></div>
+    <div class="modal-body">
+      <input type="hidden" id="interr-id">
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Nome *</label><input class="form-control" id="interr-nome" placeholder="Ex: Interruptor 3 botões"></div>
+        <div class="form-group"><label class="form-label">Cor</label><input class="form-control" id="interr-cor" placeholder="Ex: Branco, Preto fosco"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Quantos Botões</label><input class="form-control" id="interr-botoes" type="number" min="1" value="1"></div>
+        <div class="form-group"><label class="form-label">Fabricante</label><input class="form-control" id="interr-fabricante" placeholder="Ex: Positivo Casa Inteligente"></div>
+      </div>
+      <div class="form-group"><label class="form-label">Sincroniza com</label>
+        <div style="display:flex;gap:16px;flex-wrap:wrap;padding:10px 0">
+          <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer"><input type="checkbox" class="interr-sinc" value="Alexa"> Alexa</label>
+          <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer"><input type="checkbox" class="interr-sinc" value="Google Home"> Google Home</label>
+          <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer"><input type="checkbox" class="interr-sinc" value="Apple HomeKit"> Apple HomeKit</label>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Valor de Compra (R$)</label><input class="form-control" id="interr-compra" type="number" step="0.01" placeholder="0,00"></div>
+        <div class="form-group"><label class="form-label">Valor de Venda (R$)</label><input class="form-control" id="interr-venda" type="number" step="0.01" placeholder="0,00"></div>
+      </div>
+      <div class="form-group"><label class="form-label">Observações</label><textarea class="form-control" id="interr-obs" rows="2"></textarea></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="_quickItemTarget=null;closeModal('modal-interruptor')">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveInterruptor()">Salvar</button>
+    </div>
+  </div>
+</div>
+
 <!-- Modal Estoque -->
 <div class="modal-overlay hidden" id="modal-estoque">
   <div class="modal">
@@ -1521,6 +1574,7 @@ thead th.r{text-align:right}
           <button type="button" class="btn btn-ghost btn-sm" title="Cadastrar novo item de estoque" onclick="quickNovoEstoque('orccli-itens-list')">+ Estoque</button>
           <button type="button" class="btn btn-ghost btn-sm" title="Cadastrar nova estrutura" onclick="quickNovoEstrutura('orccli-itens-list')">+ Estrutura</button>
           <button type="button" class="btn btn-ghost btn-sm" title="Cadastrar novo serviço" onclick="quickNovoServico('orccli-itens-list')">+ Serviço</button>
+          <button type="button" class="btn btn-ghost btn-sm" title="Cadastrar novo interruptor inteligente" onclick="quickNovoInterruptor('orccli-itens-list')">+ Interruptor</button>
         </div>
         <div id="orccli-itens-list" style="display:flex;flex-direction:column;gap:6px;max-height:200px;overflow-y:auto;padding:8px;background:var(--surface-2);border-radius:8px;border:1.5px solid var(--border)"></div>
         <button type="button" class="btn btn-ghost btn-sm" style="margin-top:6px" onclick="addItemRow('orccli-itens-list')">+ Adicionar Item em Branco</button>
@@ -1610,6 +1664,7 @@ thead th.r{text-align:right}
           <button type="button" class="btn btn-ghost btn-sm" title="Cadastrar novo item de estoque" onclick="quickNovoEstoque('ctr-itens-list')">+ Estoque</button>
           <button type="button" class="btn btn-ghost btn-sm" title="Cadastrar nova estrutura" onclick="quickNovoEstrutura('ctr-itens-list')">+ Estrutura</button>
           <button type="button" class="btn btn-ghost btn-sm" title="Cadastrar novo serviço" onclick="quickNovoServico('ctr-itens-list')">+ Serviço</button>
+          <button type="button" class="btn btn-ghost btn-sm" title="Cadastrar novo interruptor inteligente" onclick="quickNovoInterruptor('ctr-itens-list')">+ Interruptor</button>
         </div>
         <div id="ctr-itens-list" style="display:flex;flex-direction:column;gap:6px;max-height:200px;overflow-y:auto;padding:8px;background:var(--surface-2);border-radius:8px;border:1.5px solid var(--border)"></div>
         <button type="button" class="btn btn-ghost btn-sm" style="margin-top:6px" onclick="addItemRow('ctr-itens-list')">+ Adicionar Item em Branco</button>
@@ -1947,7 +2002,7 @@ function goView(v){
   document.getElementById('page-title').textContent=VIEW_TITLES[v]||v;
   closeSidebar();
   const _renderFn=({dashboard:renderDashboard,empresa:renderEmpresaView,clientes:renderClientes,funcionarios:renderFuncionarios,
-    equipamentos:renderEquipamentos,estoque:renderEstoque,estruturas:renderEstruturas,servicos:renderServicos,orcamentoscli:renderOrcamentosCli,
+    equipamentos:()=>{renderEquipamentos();renderInterruptores();},estoque:renderEstoque,estruturas:renderEstruturas,servicos:renderServicos,orcamentoscli:renderOrcamentosCli,
     locacoes:renderLocacoes,contratos:renderContratos,faturas:renderFaturas,financeiro:renderFinanceiro,
     orcamento:renderOrcamento,relatorios:()=>{setRelPeriodo('mes');}}[v]||function(){});
   _renderFn();
@@ -2211,6 +2266,73 @@ function saveEquipamento(){
   }
 }
 function delEquipamento(id){if(!confirm('Excluir?'))return;DB.del('equipamentos',id);renderEquipamentos();toast('Excluído.','info');}
+
+// ── INTERRUPTORES INTELIGENTES (sub-aba de Equipamentos, 2026-11-12) ──────────
+let _equipTab='equip';
+function setEquipTab(t){
+  _equipTab=t;
+  document.getElementById('equiptab-equip')?.classList.toggle('active',t==='equip');
+  document.getElementById('equiptab-interr')?.classList.toggle('active',t==='interruptor');
+  document.getElementById('equiptab-view-equip')?.classList.toggle('hidden',t!=='equip');
+  document.getElementById('equiptab-view-interr')?.classList.toggle('hidden',t!=='interruptor');
+  if(t==='interruptor')renderInterruptores();else renderEquipamentos();
+}
+function renderInterruptores(){
+  const q=(document.getElementById('search-interruptores')?.value||'').toLowerCase();
+  const rows=DB.get('interruptores').filter(i=>!q||i.nome?.toLowerCase().includes(q)||i.fabricante?.toLowerCase().includes(q));
+  document.getElementById('tb-interruptores').innerHTML=rows.length?rows.map(i=>`
+    <tr><td data-label="Nome"><strong>${esc(i.nome)}</strong></td>
+    <td data-label="Cor">${esc(i.cor||'—')}</td>
+    <td data-label="Botões">${i.botoes||1}</td>
+    <td data-label="Fabricante">${esc(i.fabricante||'—')}</td>
+    <td data-label="Sincroniza">${(i.sincroniza||[]).map(s=>`<span class="badge badge-blue" style="margin-right:4px">${esc(s)}</span>`).join('')||'—'}</td>
+    <td data-label="Compra">${fmtR(i.valorCompra)}</td>
+    <td data-label="Venda">${fmtR(i.valorVenda)}</td>
+    <td class="td-actions-cell"><div class="td-actions"><button class="btn btn-ghost btn-sm" onclick="openModalInterruptor('${i.id}')" title="Editar">✏ Editar</button><button class="btn btn-danger btn-sm" onclick="delInterruptor('${i.id}')" title="Excluir">🗑️ Excluir</button></div></td></tr>`)
+    .join(''):`<tr><td colspan="8"><div class="empty"><div class="empty-icon">🔌</div><h3>Nenhum interruptor cadastrado</h3></div></td></tr>`;
+}
+function openModalInterruptor(id){
+  const i=id?DB.one('interruptores',id):{};
+  document.getElementById('minterr-title').textContent=id?'Editar Interruptor Inteligente':'Novo Interruptor Inteligente';
+  document.getElementById('interr-id').value=i.id||'';
+  document.getElementById('interr-nome').value=i.nome||'';
+  document.getElementById('interr-cor').value=i.cor||'';
+  document.getElementById('interr-botoes').value=i.botoes||1;
+  document.getElementById('interr-fabricante').value=i.fabricante||'';
+  document.getElementById('interr-compra').value=i.valorCompra||'';
+  document.getElementById('interr-venda').value=i.valorVenda||'';
+  document.getElementById('interr-obs').value=i.observacoes||'';
+  const sinc=i.sincroniza||[];
+  document.querySelectorAll('.interr-sinc').forEach(cb=>cb.checked=sinc.includes(cb.value));
+  openModal('modal-interruptor');
+}
+function saveInterruptor(){
+  const nome=document.getElementById('interr-nome').value.trim();
+  if(!nome){toast('Informe o nome','error');return;}
+  const sincroniza=[...document.querySelectorAll('.interr-sinc:checked')].map(cb=>cb.value);
+  DB.save('interruptores',{
+    id:document.getElementById('interr-id').value||uid(),
+    nome,cor:document.getElementById('interr-cor').value,
+    botoes:Number(document.getElementById('interr-botoes').value)||1,
+    fabricante:document.getElementById('interr-fabricante').value,
+    sincroniza,
+    valorCompra:document.getElementById('interr-compra').value,
+    valorVenda:document.getElementById('interr-venda').value,
+    observacoes:document.getElementById('interr-obs').value,
+  });
+  closeModal('modal-interruptor');renderInterruptores();toast('Interruptor salvo!','success');
+  if(_quickItemTarget){
+    const i=DB.get('interruptores')[0];
+    if(i)addItemRow(_quickItemTarget,i.nome||'',1,Number(i.valorVenda)||0,'interruptor',i.id);
+    _quickItemTarget=null;
+  }
+}
+function delInterruptor(id){if(!confirm('Excluir?'))return;DB.del('interruptores',id);renderInterruptores();toast('Excluído.','info');}
+function quickNovoInterruptor(targetContainerId){
+  _quickItemTarget=targetContainerId;
+  openModalInterruptor();
+  document.body.appendChild(document.getElementById('modal-interruptor'));
+}
 
 // ── ESTOQUE ───────────────────────────────────────────────────────────────────
 function renderEstoque(){
@@ -3322,7 +3444,7 @@ function renderOrcamentosCli(){
   }).join(''):`<tr><td colspan="8"><div class="empty"><div class="empty-icon">📄</div><h3>Nenhum orçamento encontrado</h3></div></td></tr>`;
 }
 function _quickPickOpts(){
-  const equips=DB.get('equipamentos'),estq=DB.get('estoque'),estruts=DB.get('estruturas'),servs=DB.get('servicos');
+  const equips=DB.get('equipamentos'),estq=DB.get('estoque'),estruts=DB.get('estruturas'),servs=DB.get('servicos'),interrs=DB.get('interruptores');
   let opts='<option value="">+ Adicionar a partir de Equipamento/Estoque/Estrutura/Serviço…</option>';
   if(equips.length){
     opts+=`<optgroup label="── Equipamentos ──">`;
@@ -3344,6 +3466,11 @@ function _quickPickOpts(){
     opts+=servs.map(s=>`<option value="sv|${s.id}">${esc(s.nome||'')}${s.categoria?' ('+esc(s.categoria)+')':''}${s.valorPadrao?' — '+fmtR(s.valorPadrao):''}</option>`).join('');
     opts+=`</optgroup>`;
   }
+  if(interrs.length){
+    opts+=`<optgroup label="── Interruptores Inteligentes ──">`;
+    opts+=interrs.map(i=>`<option value="in|${i.id}">${esc(i.nome||'')}${i.cor?' ('+esc(i.cor)+')':''}${i.valorVenda?' — '+fmtR(i.valorVenda):''}</option>`).join('');
+    opts+=`</optgroup>`;
+  }
   return opts;
 }
 function _quickPickResolve(val){
@@ -3352,6 +3479,7 @@ function _quickPickResolve(val){
   if(kind==='es'){const e=DB.one('estoque',id);return{nome:e?.nome||'',valorUnit:Number(e?.valorUnit)||0,tipo:'estoque',refId:id};}
   if(kind==='et'){const e=DB.one('estruturas',id);return{nome:e?.nome||'',valorUnit:Number(e?.valorDia)||0,tipo:'estrutura',refId:id};}
   if(kind==='sv'){const s=DB.one('servicos',id);return{nome:s?.nome||'',valorUnit:Number(s?.valorPadrao)||0,tipo:'servico',refId:id};}
+  if(kind==='in'){const i=DB.one('interruptores',id);return{nome:i?.nome||'',valorUnit:Number(i?.valorVenda)||0,tipo:'interruptor',refId:id};}
   return{nome:'',valorUnit:0,tipo:'',refId:''};
 }
 function orcQuickAdd(){
@@ -3398,7 +3526,7 @@ function openModalOrcamentoCli(id){
   document.getElementById('orccli-status').value=o.status||'pendente';
   document.getElementById('orccli-obs').value=o.observacoes||'';
   toggleOrcParc();
-  if(o.itens?.length)o.itens.forEach(i=>addItemRow('orccli-itens-list',i.nome,i.qtd,i.valorUnit,i.tipo,i.refId,i.dataExecucao,i.responsavel));
+  if(o.itens?.length)o.itens.forEach(i=>addItemRow('orccli-itens-list',i.nome,i.qtd,i.valorUnit,i.tipo,i.refId,i.dataExecucao,i.responsavel,i.localInstalacao,i.corLed));
   else addItemRow('orccli-itens-list');
   if(o.parcelas?.length)o.parcelas.forEach(p=>addParcRow('orccli-parc-list',p.vencimento,p.valor,p.forma,p.obs));
   openModal('modal-orcamentocli');
@@ -3513,8 +3641,10 @@ function quickNovoServico(targetContainerId){
 }
 let itemLines=[];
 let parcLines=[];
-const ITEM_TIPO_ICON={equipamento:'💻',estoque:'📦',estrutura:'🏗️',servico:'🔧'};
-function addItemRow(containerId,nome,qtd,valorUnit,tipo,refId,dataExecucao,responsavel){
+const ITEM_TIPO_ICON={equipamento:'💻',estoque:'📦',estrutura:'🏗️',servico:'🔧',interruptor:'🔌'};
+const INTERR_LOCAIS=['Sala','Cozinha','Quarto','Banheiro','Área Externa','Corredor','Outro'];
+const INTERR_CORES_LED=['Sem LED','Branco','Azul','Vermelho','Verde','Âmbar'];
+function addItemRow(containerId,nome,qtd,valorUnit,tipo,refId,dataExecucao,responsavel,localInstalacao,corLed){
   const lid=uid();itemLines.push(lid);
   const wrap=document.createElement('div');
   wrap.id='it-'+lid;
@@ -3538,6 +3668,23 @@ function addItemRow(containerId,nome,qtd,valorUnit,tipo,refId,dataExecucao,respo
     sub.innerHTML=`<div></div>
       <input class="form-control" style="min-width:0" id="itd-${lid}" type="date" value="${dataExecucao||''}" title="Data de execução" placeholder="Data de execução">
       <input class="form-control" style="min-width:0" id="itp-${lid}" placeholder="Equipe / Responsável" value="${esc(responsavel||'')}">`;
+    wrap.appendChild(sub);
+  }
+  if(tipo==='interruptor'){
+    // Casa inteligente: cada interruptor adicionado ao orçamento pede onde vai
+    // ser instalado (sala/cozinha/banheiro...) e a cor do LED indicador —
+    // pedido do usuário 2026-11-12, pra já vir essa informação junto no item.
+    const sub=document.createElement('div');
+    sub.className='resp-grid-row';
+    sub.style.cssText='display:grid;grid-template-columns:24px minmax(0,1fr) minmax(0,1fr);gap:6px;margin-top:4px';
+    sub.innerHTML=`<div style="text-align:center;font-size:12px" title="Casa inteligente">🏠</div>
+      <select class="form-control" style="min-width:0" id="itl-${lid}" title="Local de instalação">
+        <option value="">Local de instalação…</option>
+        ${INTERR_LOCAIS.map(l=>`<option value="${esc(l)}"${localInstalacao===l?' selected':''}>${esc(l)}</option>`).join('')}
+      </select>
+      <select class="form-control" style="min-width:0" id="itld-${lid}" title="Cor do LED">
+        ${INTERR_CORES_LED.map(c=>`<option value="${esc(c)}"${corLed===c?' selected':''}>${esc(c)}</option>`).join('')}
+      </select>`;
     wrap.appendChild(sub);
   }
   document.getElementById(containerId).appendChild(wrap);
@@ -3568,6 +3715,10 @@ function collectItens(){
     if(tipo==='servico'){
       item.dataExecucao=document.getElementById('itd-'+lid)?.value||'';
       item.responsavel=document.getElementById('itp-'+lid)?.value||'';
+    }
+    if(tipo==='interruptor'){
+      item.localInstalacao=document.getElementById('itl-'+lid)?.value||'';
+      item.corLed=document.getElementById('itld-'+lid)?.value||'';
     }
     return item;
   }).filter(i=>i.nome&&i.qtd>0);
@@ -4036,7 +4187,7 @@ function _gcItensTableHtml(itens,total,titulo){
   return `<div class="gc-sectitle">${esc(titulo||'Serviços')}</div>
   <table class="gc-table">
     <thead><tr><th class="c">Item</th><th>Nome</th><th class="c">Qtd.</th><th class="c">Vr. Unit.</th><th class="c">Subtotal</th></tr></thead>
-    <tbody>${itens.map((i,idx)=>`<tr><td class="c">${idx+1}</td><td>${esc(i.nome)}</td><td class="c">${_gcNum(i.qtd)}</td><td class="c">${_gcNum(i.valorUnit)}</td><td class="c">${_gcNum(i.qtd*i.valorUnit)}</td></tr>`).join('')||'<tr><td colspan="5" style="text-align:center;color:#999">Nenhum item</td></tr>'}</tbody>
+    <tbody>${itens.map((i,idx)=>`<tr><td class="c">${idx+1}</td><td>${esc(i.nome)}${i.tipo==='interruptor'&&(i.localInstalacao||i.corLed)?`<div style="font-size:9px;color:#777;margin-top:2px">${i.localInstalacao?'Instalação: '+esc(i.localInstalacao):''}${i.localInstalacao&&i.corLed?' · ':''}${i.corLed?'LED: '+esc(i.corLed):''}</div>`:''}</td><td class="c">${_gcNum(i.qtd)}</td><td class="c">${_gcNum(i.valorUnit)}</td><td class="c">${_gcNum(i.qtd*i.valorUnit)}</td></tr>`).join('')||'<tr><td colspan="5" style="text-align:center;color:#999">Nenhum item</td></tr>'}</tbody>
     <tfoot><tr><td colspan="2">Total</td><td class="c">${_gcNum(totalQtd)}</td><td></td><td class="c">${_gcNum(total)}</td></tr></tfoot>
   </table>
   <div class="gc-totalbar"><div>Serviços: ${_gcNum(total)}</div><div><b>Total: ${fmtR(total)}</b></div></div>`;
@@ -4206,7 +4357,7 @@ function openModalContrato(id){
   document.getElementById('ctr-lancar').value='sim';
   document.getElementById('ctr-obs').value=c.observacoes||'';
   if(!c.dias)calcDiasLocacao();
-  if(c.itens?.length)c.itens.forEach(i=>addItemRow('ctr-itens-list',i.nome,i.qtd,i.valorUnit,i.tipo,i.refId,i.dataExecucao,i.responsavel));
+  if(c.itens?.length)c.itens.forEach(i=>addItemRow('ctr-itens-list',i.nome,i.qtd,i.valorUnit,i.tipo,i.refId,i.dataExecucao,i.responsavel,i.localInstalacao,i.corLed));
   else addItemRow('ctr-itens-list');
   if(c.parcelas?.length)c.parcelas.forEach(p=>addParcRow('ctr-parc-list',p.vencimento,p.valor,p.forma,p.obs));
   openModal('modal-contrato');
@@ -4287,7 +4438,7 @@ function gerarContratoDeOrcamento(id){
   document.getElementById('ctr-lancar').value='sim';
   document.getElementById('ctr-obs').value=o.observacoes||'';
   calcDiasLocacao();
-  if(o.itens?.length)o.itens.forEach(i=>addItemRow('ctr-itens-list',i.nome,i.qtd,i.valorUnit,i.tipo,i.refId,i.dataExecucao,i.responsavel));
+  if(o.itens?.length)o.itens.forEach(i=>addItemRow('ctr-itens-list',i.nome,i.qtd,i.valorUnit,i.tipo,i.refId,i.dataExecucao,i.responsavel,i.localInstalacao,i.corLed));
   else addItemRow('ctr-itens-list');
   if(o.parcelas?.length)o.parcelas.forEach(p=>addParcRow('ctr-parc-list',p.vencimento,p.valor,p.forma,p.obs));
   closeModal('modal-orcamentocli');
