@@ -10,7 +10,7 @@
 // navegador carregou uma cópia antiga guardada), recarrega sozinho com um link
 // novo que o cache nunca viu. Resolve de vez o "cache do celular travado numa
 // versão antiga" que se repetiu várias vezes 2026-11-11.
-window.__BUILD_ID='2026-11-12-01-05';
+window.__BUILD_ID='2026-11-12-01-15';
 (function(){
   if(sessionStorage.getItem('_reloadedForFreshBuild'))return;
   fetch(location.pathname,{cache:'no-store'}).then(r=>r.text()).then(html=>{
@@ -4630,7 +4630,7 @@ function saveOrcamento(){
   DB.save('orcamentos',{id:document.getElementById('orc-id').value||uid(),mes,categoria:document.getElementById('orc-cat').value,valorOrcado:valor});
   closeModal('modal-orcamento');renderOrcamento();toast('Meta salva!','success');
 }
-function delOrcamento(id){DB.del('orcamentos',id);renderOrcamento();}
+function delOrcamento(id){if(!confirm('Excluir esta meta?'))return;DB.del('orcamentos',id);renderOrcamento();}
 
 // ── RELATÓRIOS ────────────────────────────────────────────────────────────────
 let relTab='resumo';
