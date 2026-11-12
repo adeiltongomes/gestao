@@ -10,7 +10,7 @@
 // navegador carregou uma cópia antiga guardada), recarrega sozinho com um link
 // novo que o cache nunca viu. Resolve de vez o "cache do celular travado numa
 // versão antiga" que se repetiu várias vezes 2026-11-11.
-window.__BUILD_ID='2026-11-12-00-30';
+window.__BUILD_ID='2026-11-12-00-45';
 (function(){
   if(sessionStorage.getItem('_reloadedForFreshBuild'))return;
   fetch(location.pathname,{cache:'no-store'}).then(r=>r.text()).then(html=>{
@@ -2840,6 +2840,11 @@ function saveTransacao(){
     const oldC=DB.one('contas_bancarias',oldT.contaId);
     if(oldC){const d=oldT.tipo==='entrada'?-Number(oldT.valor||0):Number(oldT.valor||0);oldC.saldo=Number(oldC.saldo||0)+d;DB.save('contas_bancarias',oldC);}
   }
+  // Editar um lançamento reconstruía o objeto do zero só com os campos do
+  // formulário — isso apagava silenciosamente contratoId/faturaId/grupoId de
+  // qualquer lançamento ligado a um Contrato ou Fatura (sumia o botão de
+  // imprimir, entre outras coisas), mesmo sem o usuário tocar nesse vínculo.
+  // Agora preserva esses campos de ligação ao editar (achado 2026-11-12).
   DB.save('transacoes',{
     id:existingId||uid(),
     tipo,categoria:cat,descricao:desc,
@@ -2850,6 +2855,9 @@ function saveTransacao(){
     formaPagamento:forma||undefined,
     contaId:contaId||undefined,
     comprovante:transComprovante||undefined,
+    contratoId:oldT?.contratoId,
+    faturaId:oldT?.faturaId,
+    grupoId:oldT?.grupoId,
   });
   // apply new balance if paid with a conta
   if(isPaid&&contaId){
