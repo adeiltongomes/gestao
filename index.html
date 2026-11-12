@@ -6,20 +6,24 @@
 <title>AccertTech — Gestão de Locações TI</title>
 <script>
 // Auto-atualização: compara esta página com a que está de verdade publicada no
-// servidor (fetch sem cache) logo ao abrir; se forem diferentes (ou seja, o
-// navegador carregou uma cópia antiga guardada), recarrega sozinho com um link
-// novo que o cache nunca viu. Resolve de vez o "cache do celular travado numa
-// versão antiga" que se repetiu várias vezes 2026-11-11.
-window.__BUILD_ID='2026-11-12-03-35';
-(function(){
-  if(sessionStorage.getItem('_reloadedForFreshBuild'))return;
+// servidor (fetch sem cache) ao abrir E a cada 60s depois (2026-11-12 —
+// descoberto que checar só uma vez não resolvia se a aba ficasse aberta por
+// muito tempo sem recarregar: o usuário nunca mais pegava nenhuma atualização
+// nova depois do primeiro load). Se a versão do servidor for diferente,
+// recarrega sozinho com um link que o cache nunca viu — mas pula o reload
+// (tenta de novo no próximo ciclo) se tiver algum modal/formulário aberto,
+// pra nunca apagar algo que o usuário esteja digitando.
+window.__BUILD_ID='2026-11-12-04-00';
+function _checkFreshBuild(){
   fetch(location.pathname,{cache:'no-store'}).then(r=>r.text()).then(html=>{
     if(html.indexOf('__BUILD_ID=\''+window.__BUILD_ID+'\'')===-1){
-      sessionStorage.setItem('_reloadedForFreshBuild','1');
+      if(document.querySelector('.modal-overlay:not(.hidden)'))return;
       location.replace(location.pathname+'?v='+Date.now());
     }
   }).catch(()=>{});
-})();
+}
+_checkFreshBuild();
+setInterval(_checkFreshBuild,60000);
 </script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -3570,7 +3574,7 @@ function openModalOrcamentoCli(id){
   document.getElementById('orccli-obs').value=o.observacoes||'';
   toggleOrcParc();
   if(o.itens?.length)o.itens.forEach(i=>addItemRow('orccli-itens-list',i.nome,i.qtd,i.valorUnit,i.tipo,i.refId,i.dataExecucao,i.responsavel,i.localInstalacao,i.corLed));
-  else addItemRow('orccli-itens-list');
+  else _itensEmptyState('orccli-itens-list');
   if(o.parcelas?.length)o.parcelas.forEach(p=>addParcRow('orccli-parc-list',p.vencimento,p.valor,p.forma,p.obs));
   openModal('modal-orcamentocli');
 }
@@ -3741,10 +3745,27 @@ function addItemRow(containerId,nome,qtd,valorUnit,tipo,refId,dataExecucao,respo
     </div>`;
     wrap.appendChild(sub);
   }
-  document.getElementById(containerId).appendChild(wrap);
+  const container=document.getElementById(containerId);
+  if(!container.querySelector('.item-card'))container.innerHTML=''; // tira a mensagem de "nenhum item" antes do 1º card real
+  container.appendChild(wrap);
   calcItens();
 }
-function removeItemRow(lid){document.getElementById('it-'+lid)?.remove();itemLines=itemLines.filter(x=>x!==lid);calcItens();}
+function removeItemRow(lid){
+  const el=document.getElementById('it-'+lid);
+  const containerId=el?.parentElement?.id;
+  el?.remove();
+  itemLines=itemLines.filter(x=>x!==lid);
+  calcItens();
+  if(containerId&&!document.getElementById(containerId).children.length)_itensEmptyState(containerId);
+}
+// Antes todo orçamento/contrato novo já nascia com uma linha "Item Avulso" em
+// branco pré-criada — o usuário via isso como "lixo" misturado com os itens
+// reais que ele mesmo adicionava. Agora a lista começa genuinamente vazia,
+// com uma mensagem clara, e só ganha cards quando o usuário escolhe algo no
+// menu/botões ou clica em "+ Adicionar Item em Branco" de propósito.
+function _itensEmptyState(containerId){
+  document.getElementById(containerId).innerHTML=`<div style="text-align:center;padding:18px 10px;color:var(--text-dim);font-size:12.5px">Nenhum item adicionado ainda — escolha acima ou clique em "+ Adicionar Item em Branco"</div>`;
+}
 function calcItens(){
   let tot=0;
   itemLines.forEach(lid=>{
@@ -4417,7 +4438,7 @@ function openModalContrato(id){
   document.getElementById('ctr-obs').value=c.observacoes||'';
   if(!c.dias)calcDiasLocacao();
   if(c.itens?.length)c.itens.forEach(i=>addItemRow('ctr-itens-list',i.nome,i.qtd,i.valorUnit,i.tipo,i.refId,i.dataExecucao,i.responsavel,i.localInstalacao,i.corLed));
-  else addItemRow('ctr-itens-list');
+  else _itensEmptyState('ctr-itens-list');
   if(c.parcelas?.length)c.parcelas.forEach(p=>addParcRow('ctr-parc-list',p.vencimento,p.valor,p.forma,p.obs));
   openModal('modal-contrato');
 }
@@ -4498,7 +4519,7 @@ function gerarContratoDeOrcamento(id){
   document.getElementById('ctr-obs').value=o.observacoes||'';
   calcDiasLocacao();
   if(o.itens?.length)o.itens.forEach(i=>addItemRow('ctr-itens-list',i.nome,i.qtd,i.valorUnit,i.tipo,i.refId,i.dataExecucao,i.responsavel,i.localInstalacao,i.corLed));
-  else addItemRow('ctr-itens-list');
+  else _itensEmptyState('ctr-itens-list');
   if(o.parcelas?.length)o.parcelas.forEach(p=>addParcRow('ctr-parc-list',p.vencimento,p.valor,p.forma,p.obs));
   closeModal('modal-orcamentocli');
   openModal('modal-contrato');
