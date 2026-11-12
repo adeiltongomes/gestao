@@ -10,7 +10,7 @@
 // navegador carregou uma cópia antiga guardada), recarrega sozinho com um link
 // novo que o cache nunca viu. Resolve de vez o "cache do celular travado numa
 // versão antiga" que se repetiu várias vezes 2026-11-11.
-window.__BUILD_ID='2026-11-12-01-50';
+window.__BUILD_ID='2026-11-12-02-05';
 (function(){
   if(sessionStorage.getItem('_reloadedForFreshBuild'))return;
   fetch(location.pathname,{cache:'no-store'}).then(r=>r.text()).then(html=>{
@@ -561,6 +561,13 @@ thead th.r{text-align:right}
   .resp-table td.td-actions-cell{display:block;padding-top:10px!important;border-top:1px dashed var(--border-2)!important;border-bottom:none!important}
   .resp-table td.td-actions-cell::before{content:none}
   .resp-table td.td-actions-cell .td-actions{justify-content:flex-start;flex-wrap:wrap}
+  /* Linhas de item/parcela de Orçamento e Contrato (addItemRow/addParcRow) usam
+     grid com colunas fixas em px pensadas pra desktop — numa tela estreita
+     mesmo com minmax(0,...) nos campos flexíveis, a SOMA das colunas fixas
+     (ex.: 130+100+90+30px da linha de parcela) já estoura o espaço disponível
+     sozinha. Empilha cada campo em sua própria linha abaixo de 900px — único
+     jeito de garantir que nunca mais empurre a página inteira pro lado. */
+  .resp-grid-row{grid-template-columns:1fr!important;gap:4px!important}
 }
 @media(max-width:480px){
   .cards-row{grid-template-columns:1fr}
@@ -3513,6 +3520,7 @@ function addItemRow(containerId,nome,qtd,valorUnit,tipo,refId,dataExecucao,respo
   wrap.id='it-'+lid;
   wrap.dataset.tipo=tipo||'';
   const row=document.createElement('div');
+  row.className='resp-grid-row';
   row.style.cssText='display:grid;grid-template-columns:24px minmax(0,2fr) 60px 100px 100px 30px;gap:6px;align-items:center';
   row.innerHTML=`<div style="text-align:center;font-size:13px" title="${esc(tipo||'item avulso')}">${ITEM_TIPO_ICON[tipo]||''}</div>
     <input class="form-control" style="min-width:0" id="itn-${lid}" placeholder="Descrição do item/serviço" value="${esc(nome||'')}">
@@ -3525,6 +3533,7 @@ function addItemRow(containerId,nome,qtd,valorUnit,tipo,refId,dataExecucao,respo
   wrap.appendChild(row);
   if(tipo==='servico'){
     const sub=document.createElement('div');
+    sub.className='resp-grid-row';
     sub.style.cssText='display:grid;grid-template-columns:24px minmax(0,1fr) minmax(0,1fr);gap:6px;margin-top:4px';
     sub.innerHTML=`<div></div>
       <input class="form-control" style="min-width:0" id="itd-${lid}" type="date" value="${dataExecucao||''}" title="Data de execução" placeholder="Data de execução">
@@ -3567,6 +3576,7 @@ function addParcRow(containerId,venc,valor,forma,obs){
   const lid=uid();parcLines.push(lid);
   const row=document.createElement('div');
   row.id='pc-'+lid;
+  row.className='resp-grid-row';
   row.style.cssText='display:grid;grid-template-columns:130px 100px 90px minmax(0,1fr) 30px;gap:6px;align-items:center';
   row.innerHTML=`<input class="form-control" style="min-width:0" id="pcd-${lid}" type="date" value="${venc||''}">
     <input class="form-control" style="min-width:0" id="pcv-${lid}" type="number" min="0" step="0.01" placeholder="Valor" value="${valor||''}">
