@@ -10,7 +10,7 @@
 // navegador carregou uma cópia antiga guardada), recarrega sozinho com um link
 // novo que o cache nunca viu. Resolve de vez o "cache do celular travado numa
 // versão antiga" que se repetiu várias vezes 2026-11-11.
-window.__BUILD_ID='2026-11-12-02-40';
+window.__BUILD_ID='2026-11-12-02-55';
 (function(){
   if(sessionStorage.getItem('_reloadedForFreshBuild'))return;
   fetch(location.pathname,{cache:'no-store'}).then(r=>r.text()).then(html=>{
@@ -2228,7 +2228,7 @@ function renderEquipamentos(){
     <td data-label="Nº Série" style="font-size:12px;color:var(--text-mid)">${esc(e.numSerie||'—')}</td>
     <td data-label="Val./Dia">${fmtR(e.valorDia)}/dia</td>
     <td data-label="Status"><span class="badge ${EQUIP_BADGE[e.status]||'badge-gray'}">${EQUIP_LBL[e.status]||e.status}</span></td>
-    <td class="td-actions-cell"><div class="td-actions"><button class="btn btn-ghost btn-sm" onclick="openModalEquipamento('${e.id}')" title="Editar">✏ Editar</button><button class="btn btn-danger btn-sm" onclick="delEquipamento('${e.id}')" title="Excluir">🗑️ Excluir</button></div></td></tr>`)
+    <td class="td-actions-cell"><div class="td-actions"><button class="btn btn-ghost btn-sm" onclick="clonarEquipamento('${e.id}')" title="Clonar">⧉ Clonar</button><button class="btn btn-ghost btn-sm" onclick="openModalEquipamento('${e.id}')" title="Editar">✏ Editar</button><button class="btn btn-danger btn-sm" onclick="delEquipamento('${e.id}')" title="Excluir">🗑️ Excluir</button></div></td></tr>`)
     .join(''):`<tr><td colspan="6"><div class="empty"><div class="empty-icon">💻</div><h3>Nenhum equipamento cadastrado</h3></div></td></tr>`;
 }
 const EQUIP_TIPOS_FIXOS=['Tablet','Celular','Notebook','Monitor','TV','Computador','Impressora','Roteador','Projetor','Scanner','Acessório'];
@@ -2266,6 +2266,13 @@ function saveEquipamento(){
   }
 }
 function delEquipamento(id){if(!confirm('Excluir?'))return;DB.del('equipamentos',id);renderEquipamentos();toast('Excluído.','info');}
+function clonarEquipamento(id){
+  openModalEquipamento(id);
+  document.getElementById('equip-id').value='';
+  document.getElementById('equip-serie').value=''; // nº de série é único por unidade física, não clona
+  document.getElementById('mequip-title').textContent='Novo Equipamento (clonado)';
+  toast('Ajuste o que precisar (ex: nº de série) e salve para criar a cópia.','info');
+}
 
 // ── INTERRUPTORES INTELIGENTES (sub-aba de Equipamentos, 2026-11-12) ──────────
 let _equipTab='equip';
@@ -2288,7 +2295,7 @@ function renderInterruptores(){
     <td data-label="Sincroniza">${(i.sincroniza||[]).map(s=>`<span class="badge badge-blue" style="margin-right:4px">${esc(s)}</span>`).join('')||'—'}</td>
     <td data-label="Compra">${fmtR(i.valorCompra)}</td>
     <td data-label="Venda">${fmtR(i.valorVenda)}</td>
-    <td class="td-actions-cell"><div class="td-actions"><button class="btn btn-ghost btn-sm" onclick="openModalInterruptor('${i.id}')" title="Editar">✏ Editar</button><button class="btn btn-danger btn-sm" onclick="delInterruptor('${i.id}')" title="Excluir">🗑️ Excluir</button></div></td></tr>`)
+    <td class="td-actions-cell"><div class="td-actions"><button class="btn btn-ghost btn-sm" onclick="clonarInterruptor('${i.id}')" title="Clonar">⧉ Clonar</button><button class="btn btn-ghost btn-sm" onclick="openModalInterruptor('${i.id}')" title="Editar">✏ Editar</button><button class="btn btn-danger btn-sm" onclick="delInterruptor('${i.id}')" title="Excluir">🗑️ Excluir</button></div></td></tr>`)
     .join(''):`<tr><td colspan="8"><div class="empty"><div class="empty-icon">🔌</div><h3>Nenhum interruptor cadastrado</h3></div></td></tr>`;
 }
 function openModalInterruptor(id){
@@ -2328,6 +2335,13 @@ function saveInterruptor(){
   }
 }
 function delInterruptor(id){if(!confirm('Excluir?'))return;DB.del('interruptores',id);renderInterruptores();toast('Excluído.','info');}
+function clonarInterruptor(id){
+  openModalInterruptor(id);
+  document.getElementById('interr-id').value='';
+  document.getElementById('interr-nome').value+=' (cópia)';
+  document.getElementById('minterr-title').textContent='Novo Interruptor Inteligente (clonado)';
+  toast('Ajuste o que precisar e salve para criar a cópia.','info');
+}
 function quickNovoInterruptor(targetContainerId){
   _quickItemTarget=targetContainerId;
   openModalInterruptor();
@@ -2345,7 +2359,7 @@ function renderEstoque(){
       <td data-label="Qtd Mín.">${e.qtdMinima||0}</td><td data-label="Val. Unit.">${fmtR(e.valorUnit)}</td>
       <td data-label="Total">${fmtR(Number(e.valorUnit||0)*Number(e.quantidade||0))}</td>
       <td data-label="Status"><span class="badge ${baixo?'badge-red':'badge-green'}">${baixo?'Baixo':'OK'}</span></td>
-      <td class="td-actions-cell"><div class="td-actions"><button class="btn btn-ghost btn-sm" onclick="openModalEstoque('${e.id}')" title="Editar">✏ Editar</button><button class="btn btn-danger btn-sm" onclick="delEstoque('${e.id}')" title="Excluir">🗑️ Excluir</button></div></td></tr>`;
+      <td class="td-actions-cell"><div class="td-actions"><button class="btn btn-ghost btn-sm" onclick="clonarEstoque('${e.id}')" title="Clonar">⧉ Clonar</button><button class="btn btn-ghost btn-sm" onclick="openModalEstoque('${e.id}')" title="Editar">✏ Editar</button><button class="btn btn-danger btn-sm" onclick="delEstoque('${e.id}')" title="Excluir">🗑️ Excluir</button></div></td></tr>`;
   }).join(''):`<tr><td colspan="8"><div class="empty"><div class="empty-icon">📦</div><h3>Nenhum item no estoque</h3></div></td></tr>`;
 }
 function openModalEstoque(id){
@@ -2368,6 +2382,14 @@ function saveEstoque(){
   }
 }
 function delEstoque(id){if(!confirm('Excluir?'))return;DB.del('estoque',id);renderEstoque();toast('Excluído.','info');}
+function clonarEstoque(id){
+  openModalEstoque(id);
+  document.getElementById('est-id').value='';
+  document.getElementById('est-nome').value+=' (cópia)';
+  document.getElementById('est-qtd').value=0; // clone é um item novo, não herda a quantidade física do original
+  document.getElementById('mest-title').textContent='Novo Item de Estoque (clonado)';
+  toast('Ajuste o que precisar (a quantidade veio zerada) e salve para criar a cópia.','info');
+}
 
 // ── ESTRUTURAS (itens de montagem de eventos — tratados por quantidade, não por unidade serializada) ──
 function syncEstrutDisponivel(){
@@ -2385,7 +2407,7 @@ function renderEstruturas(){
       <td data-label="Disponível/Total" style="font-weight:600;color:${indisp?'var(--red)':'inherit'}">${disp}/${tot}</td>
       <td data-label="Val./Dia">${fmtR(e.valorDia)}</td>
       <td data-label="Status"><span class="badge ${indisp?'badge-red':'badge-green'}">${indisp?'Indisponível':'Disponível'}</span></td>
-      <td class="td-actions-cell"><div class="td-actions"><button class="btn btn-ghost btn-sm" onclick="openModalEstrutura('${e.id}')" title="Editar">✏ Editar</button><button class="btn btn-danger btn-sm" onclick="delEstrutura('${e.id}')" title="Excluir">🗑️ Excluir</button></div></td></tr>`;
+      <td class="td-actions-cell"><div class="td-actions"><button class="btn btn-ghost btn-sm" onclick="clonarEstrutura('${e.id}')" title="Clonar">⧉ Clonar</button><button class="btn btn-ghost btn-sm" onclick="openModalEstrutura('${e.id}')" title="Editar">✏ Editar</button><button class="btn btn-danger btn-sm" onclick="delEstrutura('${e.id}')" title="Excluir">🗑️ Excluir</button></div></td></tr>`;
   }).join(''):`<tr><td colspan="6"><div class="empty"><div class="empty-icon">🏗️</div><h3>Nenhuma estrutura cadastrada</h3></div></td></tr>`;
 }
 function openModalEstrutura(id){
@@ -2412,6 +2434,15 @@ function saveEstrutura(){
   }
 }
 function delEstrutura(id){if(!confirm('Excluir?'))return;DB.del('estruturas',id);renderEstruturas();toast('Excluído.','info');}
+function clonarEstrutura(id){
+  openModalEstrutura(id);
+  document.getElementById('estrut-id').value='';
+  document.getElementById('estrut-nome').value+=' (cópia)';
+  document.getElementById('estrut-qtdtotal').value=0; // clone é uma estrutura nova, não herda a quantidade física do original
+  document.getElementById('estrut-qtddisp').value=0;
+  document.getElementById('mestrut-title').textContent='Nova Estrutura (clonada)';
+  toast('Ajuste o que precisar (a quantidade veio zerada) e salve para criar a cópia.','info');
+}
 
 // ── SERVIÇOS (catálogo de serviços de evento — não controla estoque/quantidade) ──
 function renderServicos(){
@@ -2419,7 +2450,7 @@ function renderServicos(){
   const rows=DB.get('servicos').filter(s=>!q||s.nome?.toLowerCase().includes(q)||s.categoria?.toLowerCase().includes(q));
   document.getElementById('tb-servicos').innerHTML=rows.length?rows.map(s=>
     `<tr><td data-label="Serviço"><strong>${esc(s.nome)}</strong></td><td data-label="Categoria">${esc(s.categoria||'—')}</td><td data-label="Valor Padrão">${fmtR(s.valorPadrao)}</td>
-      <td class="td-actions-cell"><div class="td-actions"><button class="btn btn-ghost btn-sm" onclick="openModalServico('${s.id}')" title="Editar">✏ Editar</button><button class="btn btn-danger btn-sm" onclick="delServico('${s.id}')" title="Excluir">🗑️ Excluir</button></div></td></tr>`
+      <td class="td-actions-cell"><div class="td-actions"><button class="btn btn-ghost btn-sm" onclick="clonarServico('${s.id}')" title="Clonar">⧉ Clonar</button><button class="btn btn-ghost btn-sm" onclick="openModalServico('${s.id}')" title="Editar">✏ Editar</button><button class="btn btn-danger btn-sm" onclick="delServico('${s.id}')" title="Excluir">🗑️ Excluir</button></div></td></tr>`
   ).join(''):`<tr><td colspan="4"><div class="empty"><div class="empty-icon">🔧</div><h3>Nenhum serviço cadastrado</h3></div></td></tr>`;
 }
 function openModalServico(id){
@@ -2442,6 +2473,13 @@ function saveServico(){
   }
 }
 function delServico(id){if(!confirm('Excluir?'))return;DB.del('servicos',id);renderServicos();toast('Excluído.','info');}
+function clonarServico(id){
+  openModalServico(id);
+  document.getElementById('serv-id').value='';
+  document.getElementById('serv-nome').value+=' (cópia)';
+  document.getElementById('mserv-title').textContent='Novo Serviço (clonado)';
+  toast('Ajuste o que precisar e salve para criar a cópia.','info');
+}
 
 // ── LOCAÇÕES ──────────────────────────────────────────────────────────────────
 let locLines=[];
