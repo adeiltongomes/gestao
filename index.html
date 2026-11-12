@@ -10,7 +10,7 @@
 // navegador carregou uma cópia antiga guardada), recarrega sozinho com um link
 // novo que o cache nunca viu. Resolve de vez o "cache do celular travado numa
 // versão antiga" que se repetiu várias vezes 2026-11-11.
-window.__BUILD_ID='2026-11-12-00-45';
+window.__BUILD_ID='2026-11-12-01-05';
 (function(){
   if(sessionStorage.getItem('_reloadedForFreshBuild'))return;
   fetch(location.pathname,{cache:'no-store'}).then(r=>r.text()).then(html=>{
@@ -4413,7 +4413,16 @@ function openModalFatura(id){
   document.getElementById('fat-itens-total').textContent='';
   document.getElementById('fat-valor').readOnly=false;
   document.getElementById('fat-valor').title='';
-  (f?.itens||[]).forEach(it=>addItemFaturaRow(it));
+  // Fatura sem itens detalhados (a maioria, geradas automaticamente a partir
+  // de um Contrato) mostrava a seção "Itens de locação" em branco na edição —
+  // mesmo a impressão sempre tendo mostrado um resumo de 1 linha (descrição +
+  // valor total) nesse caso. Usuário pediu pra nunca vir em branco: preenche
+  // essa mesma linha de resumo, igual o que a impressão já mostra.
+  if(f?.itens?.length){
+    f.itens.forEach(it=>addItemFaturaRow(it));
+  }else if(f){
+    addItemFaturaRow({produto:f.descricao,quantidade:1,valor:f.valor,inicio:f.vencimento,termino:f.vencimento});
+  }
   openModal('modal-fatura');
 }
 function preencherFaturaDeContrato(){
