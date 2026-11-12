@@ -10,7 +10,7 @@
 // navegador carregou uma cópia antiga guardada), recarrega sozinho com um link
 // novo que o cache nunca viu. Resolve de vez o "cache do celular travado numa
 // versão antiga" que se repetiu várias vezes 2026-11-11.
-window.__BUILD_ID='2026-11-12-03-10';
+window.__BUILD_ID='2026-11-12-03-35';
 (function(){
   if(sessionStorage.getItem('_reloadedForFreshBuild'))return;
   fetch(location.pathname,{cache:'no-store'}).then(r=>r.text()).then(html=>{
@@ -435,7 +435,11 @@ thead th.r{text-align:right}
   border-top:1px solid var(--border);
 }
 .form-sec-title:first-child{margin-top:0;padding-top:0;border-top:none}
-#orccli-itens-list>div:last-child,#ctr-itens-list>div:last-child{border-bottom:none!important;padding-bottom:0!important}
+.item-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px}
+.item-card-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:9px}
+.item-card-tag{font-size:10.5px;font-weight:700;color:var(--text-mid);text-transform:uppercase;letter-spacing:.05em}
+.item-card-sub{margin-top:10px;padding-top:10px;border-top:1px dashed var(--border)}
+.item-card-sub-label{font-size:10px;font-weight:700;color:var(--text-dim);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px}
 .modal-lg{max-width:700px}
 .modal-hdr{
   display:flex;align-items:center;padding:20px 22px 15px;
@@ -1577,7 +1581,7 @@ thead th.r{text-align:right}
           <button type="button" class="btn btn-ghost btn-sm" title="Cadastrar novo serviço" onclick="quickNovoServico('orccli-itens-list')">+ Serviço</button>
           <button type="button" class="btn btn-ghost btn-sm" title="Cadastrar novo interruptor inteligente" onclick="quickNovoInterruptor('orccli-itens-list')">+ Interruptor</button>
         </div>
-        <div id="orccli-itens-list" style="display:flex;flex-direction:column;gap:10px;max-height:380px;overflow-y:auto;padding:10px;background:var(--surface-2);border-radius:8px;border:1.5px solid var(--border)"></div>
+        <div id="orccli-itens-list" style="display:flex;flex-direction:column;gap:10px;max-height:480px;overflow-y:auto;padding:10px;background:var(--surface-2);border-radius:8px;border:1.5px solid var(--border)"></div>
         <button type="button" class="btn btn-ghost btn-sm" style="margin-top:6px" onclick="addItemRow('orccli-itens-list')">+ Adicionar Item em Branco</button>
         <div style="text-align:right;margin-top:8px;font-weight:800;font-size:15px">Total: <span id="orccli-total-view">R$ 0,00</span></div>
       </div>
@@ -1599,7 +1603,7 @@ thead th.r{text-align:right}
       </div>
       <div class="form-group">
         <label class="form-label">Dados do Pagamento</label>
-        <div id="orccli-parc-list" style="display:flex;flex-direction:column;gap:6px;max-height:180px;overflow-y:auto;padding:8px;background:var(--surface-2);border-radius:8px;border:1.5px solid var(--border)"></div>
+        <div id="orccli-parc-list" style="display:flex;flex-direction:column;gap:10px;max-height:380px;overflow-y:auto;padding:10px;background:var(--surface-2);border-radius:8px;border:1.5px solid var(--border)"></div>
         <button type="button" class="btn btn-ghost btn-sm" style="margin-top:6px" onclick="addParcRow('orccli-parc-list')">+ Adicionar Parcela</button>
       </div>
       <div class="form-sec-title">Outras Informações</div>
@@ -1667,7 +1671,7 @@ thead th.r{text-align:right}
           <button type="button" class="btn btn-ghost btn-sm" title="Cadastrar novo serviço" onclick="quickNovoServico('ctr-itens-list')">+ Serviço</button>
           <button type="button" class="btn btn-ghost btn-sm" title="Cadastrar novo interruptor inteligente" onclick="quickNovoInterruptor('ctr-itens-list')">+ Interruptor</button>
         </div>
-        <div id="ctr-itens-list" style="display:flex;flex-direction:column;gap:10px;max-height:380px;overflow-y:auto;padding:10px;background:var(--surface-2);border-radius:8px;border:1.5px solid var(--border)"></div>
+        <div id="ctr-itens-list" style="display:flex;flex-direction:column;gap:10px;max-height:480px;overflow-y:auto;padding:10px;background:var(--surface-2);border-radius:8px;border:1.5px solid var(--border)"></div>
         <button type="button" class="btn btn-ghost btn-sm" style="margin-top:6px" onclick="addItemRow('ctr-itens-list')">+ Adicionar Item em Branco</button>
         <div style="text-align:right;margin-top:8px;font-weight:800;font-size:15px">Total: <span id="ctr-total-view">R$ 0,00</span></div>
       </div>
@@ -1687,7 +1691,7 @@ thead th.r{text-align:right}
       </div>
       <div class="form-group">
         <label class="form-label">Dados do Pagamento</label>
-        <div id="ctr-parc-list" style="display:flex;flex-direction:column;gap:6px;max-height:180px;overflow-y:auto;padding:8px;background:var(--surface-2);border-radius:8px;border:1.5px solid var(--border)"></div>
+        <div id="ctr-parc-list" style="display:flex;flex-direction:column;gap:10px;max-height:380px;overflow-y:auto;padding:10px;background:var(--surface-2);border-radius:8px;border:1.5px solid var(--border)"></div>
         <button type="button" class="btn btn-ghost btn-sm" style="margin-top:6px" onclick="addParcRow('ctr-parc-list')">+ Adicionar Parcela</button>
       </div>
       <div class="form-group"><label class="form-label">Observações</label><textarea class="form-control" id="ctr-obs" rows="2"></textarea></div>
@@ -3683,31 +3687,40 @@ let parcLines=[];
 const ITEM_TIPO_ICON={equipamento:'💻',estoque:'📦',estrutura:'🏗️',servico:'🔧',interruptor:'🔌'};
 const INTERR_LOCAIS=['Sala','Cozinha','Quarto','Banheiro','Área Externa','Corredor','Outro'];
 const INTERR_CORES_LED=['Sem LED','Branco','Azul','Vermelho','Verde','Âmbar'];
+const ITEM_TIPO_LABEL={equipamento:'Equipamento',estoque:'Estoque',estrutura:'Estrutura',servico:'Serviço',interruptor:'Interruptor Inteligente'};
 function addItemRow(containerId,nome,qtd,valorUnit,tipo,refId,dataExecucao,responsavel,localInstalacao,corLed){
+  // Redesenhado 2026-11-12 (3ª rodada no mesmo print) — cada item agora é um
+  // CARD de verdade (fundo, borda, cabeçalho com tag+excluir, corpo com
+  // descrição em linha cheia e qtd/valor/total numa linha compacta abaixo),
+  // em vez de uma linha de grid crua. O item "em branco" padrão também vira
+  // um card igual aos outros (tag "Item avulso"), não mais uma linha solta
+  // de formato diferente misturada com os itens de verdade.
   const lid=uid();itemLines.push(lid);
   const wrap=document.createElement('div');
   wrap.id='it-'+lid;
   wrap.dataset.tipo=tipo||'';
-  wrap.style.cssText='padding-bottom:8px;border-bottom:1px dashed var(--border)';
-  const row=document.createElement('div');
-  row.className='resp-grid-row';
-  row.style.cssText='display:grid;grid-template-columns:24px minmax(0,2fr) 60px 100px 100px 30px;gap:6px;align-items:center';
-  row.innerHTML=`<div style="text-align:center;font-size:13px" title="${esc(tipo||'item avulso')}">${ITEM_TIPO_ICON[tipo]||''}</div>
-    <input class="form-control" style="min-width:0" id="itn-${lid}" placeholder="Descrição do item/serviço" value="${esc(nome||'')}">
-    <input class="form-control" style="min-width:0" id="itq-${lid}" type="number" min="0" step="1" value="${qtd||1}" oninput="calcItens()" title="Qtd.">
-    <input class="form-control" style="min-width:0" id="itv-${lid}" type="number" min="0" step="0.01" placeholder="Vr. unit." value="${valorUnit||''}" oninput="calcItens()">
-    <div id="its-${lid}" style="font-weight:700;font-size:12.5px;text-align:right;white-space:nowrap">R$ 0,00</div>
-    <button type="button" class="btn btn-danger btn-xs" onclick="removeItemRow('${lid}')">✕</button>
+  wrap.className='item-card';
+  wrap.innerHTML=`
+    <div class="item-card-hdr">
+      <span class="item-card-tag">${ITEM_TIPO_ICON[tipo]||'📄'} ${esc(ITEM_TIPO_LABEL[tipo]||'Item avulso')}</span>
+      <button type="button" class="btn btn-danger btn-xs" onclick="removeItemRow('${lid}')" title="Remover item">✕</button>
+    </div>
+    <input class="form-control" id="itn-${lid}" placeholder="Descrição do item/serviço" value="${esc(nome||'')}" style="margin-bottom:8px">
+    <div class="resp-grid-row" style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr) auto;gap:8px;align-items:center">
+      <input class="form-control" style="min-width:0" id="itq-${lid}" type="number" min="0" step="1" value="${qtd||1}" oninput="calcItens()" placeholder="Qtd.">
+      <input class="form-control" style="min-width:0" id="itv-${lid}" type="number" min="0" step="0.01" placeholder="Vr. unit." value="${valorUnit||''}" oninput="calcItens()">
+      <div id="its-${lid}" style="font-weight:700;font-size:13.5px;white-space:nowrap;min-width:84px;text-align:right">R$ 0,00</div>
+    </div>
     <input type="hidden" id="itt-${lid}" value="${esc(tipo||'')}">
     <input type="hidden" id="itr-${lid}" value="${esc(refId||'')}">`;
-  wrap.appendChild(row);
   if(tipo==='servico'){
     const sub=document.createElement('div');
-    sub.className='resp-grid-row';
-    sub.style.cssText='display:grid;grid-template-columns:24px minmax(0,1fr) minmax(0,1fr);gap:6px;margin-top:4px';
-    sub.innerHTML=`<div></div>
+    sub.className='item-card-sub';
+    sub.innerHTML=`<div class="item-card-sub-label">🔧 Execução do Serviço</div>
+    <div class="resp-grid-row" style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:8px">
       <input class="form-control" style="min-width:0" id="itd-${lid}" type="date" value="${dataExecucao||''}" title="Data de execução" placeholder="Data de execução">
-      <input class="form-control" style="min-width:0" id="itp-${lid}" placeholder="Equipe / Responsável" value="${esc(responsavel||'')}">`;
+      <input class="form-control" style="min-width:0" id="itp-${lid}" placeholder="Equipe / Responsável" value="${esc(responsavel||'')}">
+    </div>`;
     wrap.appendChild(sub);
   }
   if(tipo==='interruptor'){
@@ -3715,16 +3728,17 @@ function addItemRow(containerId,nome,qtd,valorUnit,tipo,refId,dataExecucao,respo
     // ser instalado (sala/cozinha/banheiro...) e a cor do LED indicador —
     // pedido do usuário 2026-11-12, pra já vir essa informação junto no item.
     const sub=document.createElement('div');
-    sub.className='resp-grid-row';
-    sub.style.cssText='display:grid;grid-template-columns:24px minmax(0,1fr) minmax(0,1fr);gap:6px;margin-top:4px';
-    sub.innerHTML=`<div style="text-align:center;font-size:12px" title="Casa inteligente">🏠</div>
+    sub.className='item-card-sub';
+    sub.innerHTML=`<div class="item-card-sub-label">🏠 Casa Inteligente</div>
+    <div class="resp-grid-row" style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:8px">
       <select class="form-control" style="min-width:0" id="itl-${lid}" title="Local de instalação">
         <option value="">Local de instalação…</option>
         ${INTERR_LOCAIS.map(l=>`<option value="${esc(l)}"${localInstalacao===l?' selected':''}>${esc(l)}</option>`).join('')}
       </select>
       <select class="form-control" style="min-width:0" id="itld-${lid}" title="Cor do LED">
         ${INTERR_CORES_LED.map(c=>`<option value="${esc(c)}"${corLed===c?' selected':''}>${esc(c)}</option>`).join('')}
-      </select>`;
+      </select>
+    </div>`;
     wrap.appendChild(sub);
   }
   document.getElementById(containerId).appendChild(wrap);
@@ -3767,19 +3781,24 @@ function addParcRow(containerId,venc,valor,forma,obs){
   const lid=uid();parcLines.push(lid);
   const row=document.createElement('div');
   row.id='pc-'+lid;
-  row.className='resp-grid-row';
-  row.style.cssText='display:grid;grid-template-columns:130px 100px 90px minmax(0,1fr) 30px;gap:6px;align-items:center';
-  row.innerHTML=`<input class="form-control" style="min-width:0" id="pcd-${lid}" type="date" value="${venc||''}">
-    <input class="form-control" style="min-width:0" id="pcv-${lid}" type="number" min="0" step="0.01" placeholder="Valor" value="${valor||''}">
-    <select class="form-control" style="min-width:0" id="pcf-${lid}">
-      <option value="PIX"${!forma||forma==='PIX'?' selected':''}>PIX</option>
-      <option value="Boleto"${forma==='Boleto'?' selected':''}>Boleto</option>
-      <option value="Cartão"${forma==='Cartão'?' selected':''}>Cartão</option>
-      <option value="Transferência"${forma==='Transferência'?' selected':''}>Transferência</option>
-      <option value="Dinheiro"${forma==='Dinheiro'?' selected':''}>Dinheiro</option>
-    </select>
-    <input class="form-control" style="min-width:0" id="pco-${lid}" placeholder="Observação (ex: chave Pix)" value="${esc(obs||'')}">
-    <button type="button" class="btn btn-danger btn-xs" onclick="removeParcRow('${lid}')">✕</button>`;
+  row.className='item-card';
+  row.innerHTML=`
+    <div class="item-card-hdr">
+      <span class="item-card-tag">💰 Parcela ${parcLines.length}</span>
+      <button type="button" class="btn btn-danger btn-xs" onclick="removeParcRow('${lid}')" title="Remover parcela">✕</button>
+    </div>
+    <div class="resp-grid-row" style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr) minmax(0,1fr);gap:8px;margin-bottom:8px">
+      <input class="form-control" style="min-width:0" id="pcd-${lid}" type="date" value="${venc||''}" title="Vencimento">
+      <input class="form-control" style="min-width:0" id="pcv-${lid}" type="number" min="0" step="0.01" placeholder="Valor" value="${valor||''}">
+      <select class="form-control" style="min-width:0" id="pcf-${lid}">
+        <option value="PIX"${!forma||forma==='PIX'?' selected':''}>PIX</option>
+        <option value="Boleto"${forma==='Boleto'?' selected':''}>Boleto</option>
+        <option value="Cartão"${forma==='Cartão'?' selected':''}>Cartão</option>
+        <option value="Transferência"${forma==='Transferência'?' selected':''}>Transferência</option>
+        <option value="Dinheiro"${forma==='Dinheiro'?' selected':''}>Dinheiro</option>
+      </select>
+    </div>
+    <input class="form-control" id="pco-${lid}" placeholder="Observação (ex: chave Pix)" value="${esc(obs||'')}">`;
   document.getElementById(containerId).appendChild(row);
 }
 function removeParcRow(lid){document.getElementById('pc-'+lid)?.remove();parcLines=parcLines.filter(x=>x!==lid);}
