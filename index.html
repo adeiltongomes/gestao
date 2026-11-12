@@ -13,7 +13,7 @@
 // recarrega sozinho com um link que o cache nunca viu — mas pula o reload
 // (tenta de novo no próximo ciclo) se tiver algum modal/formulário aberto,
 // pra nunca apagar algo que o usuário esteja digitando.
-window.__BUILD_ID='2026-11-12-04-00';
+window.__BUILD_ID='2026-11-12-04-20';
 function _checkFreshBuild(){
   fetch(location.pathname,{cache:'no-store'}).then(r=>r.text()).then(html=>{
     if(html.indexOf('__BUILD_ID=\''+window.__BUILD_ID+'\'')===-1){
@@ -444,6 +444,18 @@ thead th.r{text-align:right}
 .item-card-tag{font-size:10.5px;font-weight:700;color:var(--text-mid);text-transform:uppercase;letter-spacing:.05em}
 .item-card-sub{margin-top:10px;padding-top:10px;border-top:1px dashed var(--border)}
 .item-card-sub-label{font-size:10px;font-weight:700;color:var(--text-dim);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px}
+/* Dropdown "Adicionar a partir de..." construído do zero — o <select> nativo
+   do navegador tem um popup que NENHUM CSS alcança (renderizado pelo SO),
+   sempre ficava claro mesmo com o resto do app no tema escuro. Pedido do
+   usuário 2026-11-12. */
+.qp-wrap{position:relative;flex:1;min-width:0}
+.qp-btn{width:100%;display:flex;align-items:center;justify-content:space-between;gap:8px;text-align:left;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.qp-caret{flex-shrink:0;opacity:.6;font-size:11px}
+.qp-panel{position:absolute;top:calc(100% + 6px);left:0;right:0;max-height:300px;overflow-y:auto;background:var(--surface-3);border:1px solid var(--border-2);border-radius:10px;box-shadow:var(--shadow-lg);z-index:60;padding:6px}
+.qp-group-label{font-size:10px;font-weight:700;color:var(--text-dim);text-transform:uppercase;letter-spacing:.07em;padding:9px 10px 5px}
+.qp-item{padding:9px 10px;border-radius:7px;cursor:pointer;font-size:13px;color:var(--text);line-height:1.3}
+.qp-item:hover{background:var(--surface-2);color:var(--blue-light)}
+.qp-empty{padding:14px 10px;color:var(--text-dim);font-size:12.5px;text-align:center}
 .modal-lg{max-width:700px}
 .modal-hdr{
   display:flex;align-items:center;padding:20px 22px 15px;
@@ -1576,9 +1588,10 @@ thead th.r{text-align:right}
       <div class="form-sec-title">Itens / Serviços</div>
       <div class="form-group">
         <div style="display:flex;gap:6px;margin-bottom:6px">
-          <select class="form-control" id="orccli-quickpick" style="flex:1" onchange="orcQuickAdd()">
-            <option value="">+ Adicionar a partir de Equipamento/Estoque…</option>
-          </select>
+          <div class="qp-wrap">
+            <button type="button" class="btn btn-ghost qp-btn" onclick="toggleQuickPick('orccli')">+ Adicionar a partir de Equipamento/Estoque/Estrutura/Serviço… <span class="qp-caret">▾</span></button>
+            <div class="qp-panel hidden" id="orccli-quickpick-panel"></div>
+          </div>
           <button type="button" class="btn btn-ghost btn-sm" title="Cadastrar novo equipamento" onclick="quickNovoEquipamento('orccli-itens-list')">+ Equip.</button>
           <button type="button" class="btn btn-ghost btn-sm" title="Cadastrar novo item de estoque" onclick="quickNovoEstoque('orccli-itens-list')">+ Estoque</button>
           <button type="button" class="btn btn-ghost btn-sm" title="Cadastrar nova estrutura" onclick="quickNovoEstrutura('orccli-itens-list')">+ Estrutura</button>
@@ -1666,9 +1679,10 @@ thead th.r{text-align:right}
       <div class="form-group">
         <label class="form-label">Itens / Serviços</label>
         <div style="display:flex;gap:6px;margin-bottom:6px">
-          <select class="form-control" id="ctr-quickpick" style="flex:1" onchange="ctrQuickAdd()">
-            <option value="">+ Adicionar a partir de Equipamento/Estoque…</option>
-          </select>
+          <div class="qp-wrap">
+            <button type="button" class="btn btn-ghost qp-btn" onclick="toggleQuickPick('ctr')">+ Adicionar a partir de Equipamento/Estoque/Estrutura/Serviço… <span class="qp-caret">▾</span></button>
+            <div class="qp-panel hidden" id="ctr-quickpick-panel"></div>
+          </div>
           <button type="button" class="btn btn-ghost btn-sm" title="Cadastrar novo equipamento" onclick="quickNovoEquipamento('ctr-itens-list')">+ Equip.</button>
           <button type="button" class="btn btn-ghost btn-sm" title="Cadastrar novo item de estoque" onclick="quickNovoEstoque('ctr-itens-list')">+ Estoque</button>
           <button type="button" class="btn btn-ghost btn-sm" title="Cadastrar nova estrutura" onclick="quickNovoEstrutura('ctr-itens-list')">+ Estrutura</button>
@@ -3490,36 +3504,6 @@ function renderOrcamentosCli(){
       </div></td></tr>`;
   }).join(''):`<tr><td colspan="8"><div class="empty"><div class="empty-icon">📄</div><h3>Nenhum orçamento encontrado</h3></div></td></tr>`;
 }
-function _quickPickOpts(){
-  const equips=DB.get('equipamentos'),estq=DB.get('estoque'),estruts=DB.get('estruturas'),servs=DB.get('servicos'),interrs=DB.get('interruptores');
-  let opts='<option value="">+ Adicionar a partir de Equipamento/Estoque/Estrutura/Serviço…</option>';
-  if(equips.length){
-    opts+=`<optgroup label="── Equipamentos ──">`;
-    opts+=equips.map(e=>`<option value="eq|${e.id}">${esc((e.tipo||'')+' '+(e.marca||'')+' '+(e.modelo||''))}${e.status&&e.status!=='disponivel'?' ['+esc(EQUIP_LBL[e.status]||e.status)+']':''}</option>`).join('');
-    opts+=`</optgroup>`;
-  }
-  if(estq.length){
-    opts+=`<optgroup label="── Produtos do Estoque ──">`;
-    opts+=estq.map(e=>`<option value="es|${e.id}">${esc(e.nome||'')}${e.categoria?' ('+esc(e.categoria)+')':''}${e.valorUnit?' — '+fmtR(e.valorUnit):''}</option>`).join('');
-    opts+=`</optgroup>`;
-  }
-  if(estruts.length){
-    opts+=`<optgroup label="── Estruturas ──">`;
-    opts+=estruts.map(e=>`<option value="et|${e.id}">${esc(e.nome||'')}${e.categoria?' ('+esc(e.categoria)+')':''} — ${Number(e.qtdDisponivel||0)}/${Number(e.qtdTotal||0)} disp. — ${fmtR(e.valorDia)}/dia</option>`).join('');
-    opts+=`</optgroup>`;
-  }
-  if(servs.length){
-    opts+=`<optgroup label="── Serviços ──">`;
-    opts+=servs.map(s=>`<option value="sv|${s.id}">${esc(s.nome||'')}${s.categoria?' ('+esc(s.categoria)+')':''}${s.valorPadrao?' — '+fmtR(s.valorPadrao):''}</option>`).join('');
-    opts+=`</optgroup>`;
-  }
-  if(interrs.length){
-    opts+=`<optgroup label="── Interruptores Inteligentes ──">`;
-    opts+=interrs.map(i=>`<option value="in|${i.id}">${esc(i.nome||'')}${i.cor?' ('+esc(i.cor)+')':''}${i.valorVenda?' — '+fmtR(i.valorVenda):''}</option>`).join('');
-    opts+=`</optgroup>`;
-  }
-  return opts;
-}
 function _quickPickResolve(val){
   const [kind,id]=val.split('|');
   if(kind==='eq'){const e=DB.one('equipamentos',id);return{nome:e?((e.tipo||'')+' '+(e.marca||'')+' '+(e.modelo||'')).trim():'',valorUnit:Number(e?.valorDia)||0,tipo:'equipamento',refId:id};}
@@ -3529,24 +3513,45 @@ function _quickPickResolve(val){
   if(kind==='in'){const i=DB.one('interruptores',id);return{nome:i?.nome||'',valorUnit:Number(i?.valorVenda)||0,tipo:'interruptor',refId:id};}
   return{nome:'',valorUnit:0,tipo:'',refId:''};
 }
-function orcQuickAdd(){
-  const sel=document.getElementById('orccli-quickpick');
-  if(!sel.value)return;
-  const r=_quickPickResolve(sel.value);
-  addItemRow('orccli-itens-list',r.nome,1,r.valorUnit,r.tipo,r.refId);
-  sel.value='';
+// Dropdown "Adicionar a partir de..." redesenhado do zero 2026-11-12 — era um
+// <select> nativo, cujo popup (fundo azul) é desenhado pelo navegador/SO e
+// nenhum CSS alcança. Painel próprio, no tema escuro, igual o resto do app.
+function _quickPickPanelHtml(prefix){
+  const equips=DB.get('equipamentos'),estq=DB.get('estoque'),estruts=DB.get('estruturas'),servs=DB.get('servicos'),interrs=DB.get('interruptores');
+  const grupos=[
+    ['Equipamentos',equips.map(e=>({label:(e.tipo||'')+' '+(e.marca||'')+' '+(e.modelo||'')+(e.status&&e.status!=='disponivel'?' ['+(EQUIP_LBL[e.status]||e.status)+']':''),val:'eq|'+e.id}))],
+    ['Produtos do Estoque',estq.map(e=>({label:(e.nome||'')+(e.categoria?' ('+e.categoria+')':'')+(e.valorUnit?' — '+fmtR(e.valorUnit):''),val:'es|'+e.id}))],
+    ['Estruturas',estruts.map(e=>({label:(e.nome||'')+(e.categoria?' ('+e.categoria+')':'')+' — '+Number(e.qtdDisponivel||0)+'/'+Number(e.qtdTotal||0)+' disp. — '+fmtR(e.valorDia)+'/dia',val:'et|'+e.id}))],
+    ['Serviços',servs.map(s=>({label:(s.nome||'')+(s.categoria?' ('+s.categoria+')':'')+(s.valorPadrao?' — '+fmtR(s.valorPadrao):''),val:'sv|'+s.id}))],
+    ['Interruptores Inteligentes',interrs.map(i=>({label:(i.nome||'')+(i.cor?' ('+i.cor+')':'')+(i.valorVenda?' — '+fmtR(i.valorVenda):''),val:'in|'+i.id}))],
+  ];
+  let html='';
+  grupos.forEach(([label,items])=>{
+    if(!items.length)return;
+    html+=`<div class="qp-group-label">${esc(label)}</div>`;
+    items.forEach(it=>{html+=`<div class="qp-item" onclick="_quickPickSelect('${prefix}','${it.val}')">${esc(it.label)}</div>`;});
+  });
+  return html||'<div class="qp-empty">Nenhum cadastro encontrado — cadastre em Equipamentos, Estoque, Estruturas, Serviços ou Interruptores</div>';
 }
-function ctrQuickAdd(){
-  const sel=document.getElementById('ctr-quickpick');
-  if(!sel.value)return;
-  const r=_quickPickResolve(sel.value);
-  addItemRow('ctr-itens-list',r.nome,1,r.valorUnit,r.tipo,r.refId);
-  sel.value='';
+function toggleQuickPick(prefix){
+  const panel=document.getElementById(prefix+'-quickpick-panel');
+  const wasOpen=!panel.classList.contains('hidden');
+  document.querySelectorAll('.qp-panel').forEach(p=>p.classList.add('hidden'));
+  if(wasOpen)return;
+  panel.innerHTML=_quickPickPanelHtml(prefix);
+  panel.classList.remove('hidden');
 }
+function _quickPickSelect(prefix,val){
+  const r=_quickPickResolve(val);
+  addItemRow(prefix+'-itens-list',r.nome,1,r.valorUnit,r.tipo,r.refId);
+  document.getElementById(prefix+'-quickpick-panel').classList.add('hidden');
+}
+document.addEventListener('click',e=>{
+  if(!e.target.closest('.qp-wrap'))document.querySelectorAll('.qp-panel').forEach(p=>p.classList.add('hidden'));
+});
 function openModalOrcamentoCli(id){
   itemLines=[];document.getElementById('orccli-itens-list').innerHTML='';
   parcLines=[];document.getElementById('orccli-parc-list').innerHTML='';
-  document.getElementById('orccli-quickpick').innerHTML=_quickPickOpts();
   const o=id?DB.one('orcamentoscli',id):{};
   document.getElementById('morccli-title').textContent=id?'Editar Orçamento':'Novo Orçamento';
   document.getElementById('orccli-id').value=o.id||'';
@@ -4416,7 +4421,6 @@ function calcDiasLocacao(){
 function openModalContrato(id){
   itemLines=[];document.getElementById('ctr-itens-list').innerHTML='';
   parcLines=[];document.getElementById('ctr-parc-list').innerHTML='';
-  document.getElementById('ctr-quickpick').innerHTML=_quickPickOpts();
   const c=id?DB.one('contratos',id):{};
   document.getElementById('mctr-title').textContent=id?'Editar Contrato':'Novo Contrato';
   document.getElementById('ctr-id').value=c.id||'';
@@ -4499,7 +4503,6 @@ function gerarContratoDeOrcamento(id){
   const o=DB.one('orcamentoscli',id);if(!o)return;
   itemLines=[];document.getElementById('ctr-itens-list').innerHTML='';
   parcLines=[];document.getElementById('ctr-parc-list').innerHTML='';
-  document.getElementById('ctr-quickpick').innerHTML=_quickPickOpts();
   document.getElementById('mctr-title').textContent='Novo Contrato (de Orçamento)';
   document.getElementById('ctr-id').value='';
   document.getElementById('ctr-numero').value='';
