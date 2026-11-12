@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
 <title>AccertTech — Gestão de Locações TI</title>
 <script>
 // Auto-atualização: compara esta página com a que está de verdade publicada no
@@ -10,7 +10,7 @@
 // navegador carregou uma cópia antiga guardada), recarrega sozinho com um link
 // novo que o cache nunca viu. Resolve de vez o "cache do celular travado numa
 // versão antiga" que se repetiu várias vezes 2026-11-11.
-window.__BUILD_ID='2026-11-11-23-40';
+window.__BUILD_ID='2026-11-12-00-05';
 (function(){
   if(sessionStorage.getItem('_reloadedForFreshBuild'))return;
   fetch(location.pathname,{cache:'no-store'}).then(r=>r.text()).then(html=>{
@@ -77,6 +77,12 @@ window.__BUILD_ID='2026-11-11-23-40';
   --font-mono:'JetBrains Mono',monospace;
 }
 *{box-sizing:border-box;margin:0;padding:0}
+/* Tela "fixa" pedida pelo usuário 2026-11-12: sem o efeito de arrastar/
+   "rubber band" em qualquer direção que o Safari/Chrome mobile fazem por
+   padrão quando não há nada pra rolar além do necessário, e sem pinch-zoom
+   acidental — cada view deve se comportar como um painel fixo, só o
+   conteúdo interno (listas, tabelas) rola verticalmente quando precisa. */
+html,body{overflow-x:hidden;overscroll-behavior:none;touch-action:pan-y;height:100%}
 body{font-family:var(--font-body);background:var(--bg);color:var(--text);font-size:13.5px;min-height:100vh;-webkit-font-smoothing:antialiased}
 strong{font-variant-numeric:tabular-nums}
 .hidden{display:none!important}
@@ -347,6 +353,7 @@ textarea.form-control{resize:vertical}
   background:var(--surface);border-radius:var(--radius);
   border:1px solid var(--border);overflow-x:auto;
   box-shadow:var(--shadow-sm),inset 0 1px 0 rgba(255,255,255,.03);
+  touch-action:pan-x pan-y;
 }
 table{width:100%;border-collapse:collapse}
 thead th{
