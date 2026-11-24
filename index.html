@@ -2917,6 +2917,20 @@ function renderFinanceiro(){
     const k=_serieKey(t);
     (_serieMap[k]??=[]).push(t);
   });
+  // Escolhe UM representante por série pra mostrar o resumo "X de Y pagas /
+  // Próximo / Último vencimento" — antes repetia esse resumo em TODAS as
+  // linhas da série (até nas já pagas há anos), o que parecia um vencimento
+  // duplicado/contraditório em cima de uma conta já paga. Mostra só na
+  // parcela que ainda falta pagar com vencimento mais próximo (a "próxima" de
+  // verdade); se a série estiver inteira paga, mostra na última paga (mais
+  // recente). Achado real do usuário 2026-11-24.
+  const _serieRepresentante={};
+  Object.entries(_serieMap).forEach(([k,serie])=>{
+    if(serie.length<2)return;
+    const pendentes=serie.filter(x=>!isPago(x.status)&&x.data).sort((a,b)=>a.data<b.data?-1:1);
+    const rep=pendentes[0]||[...serie].sort((a,b)=>(b.data||'')<(a.data||'')?-1:1)[0];
+    if(rep)_serieRepresentante[k]=rep.id;
+  });
   // calcular totais a partir da lista filtrada
   const base4cards=hasFilter?lista:transMes;
   const totE=base4cards.filter(t=>t.tipo==='entrada'&&isPago(t.status)).reduce((s,t)=>s+Number(t.valor||0),0);
@@ -3055,8 +3069,13 @@ function renderFinanceiro(){
         origemCell('Lançado em',t.lancadoEm),
         origemCell('Modificado em',t.modificadoEm),
       ].filter(Boolean).join('');
-      const serie=_serieMap[_serieKey(t)]||[t];
-      const serieHtml=serie.length>1?(()=>{
+      const _sk=_serieKey(t);
+      const serie=_serieMap[_sk]||[t];
+      // Só mostra o resumo da série UMA vez (na parcela representante, ver
+      // _serieRepresentante acima) — senão repetia o mesmo "Próximo
+      // vencimento" em cada uma das 58 linhas, inclusive nas já pagas há
+      // anos, parecendo um vencimento contraditório duplicado.
+      const serieHtml=(serie.length>1&&_serieRepresentante[_sk]===t.id)?(()=>{
         const pagas=serie.filter(x=>isPago(x.status)).length;
         const faltam=serie.length-pagas;
         const pendentesOrdenadas=serie.filter(x=>!isPago(x.status)&&x.data).sort((a,b)=>a.data<b.data?-1:1);
@@ -3066,7 +3085,7 @@ function renderFinanceiro(){
           proximo?`Próximo vencimento: ${fmtD(proximo)}`:'',
           ultimo?`Último vencimento: ${fmtD(ultimo)}`:'',
         ].filter(Boolean).join(' · ');
-        return`<div class="fin-serie-badge" title="Série completa: ${serie.length} lançamento(s) com o mesmo nome e descrição">📊 ${pagas} de ${serie.length} pagas${faltam?` · ${faltam} faltam`:' · completa'}${datasHtml?' · '+datasHtml:''}</div>`;
+        return`<div class="fin-serie-badge" title="Série completa: ${serie.length} lançamento(s) com o mesmo nome e descrição">📊 Série completa: ${pagas} de ${serie.length} pagas${faltam?` · ${faltam} faltam`:' · completa'}${datasHtml?' · '+datasHtml:''}</div>`;
       })():'';
       return`<tr class="fin-row fin-${isE?'e':'s'}">
         <td><div class="fin-row-main">
