@@ -4237,13 +4237,14 @@ function _gcStyle(){
 function _gcCel(label,valor,full){
   return `<div class="gc-cell${full?' full':''}"><b>${esc(label)}:</b> ${esc(valor||'—')}</div>`;
 }
-function _gcHeaderHtml(emp,tituloDoc,numero,dataEmissao,cuidadosNome){
+function _gcHeaderHtml(emp,tituloDoc,numero,dataEmissao,cuidadosNome,useRazao){
   const cidadeUfEmp=[emp.cidade,emp.estado].filter(Boolean).join('/');
+  const nomePrincipal=useRazao?(emp.razaoSocial||emp.nome):emp.nome;
   return `<div class="gc-hdr">
     <div style="display:flex;gap:14px;flex:1;min-width:0">
       ${_gcLogoHtml(emp)}
       <div class="gc-emp">
-        <div class="gc-emp-nome">${esc(emp.nome||'—')}</div>
+        <div class="gc-emp-nome">${esc(nomePrincipal||'—')}</div>
         <div class="gc-emp-info">CNPJ: ${esc(emp.cnpj||'—')}<br>${esc(emp.endereco||'')}<br>${cidadeUfEmp?esc(cidadeUfEmp):''}${emp.cep?' - CEP: '+esc(emp.cep):''}</div>
       </div>
     </div>
@@ -4530,7 +4531,7 @@ function gerarContratoDeOrcamento(id){
 }
 function _gcContratoBodyHtml(c,cli,o,emp){
   const cel=_gcCel;
-  return `${_gcHeaderHtml(emp,'CONTRATO',c.numero,today())}
+  return `${_gcHeaderHtml(emp,'CONTRATO',c.numero,today(),null,true)}
   <div class="gc-grid">
     ${cel('Data de Início',fmtD(c.inicio))}${cel('Data de Término',fmtD(c.fim))}
     ${cel('Dias de Locação',c.dias||'—')}${cel('Orçamento Nº',o?.numero?String(o.numero):'—')}
@@ -4822,7 +4823,7 @@ function _gcPixBoxHtml(emp){
 }
 function _gcFaturaBodyHtml(f,cli,c,o,emp){
   const cel=_gcCel;
-  return `${_gcHeaderHtml(emp,'FATURA DE LOCAÇÃO',f.numero,f.criado?f.criado.slice(0,10):today())}
+  return `${_gcHeaderHtml(emp,'FATURA DE LOCAÇÃO',f.numero,f.criado?f.criado.slice(0,10):today(),null,true)}
   ${_gcClienteGridHtml(cli)}
   <div class="gc-sectitle">Produtos / Serviços Cedidos em Locação</div>
   ${f.itens?.length?_gcItensLocacaoTableHtml(f.itens):`<table class="gc-table">
