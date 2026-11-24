@@ -1011,10 +1011,15 @@ thead th.r{text-align:right}
       </div>
       <div class="fin-filterbar">
         <div class="fin-fb-top">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--text-dim);flex-shrink:0"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
+          <span style="font-size:11px;font-weight:700;color:var(--text-dim);white-space:nowrap">Vencimento:</span>
           <input type="date" class="form-control" id="fin-data-ini" onchange="renderFinanceiro()">
           <span class="fin-fb-top-sep">→</span>
           <input type="date" class="form-control" id="fin-data-fim" onchange="renderFinanceiro()">
+          <div class="fin-fb-top-divider"></div>
+          <span style="font-size:11px;font-weight:700;color:var(--text-dim);white-space:nowrap">Pago em:</span>
+          <input type="date" class="form-control" id="fin-pago-ini" onchange="renderFinanceiro()">
+          <span class="fin-fb-top-sep">→</span>
+          <input type="date" class="form-control" id="fin-pago-fim" onchange="renderFinanceiro()">
           <div class="fin-fb-top-divider"></div>
           <input type="text" class="form-control" id="fin-busca" placeholder="🔍  Buscar descrição, pessoa ou observações…" oninput="renderFinanceiro()" style="flex:1">
         </div>
@@ -2754,6 +2759,8 @@ function limparFiltrosFinanceiro(){
   const fof=document.getElementById('fin-forma-f');if(fof)fof.value='';
   const cof=document.getElementById('fin-contaorigem-f');if(cof)cof.value='';
   const lpf=document.getElementById('fin-lancadopor-f');if(lpf)lpf.value='';
+  const pi=document.getElementById('fin-pago-ini');if(pi)pi.value='';
+  const pf=document.getElementById('fin-pago-fim');if(pf)pf.value='';
   const di=document.getElementById('fin-data-ini');if(di)di.value='';
   const df=document.getElementById('fin-data-fim');if(df)df.value='';
   renderFinanceiro();
@@ -2799,8 +2806,11 @@ function renderFinanceiro(){
   const lancadoPorF=document.getElementById('fin-lancadopor-f')?.value||'';
   const dataIni=document.getElementById('fin-data-ini')?.value||'';
   const dataFim=document.getElementById('fin-data-fim')?.value||'';
+  const pagoIni=document.getElementById('fin-pago-ini')?.value||'';
+  const pagoFim=document.getElementById('fin-pago-fim')?.value||'';
   const hasDateRange=!!(dataIni||dataFim);
-  const hasFilter=!!(busca||catF||statusF||contaF||entidadeF||centroF||formaF||contaOrigemF||lancadoPorF||hasDateRange);
+  const hasPagoRange=!!(pagoIni||pagoFim);
+  const hasFilter=!!(busca||catF||statusF||contaF||entidadeF||centroF||formaF||contaOrigemF||lancadoPorF||hasDateRange||hasPagoRange);
   // popular select de contas bancárias
   const contaSel=document.getElementById('fin-conta-f');
   if(contaSel){
@@ -2869,6 +2879,12 @@ function renderFinanceiro(){
   if(formaF)lista=lista.filter(t=>(t.formaPagamento||'')===formaF);
   if(contaOrigemF)lista=lista.filter(t=>(t.contaOrigemTexto||'')===contaOrigemF);
   if(lancadoPorF)lista=lista.filter(t=>(t.lancadoPor||'')===lancadoPorF);
+  if(hasPagoRange)lista=lista.filter(t=>{
+    if(!t.dataConfirmacao)return false;
+    if(pagoIni&&t.dataConfirmacao<pagoIni)return false;
+    if(pagoFim&&t.dataConfirmacao>pagoFim)return false;
+    return true;
+  });
   // Expandir grupos de parcelamento: incluir irmãs respeitando filtro de datas
   const grupoIds=new Set(lista.map(t=>t.grupoId).filter(Boolean));
   if(grupoIds.size>0){
