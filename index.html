@@ -1054,10 +1054,18 @@ thead th.r{text-align:right}
         <button class="btn btn-ghost" style="border-color:#818cf8;color:#4f46e5" onclick="openModalConta()">🏦 + Conta</button>
         <button class="btn btn-ghost" onclick="abrirModalImpressao()">🖨 Imprimir</button>
       </div>
-      <!-- Contas Bancárias -->
+      <!-- Contas Bancárias — fechado por padrão (pedido do usuário 2026-11-24:
+           25 contas em cards grandes sempre visíveis "poluía" a tela inteira
+           do Financeiro antes de ver qualquer lançamento). Só expande quando
+           clicado; pra filtrar por conta já existe o dropdown "Todas as
+           contas" na barra de filtro, que é pra isso. -->
       <div id="fin-contas-wrap" style="margin-bottom:18px;display:none">
-        <div style="font-size:10.5px;font-weight:700;color:var(--text-mid);letter-spacing:.08em;text-transform:uppercase;margin-bottom:10px">Contas Bancárias</div>
-        <div id="fin-contas-cards" style="display:flex;gap:12px;flex-wrap:wrap"></div>
+        <button type="button" onclick="toggleContasBancarias()" style="all:unset;cursor:pointer;display:flex;align-items:center;gap:8px;width:100%">
+          <span id="fin-contas-chevron" style="font-size:11px;color:var(--text-dim);transition:transform .15s">▶</span>
+          <span style="font-size:10.5px;font-weight:700;color:var(--text-mid);letter-spacing:.08em;text-transform:uppercase">Contas Bancárias</span>
+          <span id="fin-contas-resumo" style="font-size:11px;color:var(--text-dim)"></span>
+        </button>
+        <div id="fin-contas-cards" style="display:none;gap:12px;flex-wrap:wrap;margin-top:10px"></div>
       </div>
       <div class="cards-row" id="fin-cards"></div>
       <div class="tabs">
@@ -3606,14 +3614,24 @@ function _abrirComprovante(comp){
 }
 // ── CONTAS BANCÁRIAS ──────────────────────────────────────────────────────────
 const CONTA_TIPO_LBL={corrente:'Corrente',poupanca:'Poupança',investimento:'Investimento',caixa:'Caixa',digital:'Carteira Digital',outro:'Outro'};
+let contasBancariasExpandido=false;
+function toggleContasBancarias(){
+  contasBancariasExpandido=!contasBancariasExpandido;
+  const cards=document.getElementById('fin-contas-cards');
+  const chevron=document.getElementById('fin-contas-chevron');
+  if(cards)cards.style.display=contasBancariasExpandido?'flex':'none';
+  if(chevron)chevron.style.transform=contasBancariasExpandido?'rotate(90deg)':'none';
+}
 function renderContasBancarias(){
   const contas=DB.get('contas_bancarias')||[];
   const wrap=document.getElementById('fin-contas-wrap');
   const cards=document.getElementById('fin-contas-cards');
+  const resumo=document.getElementById('fin-contas-resumo');
   if(!wrap||!cards)return;
   if(!contas.length){wrap.style.display='none';return;}
   wrap.style.display='block';
   const totalSaldo=contas.reduce((s,c)=>s+Number(c.saldo||0),0);
+  if(resumo)resumo.textContent=`· ${contas.length} conta${contas.length>1?'s':''} · saldo total ${fmtR(totalSaldo)}`;
   cards.innerHTML=contas.map(c=>`
     <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px 18px;min-width:180px;flex:1;max-width:240px;position:relative;overflow:hidden;box-shadow:var(--shadow-sm);cursor:default">
       <div style="position:absolute;top:0;left:0;right:0;height:3px;background:${c.cor||'#4f46e5'};border-radius:12px 12px 0 0"></div>
