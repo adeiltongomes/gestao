@@ -316,6 +316,13 @@ strong{font-variant-numeric:tabular-nums}
 .fin-sub-item svg{opacity:.55;flex-shrink:0}
 .fin-sub-sep{color:var(--border-2);font-size:9px;flex-shrink:0}
 .fin-serie-badge{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:600;color:var(--blue-text);background:var(--blue-bg);border:1px solid #bfdbfe;border-radius:6px;padding:3px 8px;margin-top:6px;width:fit-content}
+/* Vencimento em destaque — pedido do usuário 2026-11-24: antes era só mais um
+   item pequeno igual aos outros (pessoa, forma de pagamento...), sem se
+   destacar nenhum pouco. Cor muda conforme o status: ainda pendente chama
+   mais atenção (âmbar), já pago fica discreto (verde apagado). */
+.fin-venc-chip{display:inline-flex;align-items:center;gap:5px;font-size:12.5px;font-weight:700;border-radius:7px;padding:4px 10px;margin-top:6px;width:fit-content}
+.fin-venc-chip.pendente{color:#fbbf24;background:rgba(251,191,36,.12);border:1px solid rgba(251,191,36,.35)}
+.fin-venc-chip.pago{color:#34d399;background:rgba(52,211,153,.1);border:1px solid rgba(52,211,153,.25)}
 .fin-origem-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:8px 16px;margin-top:8px;padding-top:8px;border-top:1px dashed var(--border)}
 .fin-origem-cell{min-width:0}
 .fin-origem-label{font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--text-dim)}
@@ -533,6 +540,30 @@ thead th.r{text-align:right}
 
 /* ── MOBILE NAV ── */
 #mob-nav{display:none}
+
+/* Financeiro no computador — pedido do usuário 2026-11-24: os cards estavam
+   "feios" (linhas de tabela planas, sem respiro). Transforma cada <tr> num
+   cartão de verdade (cantos arredondados, espaço entre eles, tarja colorida
+   na lateral) sem abandonar a <table> — truque clássico border-collapse:
+   separate + border-spacing, cada <td> de ponta ganha o cantinho arredondado
+   do lado que toca. Só acima de 900px; abaixo disso o bloco mobile já cuida
+   (ver @media(max-width:900px) logo abaixo, inalterado).
+*/
+@media(min-width:901px){
+  #view-financeiro .table-wrap{background:transparent;border:none;box-shadow:none}
+  #view-financeiro .table-wrap table{border-collapse:separate;border-spacing:0 10px}
+  #view-financeiro .table-wrap thead{display:none}
+  #view-financeiro tr.fin-row{position:relative;background:var(--surface-2);box-shadow:var(--shadow),inset 0 1px 0 rgba(255,255,255,.04)}
+  #view-financeiro tr.fin-row td{border-top:1.5px solid var(--border-2)!important;border-bottom:1.5px solid var(--border-2)!important;padding:16px 20px!important}
+  #view-financeiro tr.fin-row td:first-child{border-left:1.5px solid var(--border-2)!important;border-top-left-radius:12px;border-bottom-left-radius:12px;padding-left:26px!important}
+  #view-financeiro tr.fin-row td:last-child{border-right:1.5px solid var(--border-2)!important;border-top-right-radius:12px;border-bottom-right-radius:12px}
+  #view-financeiro tr.fin-row::before{content:'';position:absolute;top:0;left:0;bottom:0;width:4px;border-radius:12px 0 0 12px}
+  #view-financeiro tr.fin-row.fin-e::before{background:var(--emerald)}
+  #view-financeiro tr.fin-row.fin-s::before{background:var(--red)}
+  #view-financeiro tr.fin-dhdr-row{background:transparent!important;box-shadow:none!important}
+  #view-financeiro tr.fin-dhdr-row td{border:none!important;padding:4px 8px 4px 4px!important}
+  #view-financeiro tr.fin-dhdr-row::before{content:none}
+}
 
 @media(max-width:900px){
   #sidebar{transform:translateX(-100%)}
@@ -3021,9 +3052,11 @@ function renderFinanceiro(){
         t.pessoa?`<span class="fin-sub-item">${_icoP}<span>${esc(t.pessoa)}</span></span>`:'',
         t.formaPagamento?`<span class="fin-sub-item">${_icoC}<span>${esc(t.formaPagamento)}</span></span>`:'',
         cn?`<span class="fin-sub-item">${_icoB}<span>${cn}</span></span>`:'',
-        t.data?`<span class="fin-sub-item">${_icoCal}<span>Vencimento: ${fmtD(t.data)}</span></span>`:'',
         (pago(t)&&t.dataConfirmacao)?`<span class="fin-sub-item">${_icoCal}<span>Pago em: ${fmtD(t.dataConfirmacao)}</span></span>`:'',
       ].filter(Boolean).join('<span class="fin-sub-sep">·</span>');
+      // Vencimento em destaque, fora da linha de tags pequenas — pedido do
+      // usuário 2026-11-24 ("dando ênfase na data de vencimento").
+      const vencHtml=t.data?`<div class="fin-venc-chip ${sc}">${_icoCal} Vencimento: ${fmtD(t.data)}</div>`:'';
       // Grade "Dados de origem" — só existe em lançamentos importados do
       // GestãoClick (cada campo rotulado, em grade, não mais tudo numa linha
       // só "vaga" — pedido explícito do usuário 2026-11-24, que reclamou que
@@ -3057,6 +3090,7 @@ function renderFinanceiro(){
           <div class="fin-row-icon">${isE?'↑':'↓'}</div>
           <div style="min-width:0;flex:1">
             <div class="fin-row-title">${esc(t.descricao)}</div>
+            ${vencHtml}
             ${subHtml?`<div class="fin-row-sub">${subHtml}</div>`:''}
             ${serieHtml}
             ${origemHtml?`<div class="fin-origem-grid">${origemHtml}</div>`:''}
