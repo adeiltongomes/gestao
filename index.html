@@ -1047,9 +1047,6 @@ thead th.r{text-align:right}
           <select class="form-control" id="fin-contaorigem-f" onchange="renderFinanceiro()" style="width:170px">
             <option value="">Toda conta (origem)</option>
           </select>
-          <select class="form-control" id="fin-lancadopor-f" onchange="renderFinanceiro()" style="width:160px">
-            <option value="">Todos os lançados por</option>
-          </select>
           <div style="flex:1"></div>
           <span class="fin-result-count" id="fin-count"></span>
           <button class="btn btn-ghost btn-sm" onclick="limparFiltrosFinanceiro()">✕ Limpar</button>
@@ -1560,14 +1557,7 @@ thead th.r{text-align:right}
           <div class="form-group"><label class="form-label">Conta bancária (origem)</label><input class="form-control" id="trans-conta-origem-texto" placeholder="Nome da conta no sistema antigo"></div>
           <div class="form-group"><label class="form-label">Situação original</label><input class="form-control" id="trans-situacao-original" placeholder="Confirmado, Atrasado, Não Pago…"></div>
         </div>
-        <div class="form-row">
-          <div class="form-group"><label class="form-label">Data de competência</label><input class="form-control" id="trans-data-competencia" type="date"></div>
-          <div class="form-group"><label class="form-label">Data de confirmação</label><input class="form-control" id="trans-data-confirmacao" type="date"></div>
-        </div>
-        <div class="form-row">
-          <div class="form-group"><label class="form-label">Lançado originalmente por</label><input class="form-control" id="trans-lancado-por" placeholder="Nome"></div>
-          <div class="form-group"><label class="form-label">Lançado em</label><input class="form-control" id="trans-lancado-em" placeholder="DD/MM/AAAA HH:MM:SS"></div>
-        </div>
+        <div class="form-group"><label class="form-label">Data de confirmação</label><input class="form-control" id="trans-data-confirmacao" type="date"></div>
       </div>
       <div class="form-group">
         <label class="form-label">Comprovante</label>
@@ -2757,7 +2747,6 @@ function limparFiltrosFinanceiro(){
   const cef=document.getElementById('fin-centro-f');if(cef)cef.value='';
   const fof=document.getElementById('fin-forma-f');if(fof)fof.value='';
   const cof=document.getElementById('fin-contaorigem-f');if(cof)cof.value='';
-  const lpf=document.getElementById('fin-lancadopor-f');if(lpf)lpf.value='';
   const pi=document.getElementById('fin-pago-ini');if(pi)pi.value='';
   const pf=document.getElementById('fin-pago-fim');if(pf)pf.value='';
   const di=document.getElementById('fin-data-ini');if(di)di.value='';
@@ -2802,14 +2791,13 @@ function renderFinanceiro(){
   const centroF=document.getElementById('fin-centro-f')?.value||'';
   const formaF=document.getElementById('fin-forma-f')?.value||'';
   const contaOrigemF=document.getElementById('fin-contaorigem-f')?.value||'';
-  const lancadoPorF=document.getElementById('fin-lancadopor-f')?.value||'';
   const dataIni=document.getElementById('fin-data-ini')?.value||'';
   const dataFim=document.getElementById('fin-data-fim')?.value||'';
   const pagoIni=document.getElementById('fin-pago-ini')?.value||'';
   const pagoFim=document.getElementById('fin-pago-fim')?.value||'';
   const hasDateRange=!!(dataIni||dataFim);
   const hasPagoRange=!!(pagoIni||pagoFim);
-  const hasFilter=!!(busca||catF||statusF||contaF||entidadeF||centroF||formaF||contaOrigemF||lancadoPorF||hasDateRange||hasPagoRange);
+  const hasFilter=!!(busca||catF||statusF||contaF||entidadeF||centroF||formaF||contaOrigemF||hasDateRange||hasPagoRange);
   // popular select de contas bancárias
   const contaSel=document.getElementById('fin-conta-f');
   if(contaSel){
@@ -2841,7 +2829,6 @@ function renderFinanceiro(){
   };
   _popularFiltroOrigem('fin-forma-f','Toda forma de pagamento','formaPagamento');
   _popularFiltroOrigem('fin-contaorigem-f','Toda conta (origem)','contaOrigemTexto');
-  _popularFiltroOrigem('fin-lancadopor-f','Todos os lançados por','lancadoPor');
   // definir escopo de busca — intervalo de data manual (quando preenchido) tem
   // prioridade sobre o período (Mês/Ano/Todos); caso contrário busca/categoria/
   // status filtram DENTRO do período escolhido, não mais ignorando-o (antes
@@ -2877,7 +2864,6 @@ function renderFinanceiro(){
   if(centroF)lista=lista.filter(t=>(t.centroCusto||'')===centroF);
   if(formaF)lista=lista.filter(t=>(t.formaPagamento||'')===formaF);
   if(contaOrigemF)lista=lista.filter(t=>(t.contaOrigemTexto||'')===contaOrigemF);
-  if(lancadoPorF)lista=lista.filter(t=>(t.lancadoPor||'')===lancadoPorF);
   if(hasPagoRange)lista=lista.filter(t=>{
     if(!t.dataConfirmacao)return false;
     if(pagoIni&&t.dataConfirmacao<pagoIni)return false;
@@ -3063,9 +3049,6 @@ function renderFinanceiro(){
         origemCell('Centro de custo',t.centroCusto),
         origemCell('Conta (origem)',t.contaOrigemTexto),
         origemCell('Situação original',t.situacaoOriginal),
-        origemCell('Competência',t.dataCompetencia?fmtD(t.dataCompetencia):''),
-        origemCell('Lançado por',t.lancadoPor),
-        origemCell('Lançado em',t.lancadoEm),
       ].filter(Boolean).join('');
       const _sk=_serieKey(t);
       const serie=_serieMap[_sk]||[t];
@@ -3192,11 +3175,8 @@ function openModalTransacao(tipo,id){
   document.getElementById('trans-centro-custo').value=t.centroCusto||'';
   document.getElementById('trans-conta-origem-texto').value=t.contaOrigemTexto||'';
   document.getElementById('trans-situacao-original').value=t.situacaoOriginal||'';
-  document.getElementById('trans-data-competencia').value=t.dataCompetencia||'';
   document.getElementById('trans-data-confirmacao').value=t.dataConfirmacao||'';
-  document.getElementById('trans-lancado-por').value=t.lancadoPor||'';
-  document.getElementById('trans-lancado-em').value=t.lancadoEm||'';
-  const temOrigem=!!(t.entidadeTipo||t.centroCusto||t.contaOrigemTexto||t.situacaoOriginal||t.dataCompetencia||t.dataConfirmacao||t.lancadoPor);
+  const temOrigem=!!(t.entidadeTipo||t.centroCusto||t.contaOrigemTexto||t.situacaoOriginal||t.dataConfirmacao);
   document.getElementById('trans-origem-group').style.display=temOrigem?'block':'none';
   document.getElementById('trans-nparc').value=1;
   document.getElementById('trans-parc-info').style.display='none';
@@ -3254,10 +3234,7 @@ function saveTransacao(){
   const centroCusto=document.getElementById('trans-centro-custo').value.trim();
   const contaOrigemTexto=document.getElementById('trans-conta-origem-texto').value.trim();
   const situacaoOriginal=document.getElementById('trans-situacao-original').value.trim();
-  const dataCompetencia=document.getElementById('trans-data-competencia').value;
   const dataConfirmacao=document.getElementById('trans-data-confirmacao').value;
-  const lancadoPor=document.getElementById('trans-lancado-por').value.trim();
-  const lancadoEm=document.getElementById('trans-lancado-em').value.trim();
 
   if(n>1){
     const parcelas=collectParcelas();
@@ -3315,10 +3292,7 @@ function saveTransacao(){
     centroCusto:centroCusto||undefined,
     contaOrigemTexto:contaOrigemTexto||undefined,
     situacaoOriginal:situacaoOriginal||undefined,
-    dataCompetencia:dataCompetencia||undefined,
     dataConfirmacao:dataConfirmacao||undefined,
-    lancadoPor:lancadoPor||undefined,
-    lancadoEm:lancadoEm||undefined,
   });
   // apply new balance if paid with a conta
   if(isPaid&&contaId){
