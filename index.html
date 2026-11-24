@@ -1036,9 +1036,6 @@ thead th.r{text-align:right}
           <select class="form-control" id="fin-centro-f" onchange="renderFinanceiro()" style="width:170px">
             <option value="">Todos os centros de custo</option>
           </select>
-          <select class="form-control" id="fin-situacao-f" onchange="renderFinanceiro()" style="width:150px">
-            <option value="">Toda situação original</option>
-          </select>
           <select class="form-control" id="fin-forma-f" onchange="renderFinanceiro()" style="width:160px">
             <option value="">Toda forma de pagamento</option>
           </select>
@@ -2754,7 +2751,6 @@ function limparFiltrosFinanceiro(){
   const cf=document.getElementById('fin-conta-f');if(cf)cf.value='';
   const ef=document.getElementById('fin-entidade-f');if(ef)ef.value='';
   const cef=document.getElementById('fin-centro-f');if(cef)cef.value='';
-  const sif=document.getElementById('fin-situacao-f');if(sif)sif.value='';
   const fof=document.getElementById('fin-forma-f');if(fof)fof.value='';
   const cof=document.getElementById('fin-contaorigem-f');if(cof)cof.value='';
   const lpf=document.getElementById('fin-lancadopor-f');if(lpf)lpf.value='';
@@ -2798,14 +2794,13 @@ function renderFinanceiro(){
   const contaF=document.getElementById('fin-conta-f')?.value||'';
   const entidadeF=document.getElementById('fin-entidade-f')?.value||'';
   const centroF=document.getElementById('fin-centro-f')?.value||'';
-  const situacaoF=document.getElementById('fin-situacao-f')?.value||'';
   const formaF=document.getElementById('fin-forma-f')?.value||'';
   const contaOrigemF=document.getElementById('fin-contaorigem-f')?.value||'';
   const lancadoPorF=document.getElementById('fin-lancadopor-f')?.value||'';
   const dataIni=document.getElementById('fin-data-ini')?.value||'';
   const dataFim=document.getElementById('fin-data-fim')?.value||'';
   const hasDateRange=!!(dataIni||dataFim);
-  const hasFilter=!!(busca||catF||statusF||contaF||entidadeF||centroF||situacaoF||formaF||contaOrigemF||lancadoPorF||hasDateRange);
+  const hasFilter=!!(busca||catF||statusF||contaF||entidadeF||centroF||formaF||contaOrigemF||lancadoPorF||hasDateRange);
   // popular select de contas bancárias
   const contaSel=document.getElementById('fin-conta-f');
   if(contaSel){
@@ -2835,7 +2830,6 @@ function renderFinanceiro(){
     const valores=[...new Set(allTrans.map(t=>t[campo]||'').filter(Boolean))].sort();
     sel.innerHTML=`<option value="">${placeholder}</option>`+valores.map(v=>`<option value="${esc(v)}"${v===atual?' selected':''}>${esc(v)}</option>`).join('');
   };
-  _popularFiltroOrigem('fin-situacao-f','Toda situação original','situacaoOriginal');
   _popularFiltroOrigem('fin-forma-f','Toda forma de pagamento','formaPagamento');
   _popularFiltroOrigem('fin-contaorigem-f','Toda conta (origem)','contaOrigemTexto');
   _popularFiltroOrigem('fin-lancadopor-f','Todos os lançados por','lancadoPor');
@@ -2872,7 +2866,6 @@ function renderFinanceiro(){
   if(contaF)lista=lista.filter(t=>t.contaId===contaF);
   if(entidadeF)lista=lista.filter(t=>(t.entidadeTipo||'')===entidadeF);
   if(centroF)lista=lista.filter(t=>(t.centroCusto||'')===centroF);
-  if(situacaoF)lista=lista.filter(t=>(t.situacaoOriginal||'')===situacaoF);
   if(formaF)lista=lista.filter(t=>(t.formaPagamento||'')===formaF);
   if(contaOrigemF)lista=lista.filter(t=>(t.contaOrigemTexto||'')===contaOrigemF);
   if(lancadoPorF)lista=lista.filter(t=>(t.lancadoPor||'')===lancadoPorF);
