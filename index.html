@@ -316,6 +316,19 @@ strong{font-variant-numeric:tabular-nums}
 .fin-sub-item svg{opacity:.55;flex-shrink:0}
 .fin-sub-sep{color:var(--border-2);font-size:9px;flex-shrink:0}
 .fin-serie-badge{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:600;color:var(--blue-text);background:var(--blue-bg);border:1px solid #bfdbfe;border-radius:6px;padding:3px 8px;margin-top:6px;width:fit-content}
+/* Popup "Confirmar Pagamento" — pedido do usuário 2026-11-24 ("faça um popup
+   mais bonito"). Cada campo vira uma seção com rótulo+ícone destacado, em vez
+   de form-groups genéricos coladas uma na outra. */
+.cpag-card{background:linear-gradient(135deg,var(--surface-2),var(--surface-3));border:1px solid var(--border-2);border-radius:12px;padding:16px;margin-bottom:18px;box-shadow:inset 0 1px 0 rgba(255,255,255,.04)}
+.cpag-section{margin-bottom:16px}
+.cpag-section-label{font-size:12px;font-weight:700;color:var(--text-mid);margin-bottom:7px;display:flex;align-items:center;gap:6px}
+.cpag-opcional{font-weight:400;color:var(--text-dim);font-size:11px}
+.cpag-saldo-preview{margin-top:10px;background:var(--blue-bg);border:1px solid #c7d2fe;border-radius:8px;padding:12px;font-size:13px;color:var(--blue-text)}
+.cpag-comp-preview{display:flex;align-items:center;gap:10px;padding:11px 14px;background:var(--surface-2);border:1.5px solid var(--border);border-radius:10px}
+.cpag-comp-nome{flex:1;font-size:13px;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cpag-comp-dropzone{display:flex;align-items:center;gap:10px;padding:14px 16px;background:var(--surface-2);border:1.5px dashed var(--border-2);border-radius:10px;cursor:pointer;font-size:13px;color:var(--text-mid);transition:border-color .15s,background .15s}
+.cpag-comp-dropzone:hover{border-color:var(--blue);background:var(--surface-3)}
+.cpag-modal #cpag-conta{font-weight:600}
 /* Vencimento em destaque — pedido do usuário 2026-11-24: antes era só mais um
    item pequeno igual aos outros (pessoa, forma de pagamento...), sem se
    destacar nenhum pouco. Cor muda conforme o status: ainda pendente chama
@@ -1083,9 +1096,6 @@ thead th.r{text-align:right}
           </select>
           <select class="form-control" id="fin-forma-f" onchange="renderFinanceiro()" style="width:160px">
             <option value="">Toda forma de pagamento</option>
-          </select>
-          <select class="form-control" id="fin-contaorigem-f" onchange="renderFinanceiro()" style="width:170px">
-            <option value="">Toda conta (origem)</option>
           </select>
           <div style="flex:1"></div>
           <span class="fin-result-count" id="fin-count"></span>
@@ -1900,50 +1910,44 @@ thead th.r{text-align:right}
 
 <!-- Modal Confirmar Pagamento (selecionar conta) -->
 <div class="modal-overlay hidden" id="modal-confirmar-pag">
-  <div class="modal" style="max-width:420px">
+  <div class="modal cpag-modal" style="max-width:460px">
     <div class="modal-hdr">
-      <div class="modal-title">Confirmar Pagamento</div>
+      <div class="modal-title">✓ Confirmar Pagamento</div>
       <button class="modal-close" onclick="closeModal('modal-confirmar-pag')">×</button>
     </div>
     <div class="modal-body">
       <input type="hidden" id="cpag-trans-id">
       <!-- Info da transação -->
-      <div id="cpag-info" style="background:var(--surface-2);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:16px"></div>
-      <!-- Seleção de conta -->
-      <div class="form-group">
-        <label class="form-label">De qual conta está saindo / entrando?</label>
+      <div id="cpag-info" class="cpag-card"></div>
+
+      <div class="cpag-section">
+        <div class="cpag-section-label">🏦 Conta</div>
         <select class="form-control" id="cpag-conta" onchange="atualizarPreviewSaldo()">
           <option value="">— Não vincular a nenhuma conta —</option>
         </select>
+        <div id="cpag-saldo-preview" class="cpag-saldo-preview" style="display:none"></div>
       </div>
-      <!-- Preview do novo saldo -->
-      <div id="cpag-saldo-preview" style="display:none;background:var(--blue-bg);border:1px solid #c7d2fe;border-radius:8px;padding:12px;font-size:13px;color:var(--blue-text)"></div>
-      <div class="form-row" style="margin-top:14px">
-        <div class="form-group" style="margin-bottom:0">
-          <label class="form-label">Data do Pagamento</label>
-          <input class="form-control" id="cpag-data" type="date">
-        </div>
-        <div class="form-group" style="margin-bottom:0">
-          <label class="form-label">Banco</label>
-          <input class="form-control" id="cpag-banco" placeholder="Ex: Itaú, Nubank…">
-        </div>
+
+      <div class="cpag-section">
+        <div class="cpag-section-label">📅 Data do pagamento</div>
+        <input class="form-control" id="cpag-data" type="date">
       </div>
-      <div class="form-group" style="margin-top:14px;margin-bottom:0">
-        <label class="form-label">Observação <span style="font-weight:400;color:var(--text-dim)">(opcional)</span></label>
-        <textarea class="form-control" id="cpag-obs" rows="2"></textarea>
+
+      <div class="cpag-section">
+        <div class="cpag-section-label">📝 Observação <span class="cpag-opcional">(opcional)</span></div>
+        <textarea class="form-control" id="cpag-obs" rows="2" placeholder="Alguma anotação sobre este pagamento…"></textarea>
       </div>
-      <div class="form-group" style="margin-top:14px;margin-bottom:0">
-        <label class="form-label">Comprovante <span style="font-weight:400;color:var(--text-dim)">(opcional)</span></label>
-        <div id="cpag-comp-preview" style="display:none;margin-bottom:8px">
-          <div style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--surface-2);border:1.5px solid var(--border);border-radius:8px">
-            <span id="cpag-comp-icon" style="font-size:22px">📄</span>
-            <span id="cpag-comp-nome" style="flex:1;font-size:13px;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis"></span>
-            <button type="button" onclick="removerComprovantePagamento()" class="btn btn-danger btn-xs" style="flex-shrink:0">✕ Remover</button>
-          </div>
+
+      <div class="cpag-section" style="margin-bottom:0">
+        <div class="cpag-section-label">📎 Comprovante <span class="cpag-opcional">(opcional)</span></div>
+        <div id="cpag-comp-preview" class="cpag-comp-preview" style="display:none">
+          <span id="cpag-comp-icon" style="font-size:22px">📄</span>
+          <span id="cpag-comp-nome" class="cpag-comp-nome"></span>
+          <button type="button" onclick="removerComprovantePagamento()" class="btn btn-danger btn-xs" style="flex-shrink:0">✕ Remover</button>
         </div>
-        <label id="cpag-comp-label" for="cpag-comp-input" style="display:flex;align-items:center;gap:10px;padding:12px 14px;background:var(--surface-2);border:1.5px dashed var(--border);border-radius:8px;cursor:pointer;font-size:13px;color:var(--text-mid)">
-          <span style="font-size:20px">📎</span>
-          <span>Clique para anexar comprovante <span style="font-size:11px">(imagem ou PDF, máx. 500 KB)</span></span>
+        <label id="cpag-comp-label" for="cpag-comp-input" class="cpag-comp-dropzone">
+          <span style="font-size:22px">📎</span>
+          <span>Clique para anexar <span class="cpag-opcional">(imagem ou PDF, máx. 500 KB)</span></span>
           <input type="file" id="cpag-comp-input" accept="image/*,.pdf" style="display:none" onchange="carregarComprovantePagamento(this)">
         </label>
       </div>
@@ -2807,7 +2811,6 @@ function limparFiltrosFinanceiro(){
   const cf=document.getElementById('fin-conta-f');if(cf)cf.value='';
   const cef=document.getElementById('fin-centro-f');if(cef)cef.value='';
   const fof=document.getElementById('fin-forma-f');if(fof)fof.value='';
-  const cof=document.getElementById('fin-contaorigem-f');if(cof)cof.value='';
   const pi=document.getElementById('fin-pago-ini');if(pi)pi.value='';
   const pf=document.getElementById('fin-pago-fim');if(pf)pf.value='';
   const di=document.getElementById('fin-data-ini');if(di)di.value='';
@@ -2850,14 +2853,13 @@ function renderFinanceiro(){
   const contaF=document.getElementById('fin-conta-f')?.value||'';
   const centroF=document.getElementById('fin-centro-f')?.value||'';
   const formaF=document.getElementById('fin-forma-f')?.value||'';
-  const contaOrigemF=document.getElementById('fin-contaorigem-f')?.value||'';
   const dataIni=document.getElementById('fin-data-ini')?.value||'';
   const dataFim=document.getElementById('fin-data-fim')?.value||'';
   const pagoIni=document.getElementById('fin-pago-ini')?.value||'';
   const pagoFim=document.getElementById('fin-pago-fim')?.value||'';
   const hasDateRange=!!(dataIni||dataFim);
   const hasPagoRange=!!(pagoIni||pagoFim);
-  const hasFilter=!!(busca||catF||statusF||contaF||centroF||formaF||contaOrigemF||hasDateRange||hasPagoRange);
+  const hasFilter=!!(busca||catF||statusF||contaF||centroF||formaF||hasDateRange||hasPagoRange);
   // popular select de contas bancárias
   const contaSel=document.getElementById('fin-conta-f');
   if(contaSel){
@@ -2882,7 +2884,6 @@ function renderFinanceiro(){
     sel.innerHTML=`<option value="">${placeholder}</option>`+valores.map(v=>`<option value="${esc(v)}"${v===atual?' selected':''}>${esc(v)}</option>`).join('');
   };
   _popularFiltroOrigem('fin-forma-f','Toda forma de pagamento','formaPagamento');
-  _popularFiltroOrigem('fin-contaorigem-f','Toda conta (origem)','contaOrigemTexto');
   // definir escopo de busca — intervalo de data manual (quando preenchido) tem
   // prioridade sobre o período (Mês/Ano/Todos); caso contrário busca/categoria/
   // status filtram DENTRO do período escolhido, não mais ignorando-o (antes
@@ -2916,7 +2917,6 @@ function renderFinanceiro(){
   if(contaF)lista=lista.filter(t=>t.contaId===contaF);
   if(centroF)lista=lista.filter(t=>(t.centroCusto||'')===centroF);
   if(formaF)lista=lista.filter(t=>(t.formaPagamento||'')===formaF);
-  if(contaOrigemF)lista=lista.filter(t=>(t.contaOrigemTexto||'')===contaOrigemF);
   if(hasPagoRange)lista=lista.filter(t=>{
     if(!t.dataConfirmacao)return false;
     if(pagoIni&&t.dataConfirmacao<pagoIni)return false;
@@ -3101,7 +3101,6 @@ function renderFinanceiro(){
       const origemCell=(label,value)=>value?`<div class="fin-origem-cell"><div class="fin-origem-label">${label}</div><div class="fin-origem-value" title="${esc(value)}">${esc(value)}</div></div>`:'';
       const origemHtml=[
         origemCell('Centro de custo',t.centroCusto),
-        origemCell('Conta (origem)',t.contaOrigemTexto),
         origemCell('Situação original',t.situacaoOriginal),
       ].filter(Boolean).join('');
       const _sk=_serieKey(t);
@@ -3703,9 +3702,9 @@ function marcarPago(id){
   const sel=document.getElementById('cpag-conta');
   sel.innerHTML=`<option value="">— Não vincular a nenhuma conta —</option>`+
     contas.map(c=>`<option value="${c.id}">${esc(c.nome)}${c.banco?' — '+esc(c.banco):''} (${fmtR(Number(c.saldo||0))})</option>`).join('');
+  sel.value=t.contaId||'';
   // data padrão = hoje
   document.getElementById('cpag-data').value=today();
-  document.getElementById('cpag-banco').value=t.contaOrigemTexto||'';
   document.getElementById('cpag-obs').value='';
   document.getElementById('cpag-saldo-preview').style.display='none';
   cpagComprovante=t.comprovante||null;
@@ -3765,7 +3764,6 @@ function confirmarPagamento(){
   const id=document.getElementById('cpag-trans-id').value;
   const contaId=document.getElementById('cpag-conta').value;
   const data=document.getElementById('cpag-data').value||today();
-  const banco=document.getElementById('cpag-banco').value.trim();
   const obsNova=document.getElementById('cpag-obs').value.trim();
   const t=DB.one('transacoes',id);if(!t)return;
   // marcar transação como paga
@@ -3775,7 +3773,6 @@ function confirmarPagamento(){
   // (dataPagamento) nunca era lido em lugar nenhum da tela (achado real
   // 2026-11-24, ao adicionar este popup).
   t.dataConfirmacao=data;
-  if(banco)t.contaOrigemTexto=banco;
   if(obsNova)t.observacoes=[t.observacoes,obsNova].filter(Boolean).join('\n');
   if(cpagComprovante)t.comprovante=cpagComprovante;
   if(contaId)t.contaId=contaId;
