@@ -1999,22 +1999,75 @@ const FIREBASE_CONFIG={
 };
 firebase.initializeApp(FIREBASE_CONFIG);
 const _fsdb=firebase.firestore();
+// `transacoes` guardava o array inteiro num único documento, igual toda
+// tabela aqui — mas em 2026-11-24, importando o contas a pagar (2200+
+// lançamentos), o array estourou o limite de 1MB por documento do Firestore
+// (erro real: "exceeds the maximum allowed size of 1,048,576 bytes"). Como
+// esse limite só piora com o tempo (cresce a cada lançamento novo), virou uma
+// subcoleção de verdade (`gestao/transacoes/items/{id}`, 1 documento por
+// lançamento) — a única tabela tratada assim. Tudo mais continua no modelo
+// "1 documento = a tabela inteira", sem mudança.
+const _TRANS_COL=()=>_fsdb.collection('gestao').doc('transacoes').collection('items');
 const DB={
   _c:{},
   async init(){
     const snap=await _fsdb.collection('gestao').get();
     DB._c={};
-    snap.forEach(doc=>{DB._c[doc.id]=doc.data().value;});
+    snap.forEach(doc=>{ if(doc.id!=='transacoes') DB._c[doc.id]=doc.data().value; });
+    const transSnap=await _TRANS_COL().get();
+    DB._c['transacoes']=transSnap.docs.map(d=>d.data());
     return true;
   },
   _push(k,v){
     _fsdb.collection('gestao').doc(k).set({value:_semUndefined(v)}).catch(e=>{console.error('[DB sync]',k,e);toast('Falha ao salvar na nuvem: '+e.message,'error');});
   },
   get:k=>{try{return DB._c[k]||[]}catch{return[]}},
-  set(k,v){DB._c[k]=v;DB._push(k,v);},
+  set(k,v){
+    DB._c[k]=v;
+    if(k==='transacoes')return; // ver setTransacoesEmMassa — save/del já cuidam da subcoleção item a item
+    DB._push(k,v);
+  },
   one:(k,id)=>DB.get(k).find(x=>x.id===id),
-  save(k,item){const l=DB.get(k);const i=l.findIndex(x=>x.id===item.id);if(i>=0)l[i]=item;else l.unshift(item);DB.set(k,l)},
-  del:(k,id)=>DB.set(k,DB.get(k).filter(x=>x.id!==id)),
+  save(k,item){
+    const l=DB.get(k);const i=l.findIndex(x=>x.id===item.id);if(i>=0)l[i]=item;else l.unshift(item);
+    DB._c[k]=l;
+    if(k==='transacoes'){
+      _TRANS_COL().doc(item.id).set(_semUndefined(item)).catch(e=>{console.error('[DB sync] transacoes',item.id,e);toast('Falha ao salvar na nuvem: '+e.message,'error');});
+      return;
+    }
+    DB._push(k,l);
+  },
+  del(k,id){
+    const l=DB.get(k).filter(x=>x.id!==id);
+    DB._c[k]=l;
+    if(k==='transacoes'){
+      _TRANS_COL().doc(id).delete().catch(e=>{console.error('[DB sync] transacoes del',id,e);toast('Falha ao excluir na nuvem: '+e.message,'error');});
+      return;
+    }
+    DB._push(k,l);
+  },
+  // Só pra import/migração em massa de `transacoes` (grava cada item que
+  // mudou/é novo como seu próprio documento; apaga os que sumiram do array).
+  // O app normal nunca precisa chamar isso — save/del já cuidam item a item.
+  async setTransacoesEmMassa(novoArray){
+    const antigo=DB._c['transacoes']||[];
+    const antigoPorId=new Map(antigo.map(x=>[x.id,x]));
+    const novoPorId=new Map(novoArray.map(x=>[x.id,x]));
+    DB._c['transacoes']=novoArray;
+    const col=_TRANS_COL();
+    const escritas=[];
+    for(const [id,item] of novoPorId){
+      const prev=antigoPorId.get(id);
+      if(!prev||JSON.stringify(_semUndefined(prev))!==JSON.stringify(_semUndefined(item))){
+        escritas.push(col.doc(id).set(_semUndefined(item)));
+      }
+    }
+    for(const [id] of antigoPorId){
+      if(!novoPorId.has(id))escritas.push(col.doc(id).delete());
+    }
+    await Promise.all(escritas);
+    return escritas.length;
+  },
 };
 
 // ── NAVIGATION ────────────────────────────────────────────────────────────────
