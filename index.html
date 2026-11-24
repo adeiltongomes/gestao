@@ -1035,9 +1035,6 @@ thead th.r{text-align:right}
           <select class="form-control" id="fin-conta-f" onchange="renderFinanceiro()" style="width:160px">
             <option value="">Todas as contas</option>
           </select>
-          <select class="form-control" id="fin-entidade-f" onchange="renderFinanceiro()" style="width:150px">
-            <option value="">Todas as entidades</option>
-          </select>
           <select class="form-control" id="fin-centro-f" onchange="renderFinanceiro()" style="width:170px">
             <option value="">Todos os centros de custo</option>
           </select>
@@ -1549,10 +1546,7 @@ thead th.r{text-align:right}
       <div class="form-group"><label class="form-label">Observações</label><textarea class="form-control" id="trans-obs" rows="2"></textarea></div>
       <div id="trans-origem-group" style="display:none;border-top:1px solid var(--border);margin:10px 0 12px;padding-top:12px">
         <div style="font-size:12px;font-weight:600;color:var(--text-mid);margin-bottom:10px;text-transform:uppercase;letter-spacing:.05em">Dados de origem (importado do GestãoClick)</div>
-        <div class="form-row">
-          <div class="form-group"><label class="form-label">Entidade</label><input class="form-control" id="trans-entidade-tipo" placeholder="Fornecedor, Funcionário…"></div>
-          <div class="form-group"><label class="form-label">Centro de custo</label><input class="form-control" id="trans-centro-custo" placeholder="Ex: ADMINISTRATIVO"></div>
-        </div>
+        <div class="form-group"><label class="form-label">Centro de custo</label><input class="form-control" id="trans-centro-custo" placeholder="Ex: ADMINISTRATIVO"></div>
         <div class="form-row">
           <div class="form-group"><label class="form-label">Conta bancária (origem)</label><input class="form-control" id="trans-conta-origem-texto" placeholder="Nome da conta no sistema antigo"></div>
           <div class="form-group"><label class="form-label">Situação original</label><input class="form-control" id="trans-situacao-original" placeholder="Confirmado, Atrasado, Não Pago…"></div>
@@ -2743,7 +2737,6 @@ function limparFiltrosFinanceiro(){
   const c=document.getElementById('fin-cat');if(c)c.value='';
   const s=document.getElementById('fin-status-f');if(s)s.value='';
   const cf=document.getElementById('fin-conta-f');if(cf)cf.value='';
-  const ef=document.getElementById('fin-entidade-f');if(ef)ef.value='';
   const cef=document.getElementById('fin-centro-f');if(cef)cef.value='';
   const fof=document.getElementById('fin-forma-f');if(fof)fof.value='';
   const cof=document.getElementById('fin-contaorigem-f');if(cof)cof.value='';
@@ -2787,7 +2780,6 @@ function renderFinanceiro(){
   const catF=document.getElementById('fin-cat')?.value||'';
   const statusF=document.getElementById('fin-status-f')?.value||'';
   const contaF=document.getElementById('fin-conta-f')?.value||'';
-  const entidadeF=document.getElementById('fin-entidade-f')?.value||'';
   const centroF=document.getElementById('fin-centro-f')?.value||'';
   const formaF=document.getElementById('fin-forma-f')?.value||'';
   const contaOrigemF=document.getElementById('fin-contaorigem-f')?.value||'';
@@ -2797,7 +2789,7 @@ function renderFinanceiro(){
   const pagoFim=document.getElementById('fin-pago-fim')?.value||'';
   const hasDateRange=!!(dataIni||dataFim);
   const hasPagoRange=!!(pagoIni||pagoFim);
-  const hasFilter=!!(busca||catF||statusF||contaF||entidadeF||centroF||formaF||contaOrigemF||hasDateRange||hasPagoRange);
+  const hasFilter=!!(busca||catF||statusF||contaF||centroF||formaF||contaOrigemF||hasDateRange||hasPagoRange);
   // popular select de contas bancárias
   const contaSel=document.getElementById('fin-conta-f');
   if(contaSel){
@@ -2808,12 +2800,6 @@ function renderFinanceiro(){
   // popular selects de Entidade e Centro de custo (campos de origem do
   // import GestãoClick) — pedido do usuário 2026-11-24: ter filtro de verdade
   // pra isso, não só mostrar o texto na linha sem poder filtrar por ele.
-  const entidadeSel=document.getElementById('fin-entidade-f');
-  if(entidadeSel){
-    const atual=entidadeSel.value;
-    const valores=[...new Set(allTrans.map(t=>t.entidadeTipo||'').filter(Boolean))].sort();
-    entidadeSel.innerHTML='<option value="">Todas as entidades</option>'+valores.map(v=>`<option value="${esc(v)}"${v===atual?' selected':''}>${esc(v)}</option>`).join('');
-  }
   const centroSel=document.getElementById('fin-centro-f');
   if(centroSel){
     const atual=centroSel.value;
@@ -2860,7 +2846,6 @@ function renderFinanceiro(){
   if(statusF==='pago')lista=lista.filter(t=>isPago(t.status));
   else if(statusF==='pendente')lista=lista.filter(t=>!isPago(t.status));
   if(contaF)lista=lista.filter(t=>t.contaId===contaF);
-  if(entidadeF)lista=lista.filter(t=>(t.entidadeTipo||'')===entidadeF);
   if(centroF)lista=lista.filter(t=>(t.centroCusto||'')===centroF);
   if(formaF)lista=lista.filter(t=>(t.formaPagamento||'')===formaF);
   if(contaOrigemF)lista=lista.filter(t=>(t.contaOrigemTexto||'')===contaOrigemF);
@@ -3045,7 +3030,6 @@ function renderFinanceiro(){
       // a versão anterior virou bagunça sem filtro possível).
       const origemCell=(label,value)=>value?`<div class="fin-origem-cell"><div class="fin-origem-label">${label}</div><div class="fin-origem-value" title="${esc(value)}">${esc(value)}</div></div>`:'';
       const origemHtml=[
-        origemCell('Entidade',t.entidadeTipo),
         origemCell('Centro de custo',t.centroCusto),
         origemCell('Conta (origem)',t.contaOrigemTexto),
         origemCell('Situação original',t.situacaoOriginal),
@@ -3171,12 +3155,11 @@ function openModalTransacao(tipo,id){
   // Dados de origem (só existem em lançamentos importados do GestãoClick) —
   // mostra a seção só quando tem algo pra mostrar, pra não poluir o lançamento
   // manual do dia a dia.
-  document.getElementById('trans-entidade-tipo').value=t.entidadeTipo||'';
   document.getElementById('trans-centro-custo').value=t.centroCusto||'';
   document.getElementById('trans-conta-origem-texto').value=t.contaOrigemTexto||'';
   document.getElementById('trans-situacao-original').value=t.situacaoOriginal||'';
   document.getElementById('trans-data-confirmacao').value=t.dataConfirmacao||'';
-  const temOrigem=!!(t.entidadeTipo||t.centroCusto||t.contaOrigemTexto||t.situacaoOriginal||t.dataConfirmacao);
+  const temOrigem=!!(t.centroCusto||t.contaOrigemTexto||t.situacaoOriginal||t.dataConfirmacao);
   document.getElementById('trans-origem-group').style.display=temOrigem?'block':'none';
   document.getElementById('trans-nparc').value=1;
   document.getElementById('trans-parc-info').style.display='none';
@@ -3230,7 +3213,6 @@ function saveTransacao(){
   const forma=document.getElementById('trans-forma')?.value||'';
   const dataBase=document.getElementById('trans-data').value||today();
   const grupoId=uid();
-  const entidadeTipo=document.getElementById('trans-entidade-tipo').value.trim();
   const centroCusto=document.getElementById('trans-centro-custo').value.trim();
   const contaOrigemTexto=document.getElementById('trans-conta-origem-texto').value.trim();
   const situacaoOriginal=document.getElementById('trans-situacao-original').value.trim();
@@ -3288,7 +3270,6 @@ function saveTransacao(){
     contratoId:oldT?.contratoId,
     faturaId:oldT?.faturaId,
     grupoId:oldT?.grupoId,
-    entidadeTipo:entidadeTipo||undefined,
     centroCusto:centroCusto||undefined,
     contaOrigemTexto:contaOrigemTexto||undefined,
     situacaoOriginal:situacaoOriginal||undefined,
