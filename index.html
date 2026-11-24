@@ -30,6 +30,7 @@ setInterval(_checkFreshBuild,60000);
 <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Hanken+Grotesk:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet">
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
 <style>
 /* ═══════════════════════════ DESIGN SYSTEM ═══════════════════════════ */
 :root{
@@ -5136,29 +5137,41 @@ function imprimirCategoria(tipo,mes){
 }
 
 // ── AUTH ──────────────────────────────────────────────────────────────────────
-const _USERS=[{user:'adeilton',pass:'Laisa@1000',nome:'Adeilton'}];
+// Login de verdade via Firebase Authentication (e-mail/senha) — antes disso era
+// só uma comparação feita no navegador contra uma lista fixa no código (visível
+// pra qualquer um que abrisse o "ver código-fonte"), e o banco (Firestore) nunca
+// checava se a pessoa tinha passado pelo login: dava pra ler/escrever direto via
+// API sem senha nenhuma. Agora a escrita no banco exige um login real emitido
+// pelo Firebase (ver regra `allow write: if request.auth != null` no Firestore).
+// "adeilton" continua funcionando como atalho de usuário (mapeado pro e-mail
+// real cadastrado), pra não mudar o hábito de quem já usa o sistema.
+const _USER_EMAIL_MAP={adeilton:'adeilton@accerttech.com.br'};
 function doLogin(){
-  const u=(document.getElementById('lg-user')?.value||'').trim().toLowerCase();
+  const uRaw=(document.getElementById('lg-user')?.value||'').trim().toLowerCase();
+  const email=uRaw.includes('@')?uRaw:(_USER_EMAIL_MAP[uRaw]||uRaw);
   const p=document.getElementById('lg-pass')?.value||'';
-  const found=_USERS.find(x=>x.user===u&&x.pass===p);
   const err=document.getElementById('lg-err');
-  if(!found){
-    if(err){err.textContent='Usuário ou senha incorretos.';err.style.display='block';}
-    const passEl=document.getElementById('lg-pass');
+  const passEl=document.getElementById('lg-pass');
+  const showErr=(msg)=>{
+    if(err){err.textContent=msg;err.style.display='block';}
     if(passEl){passEl.style.borderColor='#ef4444';setTimeout(()=>{passEl.style.borderColor='#334155';},1500);}
-    return;
-  }
-  sessionStorage.setItem('gc_ok','1');
-  sessionStorage.setItem('gc_user',JSON.stringify(found));
-  document.getElementById('login-ov').style.display='none';
-  document.getElementById('app').classList.remove('hidden');
-  initApp();
+  };
+  if(!email||!p){showErr('Preencha usuário e senha.');return;}
+  firebase.auth().signInWithEmailAndPassword(email,p).catch(()=>{
+    showErr('Usuário ou senha incorretos.');
+  });
+  // onAuthStateChanged (abaixo) é quem efetivamente libera a tela ao confirmar o login.
 }
 function logout(){
-  sessionStorage.removeItem('gc_ok');
-  sessionStorage.removeItem('gc_user');
-  location.reload();
+  firebase.auth().signOut().finally(()=>location.reload());
 }
+firebase.auth().onAuthStateChanged((user)=>{
+  if(user){
+    document.getElementById('login-ov').style.display='none';
+    document.getElementById('app').classList.remove('hidden');
+    initApp();
+  }
+});
 async function initApp(){
   const lov=document.getElementById('loading-ov');
   if(lov)lov.style.display='flex';
@@ -5353,11 +5366,10 @@ if(_publicOrcId){
 }else if(_publicFatId){
   document.getElementById('login-ov').style.display='none';
   renderPublicFaturaPage(_publicFatId);
-}else if(sessionStorage.getItem('gc_ok')){
-  document.getElementById('login-ov').style.display='none';
-  document.getElementById('app').classList.remove('hidden');
-  initApp();
 }
+// Sessão autenticada (se já logado antes) é restaurada automaticamente pelo
+// Firebase e tratada pelo onAuthStateChanged acima — não precisa checar nada
+// aqui pra esse caso.
 </script>
 </body>
 </html>
