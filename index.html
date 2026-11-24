@@ -1918,9 +1918,34 @@ thead th.r{text-align:right}
       </div>
       <!-- Preview do novo saldo -->
       <div id="cpag-saldo-preview" style="display:none;background:var(--blue-bg);border:1px solid #c7d2fe;border-radius:8px;padding:12px;font-size:13px;color:var(--blue-text)"></div>
+      <div class="form-row" style="margin-top:14px">
+        <div class="form-group" style="margin-bottom:0">
+          <label class="form-label">Data do Pagamento</label>
+          <input class="form-control" id="cpag-data" type="date">
+        </div>
+        <div class="form-group" style="margin-bottom:0">
+          <label class="form-label">Banco</label>
+          <input class="form-control" id="cpag-banco" placeholder="Ex: Itaú, Nubank…">
+        </div>
+      </div>
       <div class="form-group" style="margin-top:14px;margin-bottom:0">
-        <label class="form-label">Data do Pagamento</label>
-        <input class="form-control" id="cpag-data" type="date">
+        <label class="form-label">Observação <span style="font-weight:400;color:var(--text-dim)">(opcional)</span></label>
+        <textarea class="form-control" id="cpag-obs" rows="2"></textarea>
+      </div>
+      <div class="form-group" style="margin-top:14px;margin-bottom:0">
+        <label class="form-label">Comprovante <span style="font-weight:400;color:var(--text-dim)">(opcional)</span></label>
+        <div id="cpag-comp-preview" style="display:none;margin-bottom:8px">
+          <div style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--surface-2);border:1.5px solid var(--border);border-radius:8px">
+            <span id="cpag-comp-icon" style="font-size:22px">📄</span>
+            <span id="cpag-comp-nome" style="flex:1;font-size:13px;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis"></span>
+            <button type="button" onclick="removerComprovantePagamento()" class="btn btn-danger btn-xs" style="flex-shrink:0">✕ Remover</button>
+          </div>
+        </div>
+        <label id="cpag-comp-label" for="cpag-comp-input" style="display:flex;align-items:center;gap:10px;padding:12px 14px;background:var(--surface-2);border:1.5px dashed var(--border);border-radius:8px;cursor:pointer;font-size:13px;color:var(--text-mid)">
+          <span style="font-size:20px">📎</span>
+          <span>Clique para anexar comprovante <span style="font-size:11px">(imagem ou PDF, máx. 500 KB)</span></span>
+          <input type="file" id="cpag-comp-input" accept="image/*,.pdf" style="display:none" onchange="carregarComprovantePagamento(this)">
+        </label>
       </div>
     </div>
     <div class="modal-footer">
@@ -3652,17 +3677,14 @@ function delConta(id){
   DB.del('contas_bancarias',id);renderContasBancarias();toast('Conta excluída.','info');
 }
 // ── CONFIRMAR PAGAMENTO COM CONTA ─────────────────────────────────────────────
+// Marcar como pago/recebido SEMPRE abre o popup de confirmação — pedido
+// explícito do usuário 2026-11-24 ("quando eu clicar em pagar deve subir um
+// popup perguntando qual foi a data do pagamento, qual o banco, anexar
+// comprovante, observação"). Antes só abria quando já existia conta bancária
+// cadastrada (nenhuma existe hoje), então na prática nunca aparecia.
 function marcarPago(id){
   const t=DB.one('transacoes',id);if(!t)return;
   const contas=DB.get('contas_bancarias')||[];
-  if(!contas.length){
-    // sem contas: marcar direto
-    t.status=t.tipo==='entrada'?'recebido':'pago';
-    DB.save('transacoes',t);renderFinanceiro();
-    toast(t.tipo==='entrada'?'Marcado como Recebido!':'Marcado como Pago!','success');
-    return;
-  }
-  // com contas: abrir modal de confirmação
   document.getElementById('cpag-trans-id').value=id;
   const isE=t.tipo==='entrada';
   document.getElementById('cpag-info').innerHTML=`
@@ -3683,8 +3705,42 @@ function marcarPago(id){
     contas.map(c=>`<option value="${c.id}">${esc(c.nome)}${c.banco?' — '+esc(c.banco):''} (${fmtR(Number(c.saldo||0))})</option>`).join('');
   // data padrão = hoje
   document.getElementById('cpag-data').value=today();
+  document.getElementById('cpag-banco').value=t.contaOrigemTexto||'';
+  document.getElementById('cpag-obs').value='';
   document.getElementById('cpag-saldo-preview').style.display='none';
+  cpagComprovante=t.comprovante||null;
+  document.getElementById('cpag-comp-input').value='';
+  if(cpagComprovante){
+    document.getElementById('cpag-comp-icon').textContent=cpagComprovante.tipo==='pdf'?'📄':'🖼';
+    document.getElementById('cpag-comp-nome').textContent=cpagComprovante.nome||'Comprovante';
+    document.getElementById('cpag-comp-preview').style.display='block';
+    document.getElementById('cpag-comp-label').style.display='none';
+  }else{
+    document.getElementById('cpag-comp-preview').style.display='none';
+    document.getElementById('cpag-comp-label').style.display='flex';
+  }
   openModal('modal-confirmar-pag');
+}
+let cpagComprovante=null;
+function carregarComprovantePagamento(input){
+  const file=input.files[0];if(!file)return;
+  if(file.size>COMPROVANTE_MAX_BYTES){toast('Arquivo muito grande. Máx. 500 KB (limite do banco de dados).','error');input.value='';return;}
+  const isPdf=file.type==='application/pdf';
+  const reader=new FileReader();
+  reader.onload=e=>{
+    cpagComprovante={data:e.target.result,nome:file.name,tipo:isPdf?'pdf':'img'};
+    document.getElementById('cpag-comp-icon').textContent=isPdf?'📄':'🖼';
+    document.getElementById('cpag-comp-nome').textContent=file.name;
+    document.getElementById('cpag-comp-preview').style.display='block';
+    document.getElementById('cpag-comp-label').style.display='none';
+  };
+  reader.readAsDataURL(file);
+}
+function removerComprovantePagamento(){
+  cpagComprovante=null;
+  document.getElementById('cpag-comp-input').value='';
+  document.getElementById('cpag-comp-preview').style.display='none';
+  document.getElementById('cpag-comp-label').style.display='flex';
 }
 function atualizarPreviewSaldo(){
   const tId=document.getElementById('cpag-trans-id').value;
@@ -3709,10 +3765,19 @@ function confirmarPagamento(){
   const id=document.getElementById('cpag-trans-id').value;
   const contaId=document.getElementById('cpag-conta').value;
   const data=document.getElementById('cpag-data').value||today();
+  const banco=document.getElementById('cpag-banco').value.trim();
+  const obsNova=document.getElementById('cpag-obs').value.trim();
   const t=DB.one('transacoes',id);if(!t)return;
   // marcar transação como paga
   t.status=t.tipo==='entrada'?'recebido':'pago';
-  t.dataPagamento=data;
+  // dataConfirmacao (não dataPagamento) — é o mesmo campo que já alimenta o
+  // badge "Pago em" e o filtro de data de pagamento; um campo solto
+  // (dataPagamento) nunca era lido em lugar nenhum da tela (achado real
+  // 2026-11-24, ao adicionar este popup).
+  t.dataConfirmacao=data;
+  if(banco)t.contaOrigemTexto=banco;
+  if(obsNova)t.observacoes=[t.observacoes,obsNova].filter(Boolean).join('\n');
+  if(cpagComprovante)t.comprovante=cpagComprovante;
   if(contaId)t.contaId=contaId;
   DB.save('transacoes',t);
   // atualizar saldo da conta
@@ -3746,6 +3811,7 @@ function cancelarPagamento(id){
   }
   t.status='pendente';
   delete t.dataPagamento;
+  delete t.dataConfirmacao;
   delete t.contaId;
   DB.save('transacoes',t);
   renderFinanceiro();
