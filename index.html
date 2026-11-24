@@ -315,6 +315,7 @@ strong{font-variant-numeric:tabular-nums}
 .fin-sub-item{display:inline-flex;align-items:center;gap:4px;font-size:11px;color:var(--text-mid);white-space:nowrap}
 .fin-sub-item svg{opacity:.55;flex-shrink:0}
 .fin-sub-sep{color:var(--border-2);font-size:9px;flex-shrink:0}
+.fin-serie-badge{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:600;color:var(--blue-text);background:var(--blue-bg);border:1px solid #bfdbfe;border-radius:6px;padding:3px 8px;margin-top:6px;width:fit-content}
 .fin-origem-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:8px 16px;margin-top:8px;padding-top:8px;border-top:1px dashed var(--border)}
 .fin-origem-cell{min-width:0}
 .fin-origem-label{font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--text-dim)}
@@ -2855,6 +2856,23 @@ function renderFinanceiro(){
     if(extras.length){lista=[...lista,...extras];lista.sort((a,b)=>b.data>a.data?1:-1);}
   }
   const temGrupo=grupoIds.size>0;
+  // Série de parcelas (ex.: "Compra de Casa" do Mateus, 58 lançamentos iguais
+  // ao longo de anos) — pedido do usuário 2026-11-24: "como eu sei quantas
+  // faltam, quantas já foram pagas?". Os lançamentos importados do GestãoClick
+  // não tinham grupoId (cada linha da planilha virou uma transação solta), e
+  // mesmo nome+descrição repetidos não bastam pra garantir é a mesma série
+  // (ex.: conta de telefone recorrente também repete) — mas de qualquer jeito
+  // é real e útil mostrar "quantas dessa mesma pessoa+descrição já foram
+  // pagas", então agrupa por (pessoa + descrição) pra todo mundo, sempre a
+  // partir de TODAS as transações (não só a página filtrada), pra o número
+  // bater mesmo filtrando/buscando por um nome específico.
+  const _serieKey=t=>`${(t.pessoa||'').toLowerCase()}||${(t.descricao||'').toLowerCase()}`;
+  const _serieMap={};
+  allTrans.forEach(t=>{
+    if(!t.pessoa||!t.descricao)return;
+    const k=_serieKey(t);
+    (_serieMap[k]??=[]).push(t);
+  });
   // calcular totais a partir da lista filtrada
   const base4cards=hasFilter?lista:transMes;
   const totE=base4cards.filter(t=>t.tipo==='entrada'&&isPago(t.status)).reduce((s,t)=>s+Number(t.valor||0),0);
@@ -2993,12 +3011,19 @@ function renderFinanceiro(){
         origemCell('Lançado em',t.lancadoEm),
         origemCell('Modificado em',t.modificadoEm),
       ].filter(Boolean).join('');
+      const serie=_serieMap[_serieKey(t)]||[t];
+      const serieHtml=serie.length>1?(()=>{
+        const pagas=serie.filter(x=>isPago(x.status)).length;
+        const faltam=serie.length-pagas;
+        return`<div class="fin-serie-badge" title="Série completa: ${serie.length} lançamento(s) com o mesmo nome e descrição">📊 ${pagas} de ${serie.length} pagas${faltam?` · ${faltam} faltam`:' · completa'}</div>`;
+      })():'';
       return`<tr class="fin-row fin-${isE?'e':'s'}">
         <td><div class="fin-row-main">
           <div class="fin-row-icon">${isE?'↑':'↓'}</div>
           <div style="min-width:0;flex:1">
             <div class="fin-row-title">${esc(t.descricao)}</div>
             ${subHtml?`<div class="fin-row-sub">${subHtml}</div>`:''}
+            ${serieHtml}
             ${origemHtml?`<div class="fin-origem-grid">${origemHtml}</div>`:''}
           </div>
         </div></td>
