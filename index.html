@@ -1156,16 +1156,7 @@ thead th.r{text-align:right}
     <div class="modal-hdr"><div class="modal-title" id="mcli-title">Novo Cadastro</div><button class="modal-close" onclick="_quickClienteTarget=null;closeModal('modal-cliente')">×</button></div>
     <div class="modal-body">
       <input type="hidden" id="cli-id">
-      <div class="form-row">
-        <div class="form-group"><label class="form-label">Nome / Razão Social *</label><input class="form-control" id="cli-nome" placeholder="Nome completo ou razão social"></div>
-        <div class="form-group" style="max-width:180px"><label class="form-label">Tipo</label>
-          <select class="form-control" id="cli-tipo">
-            <option value="cliente">Cliente</option>
-            <option value="fornecedor">Fornecedor</option>
-            <option value="ambos">Cliente e Fornecedor</option>
-          </select>
-        </div>
-      </div>
+      <div class="form-group"><label class="form-label">Nome / Razão Social *</label><input class="form-control" id="cli-nome" placeholder="Nome completo ou razão social"></div>
       <div class="form-row">
         <div class="form-group"><label class="form-label">CPF / CNPJ</label><input class="form-control" id="cli-doc" placeholder="000.000.000-00 ou 00.000.000/0001-00" oninput="buscaCnpj(this.value)"></div>
         <div class="form-group" style="max-width:130px"><label class="form-label">Tipo de pessoa</label>
@@ -2172,7 +2163,6 @@ function openModalCliente(id){
   document.getElementById('mcli-title').textContent=id?'Editar Cadastro':(isForn?'Novo Fornecedor':'Novo Cliente');
   document.getElementById('cli-id').value=c.id||'';
   document.getElementById('cli-nome').value=c.nome||'';
-  document.getElementById('cli-tipo').value=c.tipo||(_cliTipo||'cliente');
   document.getElementById('cli-doc').value=c.cpfCnpj||'';
   document.getElementById('cli-tipopessoa').value=c.tipoPessoa||'';
   document.getElementById('cli-tel').value=c.telefone||'';
@@ -2199,7 +2189,7 @@ function saveCliente(){
   DB.save('clientes',{
     id:document.getElementById('cli-id').value||uid(),
     nome,
-    tipo:document.getElementById('cli-tipo').value,
+    tipo:_cliTipo,
     cpfCnpj:document.getElementById('cli-doc').value,
     tipoPessoa:document.getElementById('cli-tipopessoa').value,
     telefone:document.getElementById('cli-tel').value,
