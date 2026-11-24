@@ -1568,7 +1568,6 @@ thead th.r{text-align:right}
           <div class="form-group"><label class="form-label">Lançado originalmente por</label><input class="form-control" id="trans-lancado-por" placeholder="Nome"></div>
           <div class="form-group"><label class="form-label">Lançado em</label><input class="form-control" id="trans-lancado-em" placeholder="DD/MM/AAAA HH:MM:SS"></div>
         </div>
-        <div class="form-group"><label class="form-label">Modificado em (sistema antigo)</label><input class="form-control" id="trans-modificado-em" placeholder="DD/MM/AAAA HH:MM:SS"></div>
       </div>
       <div class="form-group">
         <label class="form-label">Comprovante</label>
@@ -3067,7 +3066,6 @@ function renderFinanceiro(){
         origemCell('Competência',t.dataCompetencia?fmtD(t.dataCompetencia):''),
         origemCell('Lançado por',t.lancadoPor),
         origemCell('Lançado em',t.lancadoEm),
-        origemCell('Modificado em',t.modificadoEm),
       ].filter(Boolean).join('');
       const _sk=_serieKey(t);
       const serie=_serieMap[_sk]||[t];
@@ -3198,7 +3196,6 @@ function openModalTransacao(tipo,id){
   document.getElementById('trans-data-confirmacao').value=t.dataConfirmacao||'';
   document.getElementById('trans-lancado-por').value=t.lancadoPor||'';
   document.getElementById('trans-lancado-em').value=t.lancadoEm||'';
-  document.getElementById('trans-modificado-em').value=t.modificadoEm||'';
   const temOrigem=!!(t.entidadeTipo||t.centroCusto||t.contaOrigemTexto||t.situacaoOriginal||t.dataCompetencia||t.dataConfirmacao||t.lancadoPor);
   document.getElementById('trans-origem-group').style.display=temOrigem?'block':'none';
   document.getElementById('trans-nparc').value=1;
@@ -3261,7 +3258,6 @@ function saveTransacao(){
   const dataConfirmacao=document.getElementById('trans-data-confirmacao').value;
   const lancadoPor=document.getElementById('trans-lancado-por').value.trim();
   const lancadoEm=document.getElementById('trans-lancado-em').value.trim();
-  const modificadoEm=document.getElementById('trans-modificado-em').value.trim();
 
   if(n>1){
     const parcelas=collectParcelas();
@@ -3323,7 +3319,6 @@ function saveTransacao(){
     dataConfirmacao:dataConfirmacao||undefined,
     lancadoPor:lancadoPor||undefined,
     lancadoEm:lancadoEm||undefined,
-    modificadoEm:modificadoEm||undefined,
   });
   // apply new balance if paid with a conta
   if(isPaid&&contaId){
