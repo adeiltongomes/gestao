@@ -4808,9 +4808,12 @@ function _gcItensLocacaoTableHtml(itens){
     <tfoot><tr><td colspan="7">Total</td><td class="c">${_gcNum(total)}</td></tr></tfoot>
   </table>`;
 }
-function _gcPixBoxHtml(emp){
+function _gcPixBoxHtml(emp,amount){
   if(!emp.pix)return'';
-  const qrData=emp.pix.trim().startsWith('000201')?emp.pix.trim():generatePixPayload(emp.pix,undefined,emp.nome,emp.cidade);
+  // Se emp.pix já é um código "Copia e Cola" pronto (gerado pelo banco, começa com "000201"), o valor
+  // (se algum) já está fixo dentro dele - não dá pra sobrepor sem quebrar o CRC. Só injeta o valor da
+  // fatura quando montamos o payload do zero a partir da chave crua.
+  const qrData=emp.pix.trim().startsWith('000201')?emp.pix.trim():generatePixPayload(emp.pix,amount>0?amount:undefined,emp.nome,emp.cidade);
   return `<div class="gc-sectitle">Pagamento via Pix</div>
   <div class="gc-plain" style="display:flex;gap:16px;align-items:center;flex-wrap:wrap">
     <div style="flex:1;min-width:200px">
@@ -4835,7 +4838,7 @@ function _gcFaturaBodyHtml(f,cli,c,o,emp){
     ${cel('Data de Vencimento',fmtD(f.vencimento))}${cel('Forma de Pagamento',[f.parcela,f.forma].filter(Boolean).join(' '))}
     ${(o||c)?cel('Referências',[o?`Orçamento Nº ${o.numero}`:'',c?`Contrato Nº ${c.numero}`:'',c?.local||''].filter(Boolean).join(' · '),true):''}
   </div>
-  ${_gcPixBoxHtml(emp)}
+  ${_gcPixBoxHtml(emp,Number(f.valor))}
   <div class="gc-sectitle">Dados Bancários</div>
   <div class="gc-plain" style="white-space:pre-line">${esc(emp.banco)}${f.obsPag?'\nPagamento: '+esc(f.obsPag):''}
 
