@@ -651,6 +651,17 @@ thead th.r{text-align:right}
      sozinha. Empilha cada campo em sua própria linha abaixo de 900px — único
      jeito de garantir que nunca mais empurre a página inteira pro lado. */
   .resp-grid-row{grid-template-columns:1fr!important;gap:4px!important}
+  /* Barra de filtro do Financeiro (Vencimento + Pago em + busca): a linha de
+     cima nunca tinha flex-wrap, então os 4 campos de data (138px cada) +
+     rótulos + divisores + busca somavam bem mais que a largura de um celular/
+     iPad — o container pai tem overflow:hidden, então a sobra simplesmente
+     sumia (campos de "Pago em" e a busca ficavam invisíveis, cortados pra
+     fora da tela). Achado real do usuário 2026-11-24 ("está estourando, não
+     está mostrando tudo"). Agora quebra em várias linhas em vez de cortar. */
+  .fin-fb-top{flex-wrap:wrap}
+  .fin-fb-top-divider{display:none}
+  .fin-fb-top input[type=date].form-control{width:calc(50% - 32px);min-width:118px}
+  .fin-fb-top input[type=text]#fin-busca{flex:1 1 100%}
 }
 @media(max-width:480px){
   .cards-row{grid-template-columns:1fr}
@@ -1088,7 +1099,7 @@ thead th.r{text-align:right}
           <span class="fin-fb-top-sep">→</span>
           <input type="date" class="form-control" id="fin-pago-fim" onchange="renderFinanceiro()">
           <div class="fin-fb-top-divider"></div>
-          <input type="text" class="form-control" id="fin-busca" placeholder="🔍  Buscar descrição, pessoa ou observações…" oninput="renderFinanceiro()" style="flex:1">
+          <input type="text" class="form-control" id="fin-busca" placeholder="🔍  Buscar descrição, pessoa ou observações…" oninput="renderFinanceiroDebounced()" style="flex:1">
         </div>
         <div class="fin-fb-bot">
           <select class="form-control" id="fin-cat" onchange="renderFinanceiro()" style="flex:1;min-width:140px">
@@ -2827,6 +2838,18 @@ const CATS_E=CATS_DEF_E;
 const CATS_S=CATS_DEF_S;
 let finTab='todas';
 let transComprovante=null;
+// Paginação da tabela do Financeiro — achado real 2026-11-24: com "Todos"
+// selecionado e 3000+ lançamentos (volume que só existe depois das
+// importações desta sessão), renderFinanceiro() montava o HTML de TODAS as
+// linhas de uma vez a cada tecla digitada na busca ou troca de filtro —
+// travava de verdade no celular/iPad (CPU mais fraca). Mostra só um lote por
+// vez (mais recentes primeiro, já que a lista vem ordenada por data desc) e
+// reseta o lote pro início sempre que o filtro realmente muda.
+let _finExibidos=150;
+let _finUltimaAssinatura='';
+let _finBuscaTimer=null;
+function renderFinanceiroDebounced(){clearTimeout(_finBuscaTimer);_finBuscaTimer=setTimeout(renderFinanceiro,280);}
+function _finMostrarMais(){_finExibidos+=150;renderFinanceiro();}
 function setFinTab(t){finTab=t;document.querySelectorAll('#view-financeiro .tab').forEach((el,i)=>el.classList.toggle('active',['todas','entrada','saida'][i]===t));renderFinanceiro();}
 function limparFiltrosFinanceiro(){
   const b=document.getElementById('fin-busca');if(b)b.value='';
@@ -2962,6 +2985,11 @@ function renderFinanceiro(){
     if(extras.length){lista=[...lista,...extras];lista.sort((a,b)=>b.data>a.data?1:-1);}
   }
   const temGrupo=grupoIds.size>0;
+  // Se o filtro mudou desde a última renderização, volta a paginação pro
+  // início — senão trocar de filtro já abriria mostrando 150+N linhas de uma
+  // vez (o mesmo problema que a paginação resolve).
+  const _finAssinaturaAtual=JSON.stringify([periodoTipo,mes,ano,finTab,busca,catF,statusF,contaF,centroF,formaF,dataIni,dataFim,pagoIni,pagoFim]);
+  if(_finAssinaturaAtual!==_finUltimaAssinatura){_finExibidos=150;_finUltimaAssinatura=_finAssinaturaAtual;}
   // Série de parcelas (ex.: "Compra de Casa" do Mateus, 58 lançamentos iguais
   // ao longo de anos) — pedido do usuário 2026-11-24: "como eu sei quantas
   // faltam, quantas já foram pagas?". Os lançamentos importados do GestãoClick
@@ -3044,9 +3072,15 @@ function renderFinanceiro(){
     countEl.textContent=label;
   }
   const pago=t=>isPago(t.status);
+  // Só monta o HTML das primeiras _finExibidos linhas (lista já vem ordenada
+  // por data desc, então são sempre as mais recentes primeiro) — o resto fica
+  // disponível via "Mostrar mais", sem travar o navegador montando milhares
+  // de linhas de uma vez só.
+  const listaExibida=lista.slice(0,_finExibidos);
+  const temMaisParaMostrar=lista.length>_finExibidos;
   // agrupar por data
   const byDate={};
-  lista.forEach(t=>{const d=t.data||'0000-00-00';(byDate[d]||(byDate[d]=[])).push(t);});
+  listaExibida.forEach(t=>{const d=t.data||'0000-00-00';(byDate[d]||(byDate[d]=[])).push(t);});
   const sortedDates=Object.keys(byDate).sort((a,b)=>b.localeCompare(a));
   const _dias=['Domingo','Segunda-feira','Terça-feira','Quarta-feira','Quinta-feira','Sexta-feira','Sábado'];
   const _meses=['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];
@@ -3066,7 +3100,7 @@ function renderFinanceiro(){
   const _svgDel=`<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>`;
   const _svgFile=`<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/></svg>`;
   const _svgUndo=`<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10h10a5 5 0 0 1 0 10H9"/><polyline points="7 5 3 10 7 15"/></svg>`;
-  document.getElementById('tb-financeiro').innerHTML=lista.length?sortedDates.map((date,di)=>{
+  document.getElementById('tb-financeiro').innerHTML=listaExibida.length?sortedDates.map((date,di)=>{
     const txs=byDate[date];
     const dayE=txs.filter(t=>t.tipo==='entrada').reduce((s,t)=>s+Number(t.valor||0),0);
     const dayS=txs.filter(t=>t.tipo==='saida').reduce((s,t)=>s+Number(t.valor||0),0);
@@ -3177,7 +3211,7 @@ function renderFinanceiro(){
       </tr>`;
     }).join('');
     return hdrRow+txRows;
-  }).join(''):`<tr><td colspan="4"><div class="empty"><div class="empty-icon">💰</div><h3>${hasFilter?'Nenhum resultado encontrado':'Nenhuma transação neste mês'}</h3></div></td></tr>`;
+  }).join('')+(temMaisParaMostrar?`<tr><td colspan="4" style="text-align:center;padding:18px"><button class="btn btn-ghost" onclick="_finMostrarMais()">Mostrar mais ${Math.min(150,lista.length-_finExibidos)} (${lista.length-_finExibidos} restantes)</button></td></tr>`:''):`<tr><td colspan="4"><div class="empty"><div class="empty-icon">💰</div><h3>${hasFilter?'Nenhum resultado encontrado':'Nenhuma transação neste mês'}</h3></div></td></tr>`;
 }
 function toggleTransParc(){
   const n=Number(document.getElementById('trans-nparc').value)||1;
