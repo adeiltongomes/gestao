@@ -1016,7 +1016,7 @@ thead th.r{text-align:right}
           <span class="fin-fb-top-sep">→</span>
           <input type="date" class="form-control" id="fin-data-fim" onchange="renderFinanceiro()">
           <div class="fin-fb-top-divider"></div>
-          <input type="text" class="form-control" id="fin-busca" placeholder="🔍  Buscar descrição ou pessoa…" oninput="renderFinanceiro()" style="flex:1">
+          <input type="text" class="form-control" id="fin-busca" placeholder="🔍  Buscar descrição, pessoa ou observações…" oninput="renderFinanceiro()" style="flex:1">
         </div>
         <div class="fin-fb-bot">
           <select class="form-control" id="fin-cat" onchange="renderFinanceiro()" style="flex:1;min-width:140px">
@@ -2859,7 +2859,7 @@ function renderFinanceiro(){
     catSel.innerHTML='<option value="">Todas as categorias</option>'+allCats.map(c=>`<option value="${esc(c)}"${c===catAtual?' selected':''}>${esc(c)}</option>`).join('');
   }
   // aplicar filtros de texto/categoria/status
-  if(busca)lista=lista.filter(t=>(t.descricao||'').toLowerCase().includes(busca)||(t.pessoa||'').toLowerCase().includes(busca));
+  if(busca)lista=lista.filter(t=>(t.descricao||'').toLowerCase().includes(busca)||(t.pessoa||'').toLowerCase().includes(busca)||(t.observacoes||'').toLowerCase().includes(busca));
   if(catF)lista=lista.filter(t=>(t.categoria||'')===catF);
   if(statusF==='pago')lista=lista.filter(t=>isPago(t.status));
   else if(statusF==='pendente')lista=lista.filter(t=>!isPago(t.status));
@@ -3043,7 +3043,14 @@ function renderFinanceiro(){
       const serieHtml=serie.length>1?(()=>{
         const pagas=serie.filter(x=>isPago(x.status)).length;
         const faltam=serie.length-pagas;
-        return`<div class="fin-serie-badge" title="Série completa: ${serie.length} lançamento(s) com o mesmo nome e descrição">📊 ${pagas} de ${serie.length} pagas${faltam?` · ${faltam} faltam`:' · completa'}</div>`;
+        const pendentesOrdenadas=serie.filter(x=>!isPago(x.status)&&x.data).sort((a,b)=>a.data<b.data?-1:1);
+        const proximo=pendentesOrdenadas[0]?.data;
+        const ultimo=serie.map(x=>x.data).filter(Boolean).sort().slice(-1)[0];
+        const datasHtml=[
+          proximo?`Próximo vencimento: ${fmtD(proximo)}`:'',
+          ultimo?`Último vencimento: ${fmtD(ultimo)}`:'',
+        ].filter(Boolean).join(' · ');
+        return`<div class="fin-serie-badge" title="Série completa: ${serie.length} lançamento(s) com o mesmo nome e descrição">📊 ${pagas} de ${serie.length} pagas${faltam?` · ${faltam} faltam`:' · completa'}${datasHtml?' · '+datasHtml:''}</div>`;
       })():'';
       return`<tr class="fin-row fin-${isE?'e':'s'}">
         <td><div class="fin-row-main">
