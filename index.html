@@ -2936,10 +2936,13 @@ function renderFinanceiro(){
       const _icoP=`<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>`;
       const _icoC=`<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>`;
       const _icoB=`<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="12" y1="2" x2="12" y2="6"/><path d="M5 10h14l1 10H4L5 10z"/><line x1="2" y1="10" x2="22" y2="10"/></svg>`;
+      const _icoCal=`<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>`;
       const subHtml=[
         t.pessoa?`<span class="fin-sub-item">${_icoP}<span>${esc(t.pessoa)}</span></span>`:'',
         t.formaPagamento?`<span class="fin-sub-item">${_icoC}<span>${esc(t.formaPagamento)}</span></span>`:'',
         cn?`<span class="fin-sub-item">${_icoB}<span>${cn}</span></span>`:'',
+        t.data?`<span class="fin-sub-item">${_icoCal}<span>Vencimento: ${fmtD(t.data)}</span></span>`:'',
+        (pago(t)&&t.dataConfirmacao)?`<span class="fin-sub-item">${_icoCal}<span>Pago em: ${fmtD(t.dataConfirmacao)}</span></span>`:'',
       ].filter(Boolean).join('<span class="fin-sub-sep">·</span>');
       return`<tr class="fin-row fin-${isE?'e':'s'}">
         <td><div class="fin-row-main">
@@ -2958,7 +2961,7 @@ function renderFinanceiro(){
           ${!pago(t)?`<button class="action-btn pay" onclick="marcarPago('${t.id}')" title="${isE?'Marcar Recebido':'Marcar Pago'}">${_svgCheck}</button>`:''}
           ${pago(t)?`<button class="action-btn" onclick="cancelarPagamento('${t.id}')" title="Cancelar pagamento (volta a pendente)">${_svgUndo}</button>`:''}
           ${(t.contratoId||t.faturaId)?`<button class="action-btn" onclick="imprimirFaturaDeTransacao('${t.id}')" title="Imprimir Fatura">🖨</button>`:''}
-          ${t.comprovante?`<button class="action-btn" onclick="verComprovante('${t.id}')" title="Ver comprovante">${_svgFile}</button>`:''}
+          ${t.comprovante?`<button class="action-btn" onclick="verComprovante('${t.id}')" title="Ver comprovante">${_svgFile}</button>`:`<label class="action-btn" title="Anexar comprovante" style="cursor:pointer">📎<input type="file" accept="image/*,.pdf" style="display:none" onchange="anexarComprovanteRapido('${t.id}',this)"></label>`}
           <button class="action-btn edit" onclick="openModalTransacao('${t.tipo}','${t.id}')" title="Editar">${_svgEdit}</button>
           <button class="action-btn del" onclick="delTransacao('${t.id}')" title="Excluir">${_svgDel}</button>
         </div></td>
@@ -3372,9 +3375,17 @@ function executarImpressaoFin(){
   </body></html>`);
   w.document.close();
 }
+// Limite real: o comprovante vira base64 dentro do PRÓPRIO documento do
+// lançamento (subcoleção transacoes/items/{id}), e o Firestore tem um teto de
+// 1MB por documento — base64 infla o arquivo original em ~33%. 5MB (o limite
+// antigo daqui) sempre ia estourar esse teto e falhar silenciosamente no
+// salvamento. 500KB de arquivo original deixa folga confortável pro resto do
+// documento (achado real 2026-11-24, mesmo limite que já tinha estourado em
+// `transacoes` inteiro).
+const COMPROVANTE_MAX_BYTES=500*1024;
 function loadComprovante(input){
   const file=input.files[0];if(!file)return;
-  if(file.size>5*1024*1024){toast('Arquivo muito grande. Máx. 5 MB.','error');input.value='';return;}
+  if(file.size>COMPROVANTE_MAX_BYTES){toast('Arquivo muito grande. Máx. 500 KB (limite do banco de dados).','error');input.value='';return;}
   const isPdf=file.type==='application/pdf';
   const reader=new FileReader();
   reader.onload=e=>{
@@ -3395,6 +3406,19 @@ function removeComprovante(){
 function verComprovantePreview(){
   if(!transComprovante)return;
   _abrirComprovante(transComprovante);
+}
+function anexarComprovanteRapido(id,input){
+  const file=input.files[0];if(!file)return;
+  if(file.size>COMPROVANTE_MAX_BYTES){toast('Arquivo muito grande. Máx. 500 KB (limite do banco de dados).','error');input.value='';return;}
+  const isPdf=file.type==='application/pdf';
+  const reader=new FileReader();
+  reader.onload=e=>{
+    const t=DB.one('transacoes',id);if(!t)return;
+    DB.save('transacoes',{...t,comprovante:{data:e.target.result,nome:file.name,tipo:isPdf?'pdf':'img'}});
+    renderFinanceiro();
+    toast('Comprovante anexado!','success');
+  };
+  reader.readAsDataURL(file);
 }
 function verComprovante(id){
   const t=DB.one('transacoes',id);
