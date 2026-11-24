@@ -2938,11 +2938,17 @@ function renderFinanceiro(){
       const _icoB=`<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="12" y1="2" x2="12" y2="6"/><path d="M5 10h14l1 10H4L5 10z"/><line x1="2" y1="10" x2="22" y2="10"/></svg>`;
       const _icoCal=`<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>`;
       const subHtml=[
-        t.pessoa?`<span class="fin-sub-item">${_icoP}<span>${esc(t.pessoa)}</span></span>`:'',
+        t.pessoa?`<span class="fin-sub-item">${_icoP}<span>${t.entidadeTipo?esc(t.entidadeTipo)+' — ':''}${esc(t.pessoa)}</span></span>`:'',
         t.formaPagamento?`<span class="fin-sub-item">${_icoC}<span>${esc(t.formaPagamento)}</span></span>`:'',
         cn?`<span class="fin-sub-item">${_icoB}<span>${cn}</span></span>`:'',
+        t.contaOrigemTexto?`<span class="fin-sub-item">${_icoB}<span>${esc(t.contaOrigemTexto)}</span></span>`:'',
+        t.centroCusto?`<span class="fin-sub-item">📁<span>${esc(t.centroCusto)}</span></span>`:'',
         t.data?`<span class="fin-sub-item">${_icoCal}<span>Vencimento: ${fmtD(t.data)}</span></span>`:'',
+        t.dataCompetencia?`<span class="fin-sub-item">${_icoCal}<span>Competência: ${fmtD(t.dataCompetencia)}</span></span>`:'',
         (pago(t)&&t.dataConfirmacao)?`<span class="fin-sub-item">${_icoCal}<span>Pago em: ${fmtD(t.dataConfirmacao)}</span></span>`:'',
+        t.situacaoOriginal?`<span class="fin-sub-item">🏷<span>${esc(t.situacaoOriginal)}</span></span>`:'',
+        t.lancadoPor?`<span class="fin-sub-item">✍<span>Lançado por ${esc(t.lancadoPor)}${t.lancadoEm?' em '+esc(t.lancadoEm):''}</span></span>`:'',
+        t.modificadoEm?`<span class="fin-sub-item">🔄<span>Modificado em ${esc(t.modificadoEm)}</span></span>`:'',
       ].filter(Boolean).join('<span class="fin-sub-sep">·</span>');
       return`<tr class="fin-row fin-${isE?'e':'s'}">
         <td><div class="fin-row-main">
