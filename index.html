@@ -327,7 +327,7 @@ strong{font-variant-numeric:tabular-nums}
 .fin-origem-cell{min-width:0}
 .fin-origem-label{font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--text-dim)}
 .fin-origem-value{font-size:12px;color:var(--text-mid);margin-top:1px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.fin-row-cat{width:175px}
+.fin-row-cat{width:195px}
 .fin-cat-wrap{display:flex;align-items:center;gap:7px;font-size:12px;color:var(--text-mid);font-weight:500}
 .fin-cat-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
 .fin-row-amount{text-align:right;white-space:nowrap;min-width:145px}
@@ -3090,13 +3090,17 @@ function renderFinanceiro(){
           <div class="fin-row-icon">${isE?'↑':'↓'}</div>
           <div style="min-width:0;flex:1">
             <div class="fin-row-title">${esc(t.descricao)}</div>
-            ${vencHtml}
             ${subHtml?`<div class="fin-row-sub">${subHtml}</div>`:''}
             ${serieHtml}
             ${origemHtml?`<div class="fin-origem-grid">${origemHtml}</div>`:''}
           </div>
         </div></td>
-        <td class="fin-row-cat">${t.categoria?`<div class="fin-cat-wrap"><span class="fin-cat-dot" style="background:${cc}"></span>${esc(t.categoria)}</div>`:`<span style="color:var(--text-dim);font-size:12px">—</span>`}</td>
+        <td class="fin-row-cat">
+          <div style="display:flex;flex-direction:column;align-items:center;gap:6px">
+            ${vencHtml}
+            ${t.categoria?`<div class="fin-cat-wrap"><span class="fin-cat-dot" style="background:${cc}"></span>${esc(t.categoria)}</div>`:`<span style="color:var(--text-dim);font-size:12px">—</span>`}
+          </div>
+        </td>
         <td class="fin-row-amount">
           <div class="fin-amount-val ${isE?'e':'s'}">${isE?'+ ':'− '}${fmtR(t.valor)}</div>
           <div style="margin-top:5px"><span class="status-pill ${sc}">${sl}</span></div>
