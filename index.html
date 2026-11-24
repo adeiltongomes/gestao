@@ -2121,12 +2121,21 @@ const _fsdb=firebase.firestore();
 const _TRANS_COL=()=>_fsdb.collection('gestao').doc('transacoes').collection('items');
 const DB={
   _c:{},
-  async init(){
+  // `incluirTransacoes=false` pula a releitura da subcoleção `transacoes`
+  // (hoje 3000+ documentos) — reler isso tudo a cada clique no menu lateral
+  // (era o comportamento de antes) ficou pesado demais no celular/iPad depois
+  // que o volume real de lançamentos entrou (achado real do usuário
+  // 2026-11-24: "muito lento no celular"). Telas que não mostram nada
+  // derivado de transacoes (Clientes, Fornecedores, Funcionários,
+  // Equipamentos, Estoque, Estruturas, Serviços, Minha Empresa) chamam a
+  // versão leve; o resto continua recarregando tudo, sem mudança.
+  async init(incluirTransacoes=true){
     const snap=await _fsdb.collection('gestao').get();
-    DB._c={};
     snap.forEach(doc=>{ if(doc.id!=='transacoes') DB._c[doc.id]=doc.data().value; });
-    const transSnap=await _TRANS_COL().get();
-    DB._c['transacoes']=transSnap.docs.map(d=>d.data());
+    if(incluirTransacoes){
+      const transSnap=await _TRANS_COL().get();
+      DB._c['transacoes']=transSnap.docs.map(d=>d.data());
+    }
     return true;
   },
   _push(k,v){
@@ -2198,8 +2207,12 @@ function goView(v){
     locacoes:renderLocacoes,contratos:renderContratos,faturas:renderFaturas,financeiro:renderFinanceiro,
     orcamento:renderOrcamento,relatorios:()=>{setRelPeriodo('mes');}}[v]||function(){});
   _renderFn();
-  // Recarrega do banco em segundo plano (pega aprovações/assinaturas feitas pelo cliente fora deste navegador) e re-renderiza se algo mudou
-  DB.init().then(_renderFn).catch(()=>{});
+  // Recarrega do banco em segundo plano (pega aprovações/assinaturas feitas
+  // pelo cliente fora deste navegador) e re-renderiza se algo mudou. Telas
+  // puramente de cadastro (sem nada derivado de transacoes) pedem a versão
+  // leve — não precisam reler os 3000+ lançamentos a cada clique no menu.
+  const _VIEWS_SEM_TRANSACOES=new Set(['empresa','clientes','funcionarios','equipamentos','estoque','estruturas','servicos']);
+  DB.init(!_VIEWS_SEM_TRANSACOES.has(v)).then(_renderFn).catch(()=>{});
 }
 
 function toggleSidebar(){
