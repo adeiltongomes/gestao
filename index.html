@@ -38,6 +38,12 @@ setInterval(_checkFreshBuild,60000);
      #6c63d6 (o tom original é escuro demais pra servir de destaque sobre fundo
      preto; a marca em si não muda, só a versão usada como acento de tela) +
      dourado da marca (#c2873c) usado direto, sem precisar clarear. */
+  /* color-scheme:dark — sem isso, o iOS Safari desenha o texto NATIVO de
+     <input type=date> (os campos dd/mm/aaaa) assumindo fundo claro, e como
+     nosso app é sempre escuro (não tem modo claro) o texto saía escuro em
+     cima de fundo escuro — invisível, os campos de data pareciam "em branco"
+     no celular. Achado real do usuário 2026-11-24 (print do iPhone). */
+  color-scheme:dark;
   --bg:#0a0a0f;
   --surface:#15151f;
   --surface-2:#1b1b28;
@@ -262,6 +268,11 @@ strong{font-variant-numeric:tabular-nums}
 .fin-fb-top input[type=date].form-control{width:138px}
 .fin-fb-top-sep{color:var(--text-dim);font-size:13px;flex-shrink:0;font-weight:500}
 .fin-fb-top-divider{width:1px;height:24px;background:var(--border);flex-shrink:0}
+/* Cada intervalo de data (Vencimento, Pago em) é um grupo só — rótulo +
+   2 campos + seta sempre juntos, nunca espalhados linha a linha quando a
+   barra quebra (ver @media(max-width:900px) abaixo). */
+.fin-fb-group{display:flex;align-items:center;gap:8px}
+.fin-fb-label{font-size:11px;font-weight:700;color:var(--text-dim);white-space:nowrap}
 .fin-fb-bot{
   display:flex;align-items:center;gap:8px;flex-wrap:wrap;
   padding:9px 14px;background:var(--surface-2);
@@ -655,13 +666,18 @@ thead th.r{text-align:right}
      cima nunca tinha flex-wrap, então os 4 campos de data (138px cada) +
      rótulos + divisores + busca somavam bem mais que a largura de um celular/
      iPad — o container pai tem overflow:hidden, então a sobra simplesmente
-     sumia (campos de "Pago em" e a busca ficavam invisíveis, cortados pra
-     fora da tela). Achado real do usuário 2026-11-24 ("está estourando, não
-     está mostrando tudo"). Agora quebra em várias linhas em vez de cortar. */
-  .fin-fb-top{flex-wrap:wrap}
+     sumia. 1ª tentativa (2026-11-24, só flex-wrap) ainda misturava o rótulo
+     "Pago em:" no meio dos campos de Vencimento quando o wrap cortava o grupo
+     ao meio — "bagunça" real reportada pelo usuário num segundo print do
+     iPhone. Agora cada intervalo é empilhado como bloco inteiro: rótulo
+     sempre em cima, os 2 campos daquele grupo sempre juntos embaixo dele,
+     nunca dividido entre grupos diferentes. */
+  .fin-fb-top{flex-direction:column;align-items:stretch;gap:12px}
   .fin-fb-top-divider{display:none}
-  .fin-fb-top input[type=date].form-control{width:calc(50% - 32px);min-width:118px}
-  .fin-fb-top input[type=text]#fin-busca{flex:1 1 100%}
+  .fin-fb-group{flex-wrap:wrap;padding-bottom:12px;border-bottom:1px solid var(--border)}
+  .fin-fb-label{flex:0 0 100%}
+  .fin-fb-top input[type=date].form-control{flex:1;width:auto;min-width:0}
+  .fin-fb-top input[type=text]#fin-busca{width:100%}
 }
 @media(max-width:480px){
   .cards-row{grid-template-columns:1fr}
@@ -1089,15 +1105,19 @@ thead th.r{text-align:right}
       </div>
       <div class="fin-filterbar">
         <div class="fin-fb-top">
-          <span style="font-size:11px;font-weight:700;color:var(--text-dim);white-space:nowrap">Vencimento:</span>
-          <input type="date" class="form-control" id="fin-data-ini" onchange="renderFinanceiro()">
-          <span class="fin-fb-top-sep">→</span>
-          <input type="date" class="form-control" id="fin-data-fim" onchange="renderFinanceiro()">
+          <div class="fin-fb-group">
+            <span class="fin-fb-label">Vencimento:</span>
+            <input type="date" class="form-control" id="fin-data-ini" onchange="renderFinanceiro()">
+            <span class="fin-fb-top-sep">→</span>
+            <input type="date" class="form-control" id="fin-data-fim" onchange="renderFinanceiro()">
+          </div>
           <div class="fin-fb-top-divider"></div>
-          <span style="font-size:11px;font-weight:700;color:var(--text-dim);white-space:nowrap">Pago em:</span>
-          <input type="date" class="form-control" id="fin-pago-ini" onchange="renderFinanceiro()">
-          <span class="fin-fb-top-sep">→</span>
-          <input type="date" class="form-control" id="fin-pago-fim" onchange="renderFinanceiro()">
+          <div class="fin-fb-group">
+            <span class="fin-fb-label">Pago em:</span>
+            <input type="date" class="form-control" id="fin-pago-ini" onchange="renderFinanceiro()">
+            <span class="fin-fb-top-sep">→</span>
+            <input type="date" class="form-control" id="fin-pago-fim" onchange="renderFinanceiro()">
+          </div>
           <div class="fin-fb-top-divider"></div>
           <input type="text" class="form-control" id="fin-busca" placeholder="🔍  Buscar descrição, pessoa ou observações…" oninput="renderFinanceiroDebounced()" style="flex:1">
         </div>
