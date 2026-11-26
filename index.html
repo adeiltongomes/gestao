@@ -4553,7 +4553,31 @@ function _pixSanitize(str,maxLen){
   const s=(str||'').normalize('NFD').replace(/[^A-Za-z0-9 ]/g,'').toUpperCase().trim()
   return s.slice(0,maxLen)||'NA'
 }
+// A chave Pix cadastrada no DICT (banco) nunca tem pontuação — CPF é só os 11
+// dígitos, CNPJ só os 14, telefone é "+55DDDNUMERO" sem parênteses/traço. Mas
+// é natural o usuário DIGITAR no campo "Chave Pix" do jeito que o banco mostra
+// na tela (com pontos/traço/parênteses, pra ler melhor) — achado real do
+// usuário 2026-11-26: CPF salvo como "036.480.634-64" ia direto pro payload
+// do QR com a pontuação, e todo app de banco rejeita isso como "QR inválido"
+// (a chave registrada de verdade é "03648063464", sem símbolo nenhum). E-mail
+// e chave aleatória (EVP, formato UUID — os hifens ALI são parte da chave,
+// não pontuação de digitação) passam direto, sem mexer.
+function _pixKeySanitize(raw){
+  const key=(raw||'').trim();
+  if(!key||key.includes('@')) return key;
+  if(/^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(key)) return key.toLowerCase();
+  if(key.includes('(')||key.startsWith('+')){
+    let d=key.replace(/\D/g,'');
+    if(d.startsWith('55')&&(d.length===12||d.length===13)) return '+'+d;
+    if(d.length===10||d.length===11) return '+55'+d;
+    return key;
+  }
+  const digits=key.replace(/\D/g,'');
+  if(digits.length===11||digits.length===14) return digits;
+  return key;
+}
 function generatePixPayload(key,amount,merchantName,city){
+  key=_pixKeySanitize(key);
   const merchantAccount=_pixTlv('26',_pixTlv('00','br.gov.bcb.pix')+_pixTlv('01',key))
   const additionalData=_pixTlv('62',_pixTlv('05','***'))
   const parts=[
